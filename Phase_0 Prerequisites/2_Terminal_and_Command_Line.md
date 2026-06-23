@@ -1,14 +1,14 @@
-# Prerequisite P2: The Terminal & Command Line — Making the Black Screen Friendly
+## Prerequisite P2: The Terminal & Command Line
 
-*The single most important practical skill for MLOps — navigating and controlling your computer by typing*
+*The single most important practical skill for MLOps is navigating and controlling your computer by typing. So let's make the mysterious and intimidating black screen friendly.*
 
 ---
 
 ## Introduction
 
-Every tool in this series — Git, DVC, Docker, Flask, FastAPI — is controlled by **typing commands** into a thing called the terminal. For someone from a non-technical background, that black screen with blinking text is the single most intimidating part of getting started. It looks like something from a hacker movie, and one wrong move *feels* like it could break everything.
+Every tool in this series such as Git, DVC, Docker, Flask, FastAPI, is controlled by **typing commands** into a thing called the terminal. For someone from a non-technical background, that black screen with blinking text is the single most intimidating part of getting started. It looks like something from a hacker movie, and one wrong move *feels* like it could break everything.
 
-Here's the truth: the terminal is just **another way to use your computer** — by typing instead of clicking. It's not dangerous when you understand it, and it's actually *faster and more precise* than clicking around once you're comfortable. This article makes the black screen feel friendly.
+Here's the truth: the terminal is just **another way to use your computer** by typing instead of clicking. It's not dangerous when you understand it, and it's actually *faster and more precise* than clicking around once you're comfortable. This article makes the black screen feel friendly.
 
 We'll go slowly, explain every command, and use analogies throughout. By the end, you'll be able to navigate folders, run programs, and confidently follow the commands in every other article.
 
@@ -29,13 +29,13 @@ We'll go slowly, explain every command, and use analogies throughout. By the end
 
 ---
 
-## Part 1 — What Is the Terminal, and Why Does It Exist?
+## Part 1: What Is the Terminal, and Why Does It Exist?
 
 The **terminal** (also called the **command line**, **shell**, or **console**) is a program that lets you control your computer by **typing text commands** instead of clicking on icons.
 
 ### Two Ways to Drive the Same Car
 
-You already know one way to use your computer: the **graphical interface** — windows, icons, buttons, the mouse. You double-click a folder to open it, drag files around, click "Save." This is called a **GUI** (Graphical User Interface).
+You already know one way to use your computer: the **graphical interface** with windows, icons, buttons, the mouse. You double-click a folder to open it, drag files around, click "Save." This is called a **GUI** (Graphical User Interface).
 
 The terminal is the *other* way: you **type** what you want. Instead of double-clicking the `data` folder, you type a command that means "go into the data folder."
 
@@ -49,26 +49,24 @@ The terminal is the *other* way: you **type** what you want. Instead of double-c
 └────────────────────┘          └────────────────────────┘
 ```
 
-Both do the exact same thing — they're just two different steering wheels for the same car.
-
 ### Why Bother With Typing?
 
 If clicking is so easy, why learn the terminal? Because for development work, typing is:
 
 - **Precise.** A command does exactly one specific thing, with no ambiguity.
-- **Powerful.** Many development tools (Git, Docker, DVC) have *no* clickable interface — the terminal is the only way to use them.
-- **Repeatable.** You can save commands and run them again exactly. You can't "save" a sequence of mouse clicks.
+- **Powerful.** Many development tools (Git, Docker, DVC) have *no* or limited clickable interface, so the terminal is the optimal way to use them.
+- **Repeatable.** You can save commands and run them again exactly in the same sequence but you can't "save" a sequence of mouse clicks.
 - **Fast.** Once comfortable, typing `cd src` is quicker than navigating folders with a mouse.
 
-The non-negotiable reason: **the MLOps tools you're learning are built to be used from the terminal.** When a tutorial says `git commit -m "..."` or `docker build -t myapp .`, that's a terminal command. There's no button for it. Learning the terminal isn't optional for this journey — but the good news is you only need a handful of commands to be productive.
+The non-negotiable reason: **the MLOps tools you're learning are built to be used from the terminal.** When a tutorial says `git commit -m "..."` or `docker build -t myapp .`, that's a terminal command and there's no button for it. Learning the terminal isn't optional for this journey but the good news is you only need a handful of commands to be productive.
 
 ### The Restaurant Kitchen Analogy
 
-Think of the GUI as a **picture menu** — you point at what you want. The terminal is like **speaking directly to the chef in their language** — more precise, more powerful, and the only way to make special requests the picture menu doesn't show. At first the chef's language sounds foreign, but it's actually just a small, learnable vocabulary.
+Think of the GUI as a **picture menu**, you point at what you want. The terminal is like **speaking directly to the chef in their language** being more precise, more powerful, and the only way to make special requests the picture menu doesn't show. At first the chef's language sounds foreign, but it's actually just a small, learnable vocabulary.
 
 ---
 
-## Part 2 — Opening the Terminal on Your Computer
+## Part 2: Opening the Terminal on Your Computer
 
 The terminal is a built-in program on every operating system. Here's how to open it.
 
@@ -78,7 +76,7 @@ Windows has a few options. The recommended one for development is **PowerShell**
 - Press the **Start** button, type **"PowerShell"**, and click it.
 - Or, once you install VS Code (covered in P3), use its built-in terminal.
 
-> Note: Windows commands historically differ slightly from Mac/Linux. When you install **Git** later (P3), it comes with **Git Bash**, a terminal that uses the same commands as Mac and Linux — which is what most tutorials (including this series) assume. For consistency, many developers on Windows use Git Bash.
+> Note: Windows commands historically differ slightly from Mac/Linux. When you install **Git** later (P3), it comes with **Git Bash**, a terminal that uses the same commands as Mac and Linux, which is what most tutorials (including this series) assume. For consistency, many developers on Windows use Git Bash.
 
 ### On macOS
 
@@ -97,13 +95,13 @@ A window opens with some text and a blinking cursor, waiting for you to type. It
 yourname@computer:~$ 
 ```
 
-This is normal. The computer is simply waiting for your instructions. It can't do anything until you type a command and press **Enter**. Take a breath — nothing happens until you tell it to.
+The computer is simply waiting for your instructions and it can't do anything until you type a command and press **Enter**.
 
 ---
 
-## Part 3 — Understanding the Prompt
+## Part 3: Understanding the Prompt
 
-That line of text waiting for your input is called the **prompt**. It's the terminal saying "I'm ready — what would you like?"
+That line of text waiting for your input is called the **prompt**. It's the terminal saying "I'm ready - what would you like?"
 
 ### Decoding the Prompt
 
@@ -122,17 +120,17 @@ The most important part for you is the **current location** and the **prompt sym
 
 ### The Prompt Symbol
 
-The symbol at the end — usually **`$`** (Mac/Linux) or **`>`** (Windows) — marks where you type. In tutorials, you'll often see commands written with a `$` in front:
+The symbol at the end, usually **`$`** (Mac/Linux) or **`>`** (Windows), marks where you type. In tutorials, you'll often see commands written with a `$` in front:
 
 ```bash
 $ cd data
 ```
 
-**The `$` is not something you type.** It's just a convention showing "this is a terminal command." You only type the part *after* it: `cd data`. This trips up countless beginners — so remember, ignore the leading `$`.
+**The `$` is not something you type.** It's just a convention showing "this is a terminal command." You only type the part *after* it: `cd data`. This confuses lot of beginners, so remember you just have to type your command after the `$` symbol.
 
-### "Where Am I?" — The Current Directory
+### "Where Am I?" - The Current Directory
 
-At any moment, the terminal is "standing inside" one folder, called the **current directory** or **working directory**. Every command you run happens *relative to where you're standing*.
+At any moment, the terminal is pointing to one folder, called the **current directory** or **working directory**. Every command you run happens *relative to where you're right now*.
 
 This is the single most important thing to internalize: **the terminal always has a location.** When you run a program or look for a file, it looks in your current directory first. Much beginner confusion ("it says the file doesn't exist, but I can see it!") comes from being in the wrong location.
 
@@ -140,11 +138,11 @@ This is the single most important thing to internalize: **the terminal always ha
 
 ---
 
-## Part 4 — Navigating Folders (The Core Skill)
+## Part 4: Navigating Folders (The Core Skill)
 
 Moving between folders is the skill you'll use most. Three commands do almost everything.
 
-### `pwd` — "Where Am I?"
+### `pwd` - "Where Am I?"
 
 `pwd` stands for **print working directory**. It tells you the full path of where you currently are.
 
@@ -153,9 +151,9 @@ $ pwd
 /Users/alex/projects/heart_disease
 ```
 
-This says: "You are currently standing in the `heart_disease` folder, which is inside `projects`, inside `alex`, inside `Users`." Run `pwd` anytime you feel lost. It's your GPS.
+This says: "You are currently standing in the `heart_disease` folder, which is inside `projects` -> inside `alex` folder -> inside `Users`." Run `pwd` anytime you feel lost. It's your GPS.
 
-### `ls` — "What's Here?"
+### `ls` - "What's Here?"
 
 `ls` (short for **list**) shows the files and folders in your current directory.
 
@@ -172,11 +170,11 @@ A useful variation shows more detail:
 $ ls -l
 ```
 
-The `-l` (a "flag" — more on flags in Part 7) shows a long, detailed list with sizes and dates. To also see hidden files (like `.git`), use `ls -a`.
+The `-l` shows a long, detailed list with sizes and dates. To also see hidden files (like `.git`), use `ls -a`.
 
-### `cd` — "Go There"
+### `cd` - "Go There"
 
-`cd` stands for **change directory**. It moves you into a different folder — the typed equivalent of double-clicking a folder.
+`cd` stands for **change directory**. It moves you into a different folder, similar to double-clicking a folder.
 
 ```bash
 # Go INTO the 'data' folder
@@ -199,7 +197,7 @@ A few essential `cd` moves:
 ```bash
 $ cd src           # go into the 'src' folder
 $ cd ..            # go up one level
-$ cd ../models     # go up one level, then into 'models'
+$ cd ../models     # go one folder back, then into 'models' folder
 $ cd ~             # go to your home folder (~ always means home)
 $ cd               # (with nothing after) also goes home
 ```
@@ -229,15 +227,15 @@ train.py   app.py              # → there are my code files
 $ cd ..                        # Go back up to the project root
 ```
 
-Master these four — `pwd`, `ls`, `cd`, `cd ..` — and you can navigate anywhere. This is 80% of terminal comfort.
+Master these four `pwd`, `ls`, `cd`, `cd ..` and you can navigate anywhere. This is 80% of terminal comfort.
 
 ---
 
-## Part 5 — Looking at and Creating Files and Folders
+## Part 5: Looking at and Creating Files and Folders
 
 Beyond navigating, you'll sometimes create folders, create files, and peek at file contents.
 
-### `mkdir` — Make a Folder
+### `mkdir` - Make a Folder
 
 `mkdir` means **make directory**. It creates a new folder in your current location.
 
@@ -248,8 +246,6 @@ $ mkdir models
 # Create a folder with a nested structure
 $ mkdir -p data/raw
 ```
-
-You used `mkdir` to set up projects in earlier articles — now you know exactly what it does.
 
 ### Creating an Empty File
 
@@ -284,9 +280,7 @@ $ rm oldfile.txt                # rm = remove (delete) a file
 
 ---
 
-## Part 6 — Running Programs and Commands
-
-Here's where it all pays off — running your actual work.
+## Part 6: Running Programs and Commands
 
 ### Running a Python Program
 
@@ -296,7 +290,7 @@ To run a Python file, you type `python` followed by the file's name:
 $ python train.py
 ```
 
-This says: "Use the Python program to execute the instructions in `train.py`." Remember from P1 — this is the "running/executing" step. The file does nothing until you run it like this.
+This says: "Use the Python program to execute the instructions in `train.py`." 
 
 You might see output appear as the program runs:
 
@@ -306,13 +300,11 @@ Model trained. Test accuracy: 0.8525
 Model saved to models/model.pkl
 ```
 
-Those lines are the program *talking back* to you — printing its progress. When it's done, the prompt returns, ready for your next command.
-
 > Location matters here! `python train.py` only works if `train.py` is in your **current directory**. If you're in the wrong folder, you'll get an error like "can't open file 'train.py'." The fix is almost always: `cd` to the right folder first, then run. Use `ls` to confirm the file is visible before running.
 
 ### Running Tool Commands
 
-The MLOps tools work the same way — you type the tool's name and what you want it to do:
+The MLOps tools work the same way, you type the tool's name and what you want it to do:
 
 ```bash
 $ git status               # ask Git for the current status
@@ -325,7 +317,7 @@ Every single command in this entire series follows this pattern: **the name of a
 
 ---
 
-## Part 7 — Reading Commands from Tutorials (Decoding the Syntax)
+## Part 7: Reading Commands from Tutorials (Decoding the Syntax)
 
 Tutorials are full of commands that look cryptic. Let's learn to decode them so you can read any command with confidence. Take this real one from Article 5:
 
@@ -346,13 +338,13 @@ docker run    -d  -p 8000:5000   --name heart-api    heart-disease-api:v1
  (what to do)   (on/off switches)  (settings w/ values)  (what to act on)
 ```
 
-**1. The command** — the tool and the action: `docker run` ("Docker, run a container").
+**1. The command** - the tool and the action: `docker run` ("Docker, run a container").
 
-**2. Flags** — short switches that turn options on, starting with a dash. `-d` means "detached / run in the background." Think of flags as toggle switches.
+**2. Flags** - short switches that turn options on, starting with a dash. `-d` means "detached / run in the background." Think of flags as toggle switches.
 
-**3. Options with values** — settings that take a value. `-p 8000:5000` sets a port mapping; `--name heart-api` sets a name. These configure *how* the command behaves.
+**3. Options with values** - settings that take a value. `-p 8000:5000` sets a port mapping; `--name heart-api` sets a name. These configure *how* the command behaves.
 
-**4. Arguments** — what the command acts on. Here, `heart-disease-api:v1` is the image to run.
+**4. Arguments** - what the command acts on. Here, `heart-disease-api:v1` is the image to run.
 
 ### Flags: Short and Long Forms
 
@@ -371,7 +363,7 @@ docker build -t myapp .
 git add .
 ```
 
-The `.` means **"here — the current directory."** So `docker build -t myapp .` means "build an image named `myapp` using the files *in my current folder*." It's just shorthand for "right here, where I'm standing." (And `..` , as you learned, means "the folder above.")
+The `.` means **"here - the current directory."** So `docker build -t myapp .` means "build an image named `myapp` using the files *in my current folder*." It's just shorthand for "right here, where I'm standing." (And `..` , as you learned, means "the folder above.")
 
 ### Now Re-read the Scary Command
 
@@ -385,13 +377,13 @@ Not scary at all once you see the structure. **Every** command in this series de
 
 ---
 
-## Part 8 — Safety, Mistakes, and Getting Unstuck
+## Part 8 - Safety, Mistakes, and Getting Unstuck
 
 New terminal users worry about "breaking something." Let's defuse that fear with practical reassurance.
 
 ### You Are Safer Than You Think
 
-- Most commands (`pwd`, `ls`, `cd`, `cat`, `git status`) **only look at things** — they change nothing. You can run these freely, all day, with zero risk.
+- Most commands (`pwd`, `ls`, `cd`, `cat`, `git status`) **only look at things** and they change nothing. You can run these freely, all day, with zero risk.
 - The terminal won't let you accidentally destroy your whole computer with a typo. The genuinely dangerous commands are specific and rare.
 - When unsure what a command does, **don't run it.** Look it up first. There's no rush.
 
@@ -402,7 +394,7 @@ New terminal users worry about "breaking something." Let's defuse that fear with
 | `rm` / `rm -rf` | Deletes permanently, no Trash/undo |
 | `mv` | Can overwrite a file if the destination exists |
 | Anything with `sudo` | Runs with admin power; can change system settings |
-| Commands you copy-pasted without understanding | You don't know what they do — read first |
+| Commands you copy-pasted without understanding | You don't know what they do, so read first |
 
 The golden rule: **understand a command before running it, especially if it deletes or overwrites.** For the read-only navigation commands, explore freely.
 
@@ -417,36 +409,23 @@ The golden rule: **understand a command before running it, especially if it dele
 
 ### Your Two Escape Hatches
 
-- **Ctrl + C** — stops whatever is currently running and gives you the prompt back. If something seems frozen or you started something by mistake, press this.
-- **Closing the terminal window** — ends everything in that terminal. Nothing you did in one terminal session permanently "breaks" your computer.
+- **Ctrl + C** stops whatever is currently running and gives you the prompt back. If something seems frozen or you started something by mistake, press this.
+- **Closing the terminal window** ends everything in that terminal. Nothing you did in one terminal session permanently "breaks" your computer.
 
 ### Helpful Habits
 
-- **Tab key autocompletes.** Start typing a file or folder name and press **Tab** — the terminal finishes it for you. This prevents typos and is a huge time-saver. Try it constantly.
+- **Tab key autocompletes.** Start typing a file or folder name and press **Tab** and the terminal finishes it for you.
 - **Up arrow** recalls your previous commands, so you don't retype them.
-- **`pwd` and `ls` whenever lost.** These two answer "where am I?" and "what's here?" — the questions behind most confusion.
+- **`pwd` and `ls` whenever lost.** These two answer "where am I?" and "what's here?"
 - **Read error messages.** They look scary but usually tell you exactly what went wrong, often in the last line. Don't ignore them; they're trying to help.
 
 ---
-
-## Summary
-
-The black screen is now a friendly tool, not a mystery:
-
-✅ **The terminal** is just another way to use your computer — typing instead of clicking — and it's the *only* way to use most MLOps tools  
-✅ **The prompt** waits for you; the leading `$` in tutorials is *not* typed  
-✅ **You always have a location** (current directory); `pwd` tells you where you are, `ls` shows what's there  
-✅ **Navigation** with `cd folder`, `cd ..`, and `cd ~` moves you around — the core skill  
-✅ **Files and folders** — `mkdir`, `touch`, `cat`, `cp`, `mv`, `rm` (the last one is permanent — be careful)  
-✅ **Running things** — `python train.py` and tool commands all follow "tool name + instructions"  
-✅ **Decoding commands** — command, flags (`-d`), options (`-p 8000:5000`), arguments, and `.` meaning "here"  
-✅ **Safety** — read-only commands are risk-free; understand deleting/overwriting commands before running; **Ctrl + C** rescues you  
 
 You can now follow every terminal command in this series with understanding instead of blind copying. That confidence changes everything.
 
 ### Practice Before Moving On
 
-Try this gentle warm-up in your terminal — every command here is 100% safe:
+Try this gentle warm-up in your terminal:
 
 ```bash
 pwd                 # where am I?
@@ -459,10 +438,3 @@ ls                  # see it
 cd ..               # go back up
 ```
 
-### What's Next
-
-- **P3: Setting Up Your Computer** — install and learn to use VS Code (a friendly home for your code), Python, and Git, using the terminal skills you just built.
-- **P4: Python Environments & Packages** — what `pip install` and `requirements.txt` really do.
-- **P5: How the Web Works** — `localhost`, ports, and HTTP, so Flask and FastAPI make sense.
-
-You've gone from "what is that black screen?" to navigating and running programs. That's the hardest psychological hurdle in all of development — and you've cleared it.
