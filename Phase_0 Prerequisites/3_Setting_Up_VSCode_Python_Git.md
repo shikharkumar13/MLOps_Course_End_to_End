@@ -1,4 +1,4 @@
-# Prerequisite P3: Setting Up Your Computer — VS Code, Python, and Git
+# Prerequisite P3: Setting Up Your Computer - VS Code, Python, and Git
 
 *Installing and actually using the three tools every article in this series assumes you already have*
 
@@ -8,7 +8,7 @@
 
 In P1 you built the mental model. In P2 you learned to talk to your computer through the terminal. Now it's time to install the actual toolkit: **VS Code** (where you'll write code), **Python** (the language that runs it), and **Git** (which you'll use from Article 1 onward).
 
-Every single hands-on article in this series assumes these three things are already sitting on your computer, ready to go. This article gets you there — properly installed, verified, and comfortable enough to use day to day. We won't just install things; we'll tour each tool so you know what you're looking at.
+Every single hands-on article in this series assumes these three things are already sitting on your computer, ready to go. This article gets you there - properly installed, verified, and comfortable enough to use day to day. We won't just install things; we'll tour each tool so you know what you're looking at.
 
 ---
 
@@ -29,15 +29,15 @@ Every single hands-on article in this series assumes these three things are alre
 
 ---
 
-## Part 1 — Why a Code Editor? Introducing VS Code
+## Part 1 - Why a Code Editor? Introducing VS Code
 
-In P1, you learned that code is just text — instructions saved in a file. So technically, you could write code in Notepad or any plain text app. So why does every developer use something fancier?
+In P1, you learned that code is just text with instructions saved in a file. So technically, you could write code in Notepad or any plain text app. So why does every developer use something fancier?
 
 ### The Workshop Analogy
 
-Writing code in a plain text editor is like building furniture with your bare hands — technically possible, painfully slow. A **code editor** is a fully equipped workshop: it has the right tools laid out, it catches your mistakes before they become real problems, and it shows you what you're doing as you do it.
+Writing code in a plain text editor is like building furniture with your bare hands, technically possible, painfully slow. A **code editor** is a fully equipped workshop: it has the right tools laid out, it catches your mistakes before they become real problems, and it shows you what you're doing as you do it.
 
-**VS Code** (Visual Studio Code, made by Microsoft, free and open-source) is the most widely used code editor in the world today. It's not the only option, but it's an excellent, beginner-friendly default — which is why this series assumes you're using it.
+**VS Code** (Visual Studio Code, made by Microsoft, free and open-source) is the most widely used code editor in the world today. It's not the only option, but it's an excellent, beginner-friendly default which is why this series assumes you're using it.
 
 ### What a Code Editor Actually Gives You
 
@@ -53,7 +53,7 @@ The biggest win for beginners: VS Code **shows you problems before you run your 
 
 ---
 
-## Part 2 — Installing VS Code
+## Part 2 - Installing VS Code
 
 ### Step 1: Download
 
@@ -67,7 +67,7 @@ Go to **https://code.visualstudio.com** in your browser. The site automatically 
 - ✅ Important: when you reach the "Select Additional Tasks" screen, make sure **"Add to PATH"** is checked. This lets you open VS Code by typing `code` in the terminal — a feature you'll use constantly.
 
 **On macOS:**
-- Open the downloaded `.zip` file — it extracts a `Visual Studio Code` app.
+- Open the downloaded `.zip` file, it extracts a `Visual Studio Code` app.
 - Drag it into your **Applications** folder.
 - Open it once from Applications. Then, inside VS Code, press `Cmd+Shift+P`, type "shell command," and select **"Shell Command: Install 'code' command in PATH."** This enables the `code` command in your terminal, same as Windows above.
 
@@ -96,7 +96,7 @@ code .
 
 ---
 
-## Part 3 — A Guided Tour of the VS Code Interface
+## Part 3 - A Guided Tour of the VS Code Interface
 
 Open VS Code. Here's what you're looking at, region by region.
 
@@ -129,13 +129,13 @@ Open VS Code. Here's what you're looking at, region by region.
 Switches between major views: the file Explorer, Search, Source Control (Git — you'll use this heavily from Article 1), and Extensions.
 
 **2. Explorer (sidebar)**
-Shows your project's files and folders — exactly like the `ls` command from P2, but visual and clickable. Click any file to open it.
+Shows your project's files and folders, exactly like the `ls` command from P2, but visual and clickable. Click any file to open it.
 
 **3. Editor (center, the big area)**
 Where you actually read and write code. Multiple files open as tabs across the top, just like browser tabs.
 
 **4. Terminal (bottom panel)**
-A real terminal — the exact same thing you used in P2 — built directly into your editor. This is the single biggest reason VS Code suits this series: you write code and run terminal commands in one window, without switching apps.
+A real terminal, the exact same thing you used in P2, built directly into your editor. This is the single biggest reason VS Code suits this series: you write code and run terminal commands in one window, without switching apps.
 
 ### Opening a Project
 
@@ -143,7 +143,7 @@ Use **File → Open Folder...** (or `code .` from the terminal, as shown above) 
 
 ---
 
-## Part 4 — The Integrated Terminal (Your New Home Base)
+## Part 4 - The Integrated Terminal (Your New Home Base)
 
 This is where P2's skills and VS Code merge into your daily workflow.
 
@@ -181,7 +181,7 @@ You should see you're already inside the folder you opened in VS Code. That's th
 
 ---
 
-## Part 5 — Installing Python
+## Part 5 - Installing Python
 
 Python is the language behind every code example in this series. Let's get it installed.
 
@@ -217,11 +217,11 @@ You should see something like `Python 3.11.5`.
 
 ---
 
-## Part 6 — Verifying Python and Understanding `python` vs `pip`
+## Part 6 - Verifying Python and Understanding `python` vs `pip`
 
 Now that Python is installed, you actually have **two** related commands available. Telling them apart clears up a lot of early confusion.
 
-### `python` — Runs Code
+### `python` - Runs Code
 
 As you saw in P1 and P2, `python` *executes* a file of instructions:
 
@@ -229,9 +229,9 @@ As you saw in P1 and P2, `python` *executes* a file of instructions:
 python train.py
 ```
 
-### `pip` — Installs Extra Tools (Packages)
+### `pip` - Installs Extra Tools (Packages)
 
-Python comes with a lot built in, but ML work needs extra **packages** — pre-written code libraries like `pandas` or `scikit-learn` that you didn't write yourself. `pip` is Python's package installer; it downloads and sets these up for you.
+Python comes with a lot built in, but ML work needs extra **packages** which are pre-written code libraries like `pandas` or `scikit-learn` that you didn't write yourself. `pip` is Python's package installer; it downloads and sets these up for you.
 
 ```bash
 pip --version
@@ -260,11 +260,11 @@ Try this tiny end-to-end test to confirm everything (VS Code, Python, the termin
    ```
 5. You should see: `My setup works!`
 
-If you see that message, your editor, your terminal, and Python are all correctly wired together. This is the exact loop — write, save, run — you'll repeat throughout the entire series.
+If you see that message, your editor, your terminal, and Python are all correctly wired together. This is the exact loop -> write, save, run.
 
 ---
 
-## Part 7 — Installing Git
+## Part 7 - Installing Git
 
 Git powers Articles 1, 2, and 3, and is referenced throughout the rest of the series. Let's install it now so it's ready when you need it.
 
@@ -302,7 +302,7 @@ You should see something like `git version 2.43.0`.
 
 ---
 
-## Part 8 — First-Time Git Configuration
+## Part 8 - First-Time Git Configuration
 
 Git needs to know who you are before you make your first commit (this is covered in depth in Article 1, but let's set it up now so it's ready).
 
@@ -311,7 +311,7 @@ git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
 ```
 
-**What's happening here:** every change you save with Git gets labeled with this name and email — like signing your work. The `--global` flag means "remember this for every project on this computer," so you only do this once per machine, not per project.
+**What's happening here:** every change you save with Git gets labeled with this name and email, like signing your work. The `--global` flag means "remember this for every project on this computer," so you only do this once per machine, not per project.
 
 Confirm it took effect:
 
@@ -323,7 +323,7 @@ You'll see your name and email listed among Git's settings. You're now fully set
 
 ---
 
-## Part 9 — Useful VS Code Extensions for This Series
+## Part 9 - Useful VS Code Extensions for This Series
 
 VS Code can be enhanced with **extensions** — small add-ons that give it new abilities, similar to apps on a phone. Click the **Extensions** icon in the Activity Bar (the four-squares icon) and search for these:
 
@@ -333,13 +333,13 @@ VS Code can be enhanced with **extensions** — small add-ons that give it new a
 | **Docker** (by Microsoft) | Lets you view and manage images/containers visually, and highlights Dockerfile syntax | Helpful for Articles 4–5 |
 | **GitLens** | Adds rich detail to Git history right in the editor | Optional, but great once you're comfortable with Git basics from Article 1 |
 
-To install one: click its name in the search results, then click **Install**. That's it — no terminal command needed for this part.
+To install one: click its name in the search results, then click **Install**. 
 
-> You don't need any of these to follow the series — everything works from the terminal alone, exactly as written in every article. Extensions just make the experience smoother once you're comfortable with the basics.
+> You don't need any of these to follow the series as everything works from the terminal alone, exactly as written in every article. Extensions just make the experience smoother once you're comfortable with the basics.
 
 ---
 
-## Part 10 — Putting It Together: Your First Project Folder
+## Part 10 - Putting It Together: Your First Project Folder
 
 Let's combine everything from P1 through P3 into one real, hands-on sequence — creating a small project folder the way you will for every article going forward.
 
@@ -357,7 +357,7 @@ cd my_first_project
 code .
 ```
 
-VS Code opens with `my_first_project` as your workspace — empty for now. In the VS Code terminal (`` Ctrl+` ``):
+VS Code opens with `my_first_project` as your workspace which will be empty for now. In the VS Code terminal (`` Ctrl+` ``):
 
 ```bash
 # 4. Confirm your tools are all ready (P3 skill)
@@ -382,22 +382,3 @@ You should see `Ready for the MLOps series!` printed. At this point, you have na
 
 ---
 
-## Summary
-
-Your development environment is now fully set up:
-
-✅ **VS Code installed** — your workshop for writing and running code, with a built-in terminal  
-✅ **Toured the interface** — Explorer, Editor, Terminal, Activity Bar  
-✅ **Python installed and verified** — and you understand `python` (runs code) vs `pip` (installs packages)  
-✅ **Git installed and configured** — with your name and email set globally, ready for Article 1  
-✅ **Useful extensions** — optional polish for Python and Docker work later in the series  
-✅ **A working end-to-end loop** — create a folder, open it in VS Code, write a file, run it from the terminal  
-
-Every article from here on assumes exactly this setup. When a tutorial says "open your project and run `python train.py`," you now know precisely what that means and how to do it.
-
-### What's Next
-
-- **P4: Python Environments & Packages** — what `pip install`, `venv`, and `requirements.txt` really do, and why every Python project in this series uses them.
-- **P5: How the Web Works** — `localhost`, ports, and HTTP, so Flask and FastAPI (Articles 6–7) make complete sense.
-
-With your toolkit installed and your terminal habits in place, you're ready to start writing real, runnable projects.
