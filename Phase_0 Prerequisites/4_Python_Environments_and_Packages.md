@@ -1,4 +1,4 @@
-# Prerequisite P4: Python Environments & Packages — What `pip`, `venv`, and `requirements.txt` Really Do
+# Prerequisite P4: Python Environments & Packages - What `pip`, `venv`, and `requirements.txt` Really Do
 
 *Understanding the machinery behind every `pip install` and every `requirements.txt` file you've seen so far in this series*
 
@@ -6,9 +6,9 @@
 
 ## Introduction
 
-In P3, you installed Python and briefly met `pip`. In Article 1 through 7, you've seen `requirements.txt` files appear in nearly every project, and commands like `pip install -r requirements.txt` used without much explanation. This article slows down and properly explains all of it — because once you understand **packages**, **virtual environments**, and **`requirements.txt`**, a huge chunk of "why didn't this work" confusion disappears for good.
+In P3, you installed Python and briefly met `pip`. In Article 1 through 7, you will see `requirements.txt` files appear in nearly every project, and commands like `pip install -r requirements.txt` used without much explanation. This article slows down and properly explains all of it because once you understand **packages**, **virtual environments**, and **`requirements.txt`**, a huge chunk of "why didn't this work" confusion disappears for good.
 
-By the end of this article, you'll understand exactly why every serious Python project — including every ML project in this series — is built around these three ideas, and you'll be able to set one up confidently for any new project.
+By the end of this article, you'll understand exactly why every serious Python project including every ML project in this series is built around these three ideas, and you'll be able to set one up confidently for any new project.
 
 ---
 
@@ -29,21 +29,21 @@ By the end of this article, you'll understand exactly why every serious Python p
 
 ---
 
-## Part 1 — What Is a Package, Really? (A Proper Recap)
+## Part 1 - What Is a Package, Really? (A Proper Recap)
 
 In P3, you learned that `pip` installs extra tools Python doesn't include by default. Let's be precise about what those "extra tools" are.
 
-A **package** (also called a **library**) is code that someone else already wrote, tested, and published — so you don't have to write it yourself. When you write:
+A **package** (also called a **library**) is code that someone else already wrote, tested, and published so you don't have to write it yourself. When you write:
 
 ```python
 import pandas as pd
 ```
 
-You're saying: "Bring in the `pandas` package, which contains thousands of lines of pre-written code for working with tabular data." Without `pandas` installed, this line fails — Python has no idea what `pandas` means, because it isn't part of the language itself.
+You're saying: "Bring in the `pandas` package, which contains thousands of lines of pre-written code for working with tabular data." 
 
 ### The Toolbox Analogy
 
-Think of Python itself as a basic toolbox — a hammer, a screwdriver, enough to do simple jobs. **Packages are specialized tools** you buy separately and add to your toolbox: a power drill (`pandas` for data), a precision caliper (`scikit-learn` for ML), a stud finder (`flask` for web APIs).
+Think of Python itself as a basic toolbox like a hammer, a screwdriver, enough to do simple jobs. **Packages are specialized tools** you buy separately and add to your toolbox: a power drill (`pandas` for data), a precision caliper (`scikit-learn` for ML), a stud finder (`flask` for web APIs).
 
 `pip` is the **hardware store** where you go to buy these specialized tools. `pip install pandas` means "go to the store, get the `pandas` tool, and add it to my toolbox."
 
@@ -58,7 +58,7 @@ This much you already understand from P3. Now let's uncover the problem that mak
 
 ## Part 2 — The Problem: One Shared Python, Many Conflicting Projects
 
-Here's something that catches every beginner off guard: by default, **there is only one Python installation on your computer**, and `pip install` adds packages to that *one shared toolbox* — globally, for every project.
+Here's something that catches every beginner off guard: by default, **there is only one Python installation on your computer**, and `pip install` adds packages to that *one shared toolbox* globally, for every project.
 
 This sounds fine until you have more than one project.
 
@@ -76,11 +76,11 @@ pip install pandas==2.2.0    # Project B works now...
 # ...but Project A, which needed pandas 1.5, is now BROKEN
 ```
 
-Installing what Project B needs **breaks** Project A. This is called a **dependency conflict**, and it's one of the most common sources of mysterious bugs in Python development — "it worked yesterday!" usually means a shared package got upgraded for a different project.
+Installing what Project B needs **breaks** Project A. This is called a **dependency conflict**, and it's one of the most common sources of mysterious bugs in Python development where "it worked yesterday!" usually means a shared package got upgraded for a different project.
 
 ### The Shared Kitchen Analogy
 
-Imagine ten different cooks (your projects) all sharing **one single kitchen** with **one single set of ingredients**. If one cook needs sugar replaced with a sugar substitute for their recipe, every other cook's recipe is affected too — because there's only one sugar jar for everyone.
+Imagine ten different cooks (your projects) all sharing **one single kitchen** with **one single set of ingredients**. If one cook needs sugar replaced with a sugar substitute for their recipe, every other cook's recipe is affected too because there's only one sugar jar for everyone.
 
 What you actually want is for **each cook to have their own private kitchen**, stocked with exactly the ingredients their recipe needs, completely unaffected by what the other cooks are doing.
 
@@ -88,7 +88,7 @@ That private kitchen, for Python, is called a **virtual environment**.
 
 ---
 
-## Part 3 — The Solution: Virtual Environments
+## Part 3 - The Solution: Virtual Environments
 
 A **virtual environment** (often shortened to **venv**, which is also the name of the tool that creates one) is an isolated, self-contained copy of Python and its packages, dedicated to a single project.
 
@@ -112,13 +112,13 @@ When you create a virtual environment for a project, you get:
 └─────────────────────────────┘       each project: its own toolbox
 ```
 
-Each project gets its own sealed-off "kitchen." Project A can keep `pandas 1.5` happily forever, while Project B uses `pandas 2.2`, and neither knows or cares about the other. This is **the standard, expected way to work on any Python project** — including every project in this series. From this point on, you should create a fresh virtual environment for every new project folder.
+Each project gets its own sealed-off "kitchen." Project A can keep `pandas 1.5` happily forever, while Project B uses `pandas 2.2`, and neither knows or cares about the other. This is **the standard, expected way to work on any Python project** including every project in this series. From this point on, you should create a fresh virtual environment for every new project folder.
 
 ---
 
-## Part 4 — Creating and Activating a Virtual Environment
+## Part 4 - Creating and Activating a Virtual Environment
 
-Python includes the tool to create virtual environments built in — it's called `venv` (lowercase, part of Python itself, not a separate install).
+Python includes the tool to create virtual environments built in, it's called `venv` (lowercase, part of Python itself, not a separate install).
 
 ### Step 1: Navigate to Your Project
 
@@ -135,9 +135,9 @@ python -m venv venv
 ```
 
 Let's decode this command the way you learned in P2:
-- `python` — the tool
-- `-m venv` — "run the built-in `venv` module"
-- the second `venv` — the **name** you're giving the new environment (folder). Calling it `venv` is just a strong convention — you could name it `env` or anything else, but `venv` is what almost everyone uses, including every project in this series.
+- `python` - the tool
+- `-m venv` - "run the built-in `venv` module"
+- the second `venv` is the **name** you're giving the new environment (folder). Calling it `venv` is just a strong convention but you could name it `env` or anything else, but `venv` is what almost everyone uses, including every project in this series.
 
 After running this, look at your project with `ls`:
 
@@ -146,11 +146,9 @@ $ ls
 venv/   src/   data/   requirements.txt
 ```
 
-A new folder called `venv` appeared. **This folder is your private kitchen** — a self-contained copy of Python and a place for packages to live, just for this project. You never need to open or edit anything inside it directly.
-
 ### Step 3: Activate It
 
-Creating the environment isn't enough — you need to **activate** it to actually start using it. The activation command differs slightly by operating system:
+Creating the environment isn't enough but you need to **activate** it to actually start using it. The activation command differs slightly by operating system:
 
 ```bash
 # macOS / Linux
@@ -163,7 +161,7 @@ venv\Scripts\Activate.ps1
 source venv/Scripts/activate
 ```
 
-After activation, look closely at your terminal prompt — it changes to show the environment's name at the front:
+After activation, look closely at your terminal prompt, it changes to show the environment's name at the front:
 
 ```bash
 (venv) $
@@ -183,13 +181,13 @@ The `(venv)` prefix disappears, and you're back to your regular, global terminal
 
 ---
 
-## Part 5 — What "Activated" Actually Changes
+## Part 5 - What "Activated" Actually Changes
 
 It helps to understand precisely what activation does, so it stops feeling like a magic incantation.
 
 Recall from P2: when you type `python` or `pip`, the terminal finds and runs a specific program with that name. Normally, it finds your *global* Python and *global* pip.
 
-**Activation temporarily changes which `python` and `pip` your terminal points to** — redirecting them to the private copies inside your `venv` folder instead of the global ones.
+**Activation temporarily changes which `python` and `pip` your terminal points to**, redirecting them to the private copies inside your `venv` folder instead of the global ones.
 
 ```
 BEFORE activation:                AFTER activation (venv) $:
@@ -197,15 +195,15 @@ BEFORE activation:                AFTER activation (venv) $:
   "pip"    → global pip             "pip"    → venv/bin/pip     (private)
 ```
 
-This is the entire trick behind virtual environments: same commands you already know (`python`, `pip`), just quietly pointed at an isolated, project-specific copy instead of the shared global one. Everything else about using Python — running files, installing packages — works exactly the same as before. Only *where things go* changes.
+This is the entire trick behind virtual environments: same commands you already know (`python`, `pip`), just quietly pointed at an isolated, project-specific copy instead of the shared global one. Everything else about using Python like running files, installing packages works exactly the same as before. Only *where things go* changes.
 
 > **A simple rule to build into habit:** Before running `python` or `pip install` for any project, check that `(venv)` is showing in your prompt. If it's missing, activate first. This single habit prevents a large share of "why isn't this working" headaches.
 
 ---
 
-## Part 6 — Installing Packages Inside Your Environment
+## Part 6 - Installing Packages Inside Your Environment
 
-With your environment activated, install packages exactly as you learned in P3 — `pip install` just now installs into your private space instead of globally.
+With your environment activated, install packages exactly as you learned in P3. `pip install` just now installs into your private space instead of globally.
 
 ```bash
 (venv) $ pip install pandas
@@ -227,11 +225,11 @@ scikit-learn    1.4.0
 flask           3.0.0
 ```
 
-This list is private to this environment. If you `deactivate` and check a *different* project's environment, you'll see a completely different list — exactly as intended.
+This list is private to this environment. If you `deactivate` and check a *different* project's environment, you'll see a completely different list exactly as intended.
 
 ---
 
-## Part 7 — `requirements.txt`: The Project's Packing List
+## Part 7 - `requirements.txt`: The Project's Packing List
 
 You've now solved the conflict problem for yourself, on your own machine. But a new question arises: **how does anyone else (a teammate, a server, a Docker container) know exactly which packages your project needs?**
 
@@ -250,7 +248,7 @@ flask==3.0.0
 
 ### The Packing List Analogy
 
-Imagine you're sending a friend to recreate your exact recipe in their own kitchen. Instead of having them guess what's needed, you hand them a **precise shopping list**: "2.2 version of pandas, 1.4 version of scikit-learn..." They take that list to *their own* hardware store (`pip`) and buy exactly what's specified — nothing more, nothing less, and no guessing about versions.
+Imagine you're sending a friend to recreate your exact recipe in their own kitchen. Instead of having them guess what's needed, you hand them a **precise shopping list**: "2.2 version of pandas, 1.4 version of scikit-learn..." They take that list to *their own* hardware store (`pip`) and buy exactly what's specified.
 
 `requirements.txt` is exactly this packing list for your Python project. It's the single source of truth for "what does this project need to run."
 
@@ -263,9 +261,9 @@ You don't typically write `requirements.txt` by hand from memory. You generate i
 ```
 
 Let's decode this:
-- `pip freeze` — lists everything currently installed, in the exact `package==version` format
-- `>` — a terminal symbol meaning "save this output into a file" instead of printing it to the screen
-- `requirements.txt` — the file it gets saved into
+- `pip freeze` - lists everything currently installed, in the exact `package==version` format
+- `>` : a terminal symbol meaning "save this output into a file" instead of printing it to the screen
+- `requirements.txt` - the file it gets saved into
 
 This single command captures a perfect, precise snapshot of your environment into a shareable text file.
 
@@ -277,11 +275,11 @@ When you (or a teammate, or a server, or Docker) need to recreate your exact env
 (venv) $ pip install -r requirements.txt
 ```
 
-- `-r requirements.txt` means "read package names and versions from this file, and install all of them." This is the exact command you've seen at the start of nearly every article in this series — now you know precisely what it does.
+- `-r requirements.txt` means "read package names and versions from this file, and install all of them." This is the exact command you've seen at the start of nearly every article in this series and now you know precisely what it does.
 
 ---
 
-## Part 8 — The Complete Workflow, Start to Finish
+## Part 8 - The Complete Workflow, Start to Finish
 
 Let's walk through the full lifecycle, tying every piece together, the way you'd actually start a new project.
 
@@ -327,11 +325,9 @@ This is precisely the pattern you'll repeat at the start of nearly every project
 
 ---
 
-## Part 9 — Connecting This to Git and Docker
+## Part 9 - Connecting This to Git and Docker
 
-Two important links back to earlier articles.
-
-### Git: Commit `requirements.txt`, NOT the `venv` Folder
+### Git:  We commit `requirements.txt`, NOT the `venv` Folder
 
 Recall from Article 1's `.gitignore` discussion: your virtual environment folder should **never** be committed to Git.
 
@@ -340,23 +336,23 @@ Recall from Article 1's `.gitignore` discussion: your virtual environment folder
 venv/
 ```
 
-**Why not?** The `venv` folder can be hundreds of megabytes, contains machine-specific files, and is entirely *reconstructable* from `requirements.txt` in seconds with `pip install -r requirements.txt`. There's no reason to version it — it's generated output, not source material. What you **do** commit is the lightweight `requirements.txt` file itself, since that's the actual instructions for recreating the environment.
+**Why not?** The `venv` folder can be hundreds of megabytes, contains machine-specific files, and is entirely *reconstructable* from `requirements.txt` in seconds with `pip install -r requirements.txt`, so there's no reason to version it with git. What you **do** commit is the lightweight `requirements.txt` file itself, since that's the actual instructions for recreating the environment.
 
 ```
-✅ git add requirements.txt    (the packing list — small, essential)
-❌ git add venv/               (the actual kitchen — huge, regenerable, never do this)
+✅ git add requirements.txt    (the packing list - small, essential)
+❌ git add venv/               (the actual kitchen - huge, regenerable, never do this)
 ```
 
 ### Docker: `requirements.txt` Is the Bridge
 
-Look back at every Dockerfile from Articles 4, 5, and 7 — you'll notice this exact pattern:
+Look at every Dockerfile from Articles 4, 5, and 7 and you'll notice this exact pattern:
 
 ```dockerfile
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 ```
 
-This is the **same command** you just learned, just running *inside* a container instead of inside a `venv`. Docker doesn't use virtual environments (the whole container is already an isolated environment, as you learned in Article 4) — but it relies on the exact same `requirements.txt` file to know precisely what to install. This is why the file ordering in every Dockerfile in this series copies `requirements.txt` first, before the rest of the code — it's the same dependency-installation step you now understand deeply, just running inside Docker's isolated box instead of a `venv`'s.
+This is the **same command** you just learned, just running *inside* a container instead of inside a `venv`. Docker doesn't use virtual environments (the whole container is already an isolated environment, as you learned in Article 4) but it relies on the exact same `requirements.txt` file to know precisely what to install. This is why the file ordering in every Dockerfile in this series copies `requirements.txt` first, before the rest of the code and it's the same dependency-installation step you now understand deeply, just running inside Docker's isolated box instead of a `venv`'s.
 
 ```
    venv (on your laptop)              Docker (in a container)
@@ -370,11 +366,11 @@ This is the **same command** you just learned, just running *inside* a container
    isolation via a folder            isolation via a container
 ```
 
-Both tools solve the *exact same problem* — isolating a project's dependencies — just at different scales. `venv` isolates on your laptop; Docker isolates the entire runtime, OS included. Understanding one makes the other click immediately.
+Both tools solve the *exact same problem* which is isolating a project's dependencies/packages just at different scales. `venv` isolates on your laptop; Docker isolates the entire runtime, OS included. Understanding one makes the other click immediately.
 
 ---
 
-## Part 10 — Common Mistakes and How to Avoid You
+## Part 10 - Common Mistakes and How to Avoid You
 
 A few pitfalls catch nearly everyone early on. Knowing them in advance saves hours of confusion.
 
@@ -390,9 +386,9 @@ If you don't see `(venv)` at the start of your prompt, you just installed `panda
 
 ### Mistake 2: Committing the `venv` Folder to Git
 
-If you forget the `.gitignore` entry and run `git add .` inside a project, you might commit hundreds of megabytes of environment files to your repository — bloating it permanently (recall the Git+DVC lesson from Article 3 about not putting heavy files where they don't belong).
+If you forget the `.gitignore` entry and run `git add .` inside a project, you might commit hundreds of megabytes of environment files to your repository which ends up bloating it permanently (recall the Git+DVC lesson from Article 3 about not putting heavy files where they don't belong).
 
-**Fix:** Add `venv/` to `.gitignore` at the very start of every project, before your first commit — the same habit emphasized in Article 2.
+**Fix:** Add `venv/` to `.gitignore` at the very start of every project, before your first commit, the same habit emphasized in Article 2.
 
 ### Mistake 3: Different Python Versions Causing Mismatches
 
