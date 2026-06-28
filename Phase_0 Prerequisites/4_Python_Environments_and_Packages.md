@@ -1,4 +1,4 @@
-# Prerequisite P4: Python Environments & Packages - What `pip`, `venv`, and `requirements.txt` Really Do
+### Prerequisite P4: Python Environments & Packages - What `pip`, `venv`, and `requirements.txt` Really Do
 
 *Understanding the machinery behind every `pip install` and every `requirements.txt` file you've seen so far in this series*
 
