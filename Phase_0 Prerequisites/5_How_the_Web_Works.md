@@ -1,12 +1,12 @@
-# Prerequisite P5: How the Web Works — localhost, Ports, and HTTP
+## Prerequisite P5: How the Web Works(localhost, Ports, and HTTP)
 
-*The final piece before Flask and FastAPI make complete sense: what actually happens when one program talks to another over a network*
+*The final piece before tools like Flask and FastAPI make complete sense: what actually happens when one program talks to another over a network*
 
 ---
 
 ## Introduction
 
-In P1, you met the client-server model in passing — a customer placing an order, a kitchen preparing it. In Articles 6 and 7, you ran commands like `app.run(host="0.0.0.0", port=5000)` and `docker run -p 8000:5000`, and visited addresses like `http://localhost:8000/predict`. This article is where all of that finally gets explained properly, from the ground up.
+In P1, you met the client-server model in passing — a customer placing an order, a kitchen preparing it. In Articles 6 and 7, you will run commands like `app.run(host="0.0.0.0", port=5000)` and `docker run -p 8000:5000`, and visited addresses like `http://localhost:8000/predict`. This article is where all of that finally gets explained properly, from the ground up.
 
 By the end, you won't just *run* these commands — you'll understand exactly what's happening behind each one: what an address really means, why ports exist, what HTTP actually is, and what's literally occurring when your browser or `curl` talks to your Flask or FastAPI app. This is the last prerequisite — after this, you're fully equipped for the entire series.
 
