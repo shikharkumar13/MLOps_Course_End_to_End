@@ -22,28 +22,26 @@ Why it's worth taking seriously: independent estimates from VentureBeat, Gartner
  
 ## The Articles
  
-All 13 pieces build on one real, continuous project starting at Article 7.5: predicting customer churn on the real IBM Telco Customer Churn dataset (7,043 customers). Nothing before Article 7.5 uses invented placeholder projects either, Articles 1–7 use real datasets (Iris, UCI Heart Disease) throughout.
+All 13 pieces build on one real, continuous project starting at Article 7.5: predicting customer churn on the real IBM Telco Customer Churn dataset (7,043 customers). Nothing before Article 7.5 uses invented placeholder projects either, Articles 1-7 use real datasets (Iris, UCI Heart Disease) throughout.
  
 HTML files in this repo won't render in GitHub's own file viewer, GitHub only shows raw HTML as text. Enable **GitHub Pages** for this repository (Settings → Pages → deploy from branch, root) and the links below will open properly in a browser.
  
 | # | Article | What it covers | Link |
 |---|---------|-----------------|------|
-| 0 | **Introduction to MLOps** | Why ML needs its own engineering discipline: real failure-rate statistics, the Zillow and Uber case studies, the four pillars, and the roadmap this series follows | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_0_Introduction_to_MLOps.html) |
-| 1 | **Git & GitHub, Complete Guide** | Every core Git and GitHub concept and command, from a first commit to resolving a merge conflict | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_1_Git_GitHub_Complete_Guide.html) |
-| 2 | **Git Hands-On: Iris Project** | The full Git workflow practiced end to end on a real classifier project | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_2_Git_ML_Project_Practice.html) |
-| 3 | **Git + DVC: Heart Disease Project** | Versioning data and trained models alongside code, including a full pipeline and byte-for-byte time travel | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_3_Git_DVC_Heart_Disease_Project.html) |
-| 4 | **Docker Fundamentals & Dockerfile** | Images, containers, layers, and writing a real Dockerfile line by line | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_4_Docker_Fundamentals_and_Dockerfile.html) |
-| 5 | **Docker Hands-On: ML Project** | Containerizing a trained model and its Flask API into one portable image | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_5_Docker_ML_Project_Practice.html) |
-| 6 | **Flask for ML Deployment** | Wrapping a trained model in a REST API, and the exact gotchas that break it in production | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_6_Flask_for_ML_Deployment.html) |
-| 7 | **FastAPI & Pydantic for ML Deployment** | Modern, self-documenting API serving with automatic request validation | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_7_FastAPI_Pydantic_for_ML_Deployment.html) |
-| 7.5 | **End-to-End Churn Pipeline** | The checkpoint: Git, DVC, Docker, and FastAPI wired into one real, continuous project on the Telco Customer Churn dataset | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_7_5_End_to_End_Churn_Pipeline.html) |
-| 8 | **MLflow Experiment Tracking** | Logging every training run's parameters, metrics, and models so nothing gets lost or forgotten | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_8_MLflow_Experiment_Tracking.html) |
-| 9 | **MLflow Model Registry** | Managing which model version is actually live, using aliases rather than the deprecated stages API | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_9_MLflow_Model_Registry.html) |
-| 10 | **Pipeline Orchestration with Prefect** | Automating training, tracking, and promotion to run on their own, on a schedule, with retries and caching | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_10_Pipeline_Orchestration_with_Prefect.html) |
-| 11 | **CI/CD with GitHub Actions** | Testing, building, and shipping a Docker image automatically on every pull request | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_11_CI_CD_with_GitHub_Actions.html) |
-| 12 | **Unified Implementation** | Tying MLflow, Prefect, and GitHub Actions together into one real, networked system rather than four separate demos | [HTML](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/Article_12_Unified_Implementation.html) |
- 
-Replace `YOUR-USERNAME` and `YOUR-REPO-NAME` in each link once this repository and GitHub Pages are set up. The filenames themselves are exact and don't need to change.
+| 0 | **Introduction to MLOps** | Why ML needs its own engineering discipline: real failure-rate statistics, the Zillow and Uber case studies, the four pillars, and the roadmap this series follows | [Article 0](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_0_Introduction_to_MLOps.html) |
+| 1 | **Git & GitHub, Complete Guide** | Every core Git and GitHub concept and command, from a first commit to resolving a merge conflict | [Article 1](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_1_Git_GitHub_Complete_Guide.html) |
+| 2 | **Git Hands-On: Iris Project** | The full Git workflow practiced end to end on a real classifier project | [Article 2](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_2_Git_ML_Project_Practice.html) |
+| 3 | **Git + DVC: Heart Disease Project** | Versioning data and trained models alongside code, including a full pipeline and byte-for-byte time travel | [Article 3](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_3_Git_DVC_Heart_Disease_Project.html) |
+| 4 | **Docker Fundamentals & Dockerfile** | Images, containers, layers, and writing a real Dockerfile line by line | [Article 4](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_4_Docker_Fundamentals_and_Dockerfile.html) |
+| 5 | **Docker Hands-On: ML Project** | Containerizing a trained model and its Flask API into one portable image | [Article 5](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_5_Docker_ML_Project_Practice.html) |
+| 6 | **Flask for ML Deployment** | Wrapping a trained model in a REST API, and the exact gotchas that break it in production | [Article 6](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_6_Flask_for_ML_Deployment.html) |
+| 7 | **FastAPI & Pydantic for ML Deployment** | Modern, self-documenting API serving with automatic request validation | [Article 7](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_7_FastAPI_Pydantic_for_ML_Deployment.html) |
+| 7.5 | **End-to-End Churn Pipeline** | The checkpoint: Git, DVC, Docker, and FastAPI wired into one real, continuous project on the Telco Customer Churn dataset | [Article 8](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_7.5_End_to_End_Churn_Pipeline.html) |
+| 8 | **MLflow Experiment Tracking** | Logging every training run's parameters, metrics, and models so nothing gets lost or forgotten | [Article 8](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_8_MLflow_Experiment_Tracking.html) |
+| 9 | **MLflow Model Registry** | Managing which model version is actually live, using aliases rather than the deprecated stages API | [Article 9](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_9_MLflow_Model_Registry.html) |
+| 10 | **Pipeline Orchestration with Prefect** | Automating training, tracking, and promotion to run on their own, on a schedule, with retries and caching | [Article 10](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_10_Pipeline_Orchestration_with_Prefect.html) |
+| 11 | **CI/CD with GitHub Actions** | Testing, building, and shipping a Docker image automatically on every pull request | [Article 11](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_11_CI_CD_with_GitHub_Actions.html) |
+| 12 | **Unified Implementation** | Tying MLflow, Prefect, and GitHub Actions together into one real, networked system rather than four separate demos | [Article 12](https://shikharkumar13.github.io/MLOps_Course_End_to_End/Article_12_Unified_Implementation.html) |
  
 ---
  
