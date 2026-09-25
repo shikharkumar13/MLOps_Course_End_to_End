@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker in action — Dockerizing a real ML project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:34px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:25px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+  h2 small{ display:block; font-family:'JetBrains Mono', monospace; font-weight:500; font-size:12px; color:var(--accent); letter-spacing:0.08em; margin-bottom:8px; text-transform:uppercase; }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:14px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+  .out-label{ font-family:'Inter', sans-serif; font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0.04em; text-transform:uppercase; margin:0 0 6px; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+
+  .line-section{ margin:36px 0; padding:20px 22px; background:#fff; border:1px solid var(--border); border-radius:8px; }
+  .line-section h4{ font-family:'JetBrains Mono', monospace; font-size:16px; font-weight:600; color:var(--accent); margin:0 0 12px; }
+  .line-section p{ margin:0 0 10px; } .line-section p:last-child{ margin-bottom:0; }
+  .plain{ font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.03em; }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 5</p>
+    <h1 class="title">Docker in action: Dockerizing a real ML project</h1>
+    <p class="dek">A full hands-on walkthrough: containerizing a heart disease prediction API, with every line of the Dockerfile explained in plain words.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Article 4 first &middot; next up: Flask for ML deployment</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Article 4 covered what Docker is, how it works, and how to write a Dockerfile. Now we put it into practice. We'll take a small, working machine learning project, a heart disease prediction service, and containerize it start to finish.</p>
+
+<p>By the end you'll have a real ML project packaged into a Docker image, a Dockerfile where you understand every single line, a running container serving predictions over an API, and the confidence to Dockerize your own projects.</p>
+
+<p>We'll go slowly, because the goal here is understanding, not just copying commands.</p>
+
+<hr>
+
+<h2><small>Part 1</small>The project we're containerizing</h2>
+<p>A small ML service that predicts whether a patient has heart disease from their health measurements, in two parts: a training script that trains a model and saves it, and a prediction API, using Flask, that loads the saved model and serves predictions over HTTP.</p>
+
+<pre><code>heart_disease_docker/
+├── Dockerfile              ← the recipe (we'll write this)
+├── .dockerignore           ← files to exclude from the image
+├── requirements.txt        ← Python dependencies
+├── train.py                ← trains and saves the model
+├── app.py                  ← Flask API that serves predictions
+├── data/
+│   └── heart.csv           ← the dataset
+└── models/
+    └── model.pkl           ← the trained model (created by train.py)</code></pre>
+
+<hr>
+
+<h2><small>Part 2</small>Building the ML project, before Docker</h2>
+
+<h3>Step 2.1 — the requirements file</h3>
+<p><code>requirements.txt</code> lists the exact packages and versions the project needs:</p>
+<pre><code>scikit-learn==1.4.0
+pandas==2.2.0
+numpy==1.26.4
+joblib==1.3.2
+flask==3.0.0</code></pre>
+<blockquote><p>Pinning exact versions with <code>==</code> matters for reproducibility: it guarantees the container installs the same versions every single time.</p></blockquote>
+
+<h3>Step 2.2 — the training script</h3>
+<p><code>train.py</code> loads the data, trains a Random Forest, and saves the model:</p>
+<pre><code>"""train.py — Train a heart disease classifier and save it."""
+import pandas as pd
+import joblib
+import os
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+df = pd.read_csv("data/heart.csv")
+
+X = df.drop(columns=["target"])
+y = df["target"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+model.fit(X_train, y_train)
+
+accuracy = accuracy_score(y_test, model.predict(X_test))
+print(f"Model trained. Test accuracy: {accuracy:.4f}")
+
+os.makedirs("models", exist_ok=True)
+joblib.dump(model, "models/model.pkl")
+print("Model saved to models/model.pkl")</code></pre>
+
+<h3>Step 2.3 — the prediction API</h3>
+<p><code>app.py</code> is a Flask server that loads the model and returns predictions:</p>
+<pre><code>"""app.py — Flask API serving heart disease predictions."""
+from flask import Flask, request, jsonify
+import joblib
+import pandas as pd
+
+app = Flask(__name__)
+
+model = joblib.load("models/model.pkl")
+
+FEATURES = ["age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
+            "thalach", "exang", "oldpeak", "slope", "ca", "thal"]
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Simple health check to confirm the API is running."""
+    return jsonify({"status": "healthy"})
+
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    """Accept patient data as JSON and return a prediction."""
+    data = request.get_json()
+
+    input_df = pd.DataFrame([[data[f] for f in FEATURES]], columns=FEATURES)
+
+    prediction = int(model.predict(input_df)[0])
+    probability = float(model.predict_proba(input_df)[0][1])
+
+    return jsonify({
+        "prediction": prediction,           # 1 = disease, 0 = no disease
+        "probability": round(probability, 4),
+        "interpretation": "Heart disease likely" if prediction == 1
+                          else "Heart disease unlikely"
+    })
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)</code></pre>
+<blockquote><p><code>host="0.0.0.0"</code> is essential inside Docker. Use the default <code>127.0.0.1</code> instead and the app would only be reachable from inside the container, invisible from your laptop. More on this shortly.</p></blockquote>
+
+<h3>Step 2.4 — the .dockerignore file</h3>
+<p><code>.dockerignore</code> tells Docker what not to copy into the image, keeping it lean:</p>
+<pre><code><span class="c"># Python cache</span>
+__pycache__/
+*.pyc
+*.pyo
+
+<span class="c"># Virtual environments</span>
+.venv/
+venv/
+
+<span class="c"># Git</span>
+.git/
+.gitignore
+
+<span class="c"># Jupyter</span>
+.ipynb_checkpoints/
+
+<span class="c"># Docs and misc</span>
+README.md
+*.md
+
+<span class="c"># We'll train inside the build, so raw data extras can be excluded if large</span>
+<span class="c"># (keep data/heart.csv since train.py needs it during the build)</span></code></pre>
+
+<hr>
+
+<h2><small>Part 3</small>Writing the Dockerfile, line by line</h2>
+<p>Here's the complete Dockerfile, followed by a detailed explanation of every line.</p>
+
+<pre><code><span class="c"># ===== 1. Base image =====</span>
+FROM python:3.11-slim
+
+<span class="c"># ===== 2. Environment variables =====</span>
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+<span class="c"># ===== 3. Working directory =====</span>
+WORKDIR /app
+
+<span class="c"># ===== 4. System dependencies =====</span>
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+<span class="c"># ===== 5. Install Python dependencies (cached layer) =====</span>
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+<span class="c"># ===== 6. Copy project files =====</span>
+COPY data/ ./data/
+COPY train.py .
+COPY app.py .
+
+<span class="c"># ===== 7. Train the model during the build =====</span>
+RUN python train.py
+
+<span class="c"># ===== 8. Expose the API port =====</span>
+EXPOSE 5000
+
+<span class="c"># ===== 9. Start the API when the container runs =====</span>
+CMD ["python", "app.py"]</code></pre>
+
+<h3>Every line, in plain words</h3>
+
+<div class="line-section">
+<h4>1. FROM python:3.11-slim</h4>
+<p><span class="plain">In plain words</span> "Start with a ready-made box that already has Python 3.11 installed on a minimal Linux system."</p>
+<p>We don't build from scratch. An official Python image is the foundation. <code>-slim</code> means a stripped-down version, Python without a lot of extra tools we don't need, which keeps the final image small (smaller means faster to build, push, and deploy).</p>
+<p><em>Analogy: instead of building a kitchen from raw materials, we rent an apartment that already has a stove and sink installed.</em></p>
+</div>
+
+<div class="line-section">
+<h4>2. ENV PYTHONUNBUFFERED / PYTHONDONTWRITEBYTECODE</h4>
+<p><span class="plain">In plain words</span> "Set two rules that make Python behave nicely inside a container."</p>
+<p><code>PYTHONUNBUFFERED=1</code> forces Python to print output immediately instead of holding it in a buffer. Skip it, and your <code>print()</code> statements might not show up until the program ends, which makes debugging inside Docker painful. <code>PYTHONDONTWRITEBYTECODE=1</code> stops Python from writing <code>.pyc</code> cache files we don't need in a container.</p>
+<p>The <code>\</code> at the end of the first line just means "continue on the next line," a way to set multiple variables in one instruction.</p>
+<p><em>Analogy: posting two house rules on the fridge that every program inside follows.</em></p>
+</div>
+
+<div class="line-section">
+<h4>3. WORKDIR /app</h4>
+<p><span class="plain">In plain words</span> "Make a folder called <code>/app</code> inside the container, and work inside it from now on."</p>
+<p>Everything after this runs inside <code>/app</code>. When we later copy <code>train.py</code>, it lands at <code>/app/train.py</code>. That keeps the project organized in one place instead of scattered around the container's filesystem.</p>
+<p><em>Analogy: saying "we're working in the kitchen now," once, so you don't repeat the location for every instruction.</em></p>
+</div>
+
+<div class="line-section">
+<h4>4. System dependencies</h4>
+<p><span class="plain">In plain words</span> "Install a Linux system library that scikit-learn needs, then clean up the leftover install files."</p>
+<p>Some ML libraries rely on system-level libraries that aren't part of Python itself. <code>libgomp1</code> is one, handling parallel processing, installed through the Linux package manager <code>apt-get</code>. Breaking it down: <code>apt-get update</code> refreshes the list of available packages; <code>apt-get install -y --no-install-recommends libgomp1</code> installs it, with <code>-y</code> auto-confirming and <code>--no-install-recommends</code> skipping optional extras; <code>rm -rf /var/lib/apt/lists/*</code> deletes the package list cache afterward to keep the image smaller. Chaining all three with <code>&amp;&amp;</code> keeps them in one layer.</p>
+<p><em>Analogy: a trip to the hardware store for one specific tool the recipe needs, then throwing away the shopping bags so the kitchen stays tidy.</em></p>
+</div>
+
+<div class="line-section">
+<h4>5. Install Python dependencies (the caching trick)</h4>
+<p><span class="plain">In plain words</span> "Copy just the requirements list, then install the packages it names."</p>
+<p><code>COPY requirements.txt .</code> copies only that one file into <code>/app</code>; <code>RUN pip install --no-cache-dir -r requirements.txt</code> installs everything it lists, with <code>--no-cache-dir</code> skipping pip's own download cache to keep the image smaller.</p>
+<p>Why requirements first, and not all the code at once? This is the single most important habit in the whole Dockerfile. Docker caches each step. Code changes constantly; the dependency list rarely does. Install dependencies first, and tweaking <code>app.py</code> later reuses the cached dependency layer, rebuilding in seconds. Copy everything up front instead, and every tiny code change forces a full dependency reinstall, taking minutes.</p>
+<p><em>Analogy: stock the pantry once, slowly, since it rarely changes. Then for each new dish you just grab fresh ingredients, fast. You don't restock the whole pantry to make a sandwich.</em></p>
+</div>
+
+<div class="line-section">
+<h4>6. Copy project files</h4>
+<p><span class="plain">In plain words</span> "Copy the dataset, the training script, and the API script into the container."</p>
+<p><code>COPY data/ ./data/</code> brings in the <code>data</code> folder (with <code>heart.csv</code>) at <code>/app/data/</code>; <code>COPY train.py .</code> and <code>COPY app.py .</code> bring in the two scripts. All of this happens after installing dependencies, for exactly the caching reason above.</p>
+<p><em>Analogy: the kitchen is set up and the pantry's stocked, so now bring in tonight's specific ingredients and the recipe card.</em></p>
+</div>
+
+<div class="line-section">
+<h4>7. RUN python train.py</h4>
+<p><span class="plain">In plain words</span> "Run the training script right now, while building the image, so the trained model gets baked in."</p>
+<p>This executes <code>train.py</code> during the build. It trains the Random Forest and saves <code>models/model.pkl</code> inside the image itself. Anyone who runs a container from this image gets a model that's already there, ready to serve predictions instantly, no training needed at runtime.</p>
+<blockquote><p><strong>Design note:</strong> training during the build works well for small, fast models like this one. For anything that takes hours to train, train separately, save the model (with DVC, as in Article 3), and <code>COPY</code> the pre-trained model in instead of training inside the build.</p></blockquote>
+<p><em>Analogy: pre-cooking the meal and sealing it into the kit, so the customer only has to reheat it.</em></p>
+</div>
+
+<div class="line-section">
+<h4>8. EXPOSE 5000</h4>
+<p><span class="plain">In plain words</span> "Announce that this container's app listens on port 5000."</p>
+<p>The Flask API runs on port 5000, set in <code>app.py</code>. <code>EXPOSE</code> documents that. It's informational only, though: it doesn't actually open the port to your laptop. <code>-p</code> at <code>docker run</code> time does that (Part 4).</p>
+<p><em>Analogy: a sign reading "service window at counter 5000." It tells people where to go, but you still need an actual door, the <code>-p</code> mapping, for anyone to get in.</em></p>
+</div>
+
+<div class="line-section">
+<h4>9. CMD ["python", "app.py"]</h4>
+<p><span class="plain">In plain words</span> "When someone starts a container from this image, run the API server automatically."</p>
+<p><code>CMD</code> is the default action. Starting the container launches <code>app.py</code>, which starts Flask and begins listening for prediction requests, the main job of this container.</p>
+<p><em>Analogy: the default action when the meal kit is opened, heat and serve, unless you override it.</em></p>
+</div>
+
+<hr>
+
+<h2><small>Part 4</small>Building and running the container</h2>
+
+<h3>Step 4.1 — build the image</h3>
+<p>From inside <code>heart_disease_docker/</code>:</p>
+<pre><code>docker build -t heart-disease-api:v1 .</code></pre>
+<p><code>docker build</code> is the build command; <code>-t heart-disease-api:v1</code> tags the image with a name and version; the trailing <code>.</code> is the build context, "find the Dockerfile here."</p>
+<p>Docker executes each instruction and shows its progress:</p>
+<pre class="output"><code>[+] Building 45.2s
+ => [1/8] FROM python:3.11-slim
+ => [2/8] WORKDIR /app
+ => [3/8] RUN apt-get update && apt-get install...
+ => [4/8] COPY requirements.txt .
+ => [5/8] RUN pip install --no-cache-dir -r requirements.txt
+ => [6/8] COPY data/ ./data/
+ => [7/8] COPY train.py . && COPY app.py .
+ => [8/8] RUN python train.py
+       Model trained. Test accuracy: 0.8525
+       Model saved to models/model.pkl
+ => exporting to image
+ => => naming to docker.io/library/heart-disease-api:v1</code></pre>
+<p>The training output shows up mid-build. The model is baked into the image at this point.<sup class="fn"><a href="#fn1">1</a></sup></p>
+
+<h3>Step 4.2 — verify the image exists</h3>
+<pre><code>docker images</code></pre>
+<pre class="output"><code>REPOSITORY           TAG    IMAGE ID       CREATED         SIZE
+heart-disease-api    v1     a3f5c2d8e1b9   2 minutes ago   450MB</code></pre>
+
+<h3>Step 4.3 — run the container</h3>
+<pre><code>docker run -d -p 8000:5000 --name heart-api heart-disease-api:v1</code></pre>
+<p><code>docker run</code> creates and starts a container; <code>-d</code> runs it detached, in the background; <code>-p 8000:5000</code> maps your laptop's port 8000 to the container's port 5000, the actual door that <code>EXPOSE</code> only advertised; <code>--name heart-api</code> gives it a friendly name; <code>heart-disease-api:v1</code> is the image to run.</p>
+
+<figure>
+<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of port mapping: the Flask app inside the container listens on port 5000, which is isolated from the laptop by default. The -p 8000:5000 flag builds a bridge, so requests to localhost:8000 on the laptop are forwarded to port 5000 inside the container.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.3;stroke-dasharray:5,4;} .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#6B6B6B;} .cmd{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#1B6B5C;font-weight:600;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="40" width="220" height="90" rx="8" class="box"/>
+  <text x="120" y="70" text-anchor="middle" class="lbl">Your laptop</text>
+  <text x="120" y="92" text-anchor="middle" class="sub">curl localhost:8000</text>
+  <text x="120" y="108" text-anchor="middle" class="sub">port 8000</text>
+
+  <rect x="330" y="40" width="290" height="90" rx="8" class="boxd"/>
+  <text x="475" y="65" text-anchor="middle" class="lbl">Container (isolated world)</text>
+  <rect x="350" y="80" width="250" height="34" rx="6" class="box" fill="#fff"/>
+  <text x="475" y="102" text-anchor="middle" class="sub">Flask app listening on port 5000</text>
+
+  <line x1="230" y1="85" x2="328" y2="85" stroke="#1B6B5C" stroke-width="1.8" marker-end="url(#ar)"/>
+  <text x="280" y="72" text-anchor="middle" class="cmd">-p 8000:5000</text>
+
+  <text x="320" y="165" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" fill="#6B6B6B">Without -p, port 5000 stays sealed inside the container, unreachable from the laptop</text>
+</svg>
+<figcaption>Fig. 1 — the -p flag is the actual door; EXPOSE was only ever the sign</figcaption>
+</figure>
+
+<blockquote><p>Your Flask app listens on port 5000 <em>inside</em> the container, which is isolated from your laptop. <code>-p 8000:5000</code> builds the bridge: requests to <code>localhost:8000</code> on your laptop get forwarded to port 5000 in the container. Map to any host port you like; <code>-p 9999:5000</code> would give you <code>localhost:9999</code> instead.</p></blockquote>
+
+<h3>Step 4.4 — confirm it's running</h3>
+<pre><code>docker ps</code></pre>
+<pre class="output"><code>CONTAINER ID   IMAGE                  STATUS         PORTS                    NAMES
+b1e2d4f6a8c0   heart-disease-api:v1   Up 10 seconds  0.0.0.0:8000->5000/tcp   heart-api</code></pre>
+
+<hr>
+
+<h2><small>Part 5</small>Testing the containerized API</h2>
+
+<h3>Step 5.1 — health check</h3>
+<pre><code>curl http://localhost:8000/health</code></pre>
+<pre class="output"><code>{"status": "healthy"}</code></pre>
+<p>The API is alive and responding from inside the container.</p>
+
+<h3>Step 5.2 — make a prediction</h3>
+<pre><code>curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 63, "sex": 1, "cp": 3, "trestbps": 145, "chol": 233,
+    "fbs": 1, "restecg": 0, "thalach": 150, "exang": 0,
+    "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1
+  }'</code></pre>
+<p class="out-label">Response</p>
+<pre class="output"><code>{
+  "prediction": 1,
+  "probability": 0.78,
+  "interpretation": "Heart disease likely"
+}</code></pre>
+<p>The model is now running inside a Docker container, serving predictions over HTTP.<sup class="fn"><a href="#fn2">2</a></sup> Ship this image to any machine with Docker installed and it runs exactly the same way.</p>
+
+<hr>
+
+<h2><small>Part 6</small>Useful operations on a running container</h2>
+
+<h3>View logs</h3>
+<pre><code>docker logs heart-api
+<span class="c"># the Flask startup output, and any request logs</span></code></pre>
+
+<h3>Open a shell inside it, for debugging</h3>
+<pre><code>docker exec -it heart-api /bin/bash
+<span class="c"># now you're inside the container's Linux shell</span>
+<span class="c"># try: ls /app  → your files, including models/model.pkl</span>
+<span class="c"># type 'exit' to leave</span></code></pre>
+
+<h3>Stop and remove</h3>
+<pre><code>docker stop heart-api
+docker rm heart-api
+docker rmi heart-disease-api:v1   <span class="c"># the image too, if you want</span></code></pre>
+
+<hr>
+
+<h2><small>Part 7</small>Sharing your image</h2>
+<p>To let anyone else run your exact containerized model, push it to Docker Hub.</p>
+<pre><code><span class="c"># 1. log in</span>
+docker login
+
+<span class="c"># 2. tag with your Docker Hub username</span>
+docker tag heart-disease-api:v1 yourusername/heart-disease-api:v1
+
+<span class="c"># 3. push</span>
+docker push yourusername/heart-disease-api:v1</code></pre>
+<p>Now anyone, anywhere, can run your model with two commands:</p>
+<pre><code>docker pull yourusername/heart-disease-api:v1
+docker run -d -p 8000:5000 yourusername/heart-disease-api:v1</code></pre>
+<p>No "install Python," no "pip install," no "it works on my machine." It just runs. That's the entire point of Docker.</p>
+
+<hr>
+
+<h2><small>Part 8</small>Handling data and models with volumes</h2>
+<p>This project baked the model into the image. Sometimes you'd rather data or models lived <em>outside</em> the container, so they persist and can be swapped without a rebuild. That's what volumes are for.</p>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram contrasting two approaches: baking the model into the image at build time, versus mounting the models folder from the host machine as a volume, which lets the model be swapped without rebuilding the image.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} .hd{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;} </style>
+  <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <text x="160" y="20" text-anchor="middle" class="hd">Baked in (this article)</text>
+  <rect x="30" y="35" width="260" height="60" rx="8" class="box"/>
+  <text x="160" y="60" text-anchor="middle" class="lbl">Image</text>
+  <text x="160" y="78" text-anchor="middle" class="sub">RUN python train.py — model.pkl inside</text>
+  <text x="160" y="115" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">Change the model? Rebuild the whole image.</text>
+
+  <text x="480" y="20" text-anchor="middle" class="hd">Mounted volume</text>
+  <rect x="350" y="35" width="120" height="60" rx="8" class="box"/>
+  <text x="410" y="60" text-anchor="middle" class="lbl">Laptop</text>
+  <text x="410" y="78" text-anchor="middle" class="sub">./models/</text>
+
+  <line x1="470" y1="65" x2="518" y2="65" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar2)"/>
+  <text x="494" y="53" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#1B6B5C">-v</text>
+
+  <rect x="520" y="35" width="100" height="60" rx="8" class="boxd"/>
+  <text x="570" y="60" text-anchor="middle" class="lbl">Container</text>
+  <text x="570" y="78" text-anchor="middle" class="sub">/app/models</text>
+  <text x="480" y="115" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">Change the model? Just swap the file on disk.</text>
+</svg>
+<figcaption>Fig. 2 — baking a model in is simple; a volume lets you swap it without a rebuild</figcaption>
+</figure>
+
+<p>To mount a local <code>models</code> folder into the container instead of baking the model in:</p>
+<pre><code>docker run -d -p 8000:5000 \
+  -v $(pwd)/models:/app/models \
+  --name heart-api \
+  heart-disease-api:v1</code></pre>
+<p><code>-v $(pwd)/models:/app/models</code> connects your laptop's <code>models</code> folder to <code>/app/models</code> inside the container. Update the model file on your laptop, and the container sees the new version, no rebuild needed.</p>
+<p><em>Analogy: instead of sealing the food inside the kit, you give the container access to your fridge, the volume, so it uses whatever's currently in there.</em></p>
+<p>This connects directly to Article 3: version your data and models with DVC, <code>dvc pull</code> them onto the host, then mount them into the container as a volume. Git versions code, DVC versions data and models, Docker packages the runtime, and together they make a complete, reproducible ML workflow.</p>
+
+<hr>
+
+<h2>Summary</h2>
+<p>You've containerized a real ML project from scratch: built a working training script and prediction API, wrote a complete Dockerfile and understood every line of it, learned the layer-caching habit that matters most (requirements before code), built an image, ran a container, and mapped ports correctly, tested a live prediction API running inside Docker, and saw how to share images through Docker Hub and how volumes connect Docker back to Git and DVC for a full workflow.</p>
+
+<table>
+<thead><tr><th>Tool</th><th>What it versions or does</th></tr></thead>
+<tbody>
+<tr><td>Git</td><td>Your code</td></tr>
+<tr><td>GitHub</td><td>Cloud collaboration and sharing of code</td></tr>
+<tr><td>DVC</td><td>Your data and models</td></tr>
+<tr><td>Docker</td><td>Your entire runtime environment</td></tr>
+</tbody>
+</table>
+
+<p>Together, these guarantee your ML project runs identically everywhere, that every experiment is reproducible, and that you can hand your work to anyone, a teammate, a server, or your future self, and it will just work.</p>
+
+<p>Worth exploring from here: Docker Compose, for running your model API alongside a database or frontend with one command; multi-stage builds, for shrinking production images further by separating build and runtime stages; GPU containers, using CUDA base images for deep learning; Kubernetes, for orchestrating and scaling many containers across a cluster; and CI/CD, for building and deploying your Docker image automatically on every push, which is exactly where this series goes next.</p>
+
+<p>You've gone from raw code to a fully versioned, reproducible, containerized ML service. That's the foundation real-world MLOps is built on.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. The Python code in this article (<code>train.py</code>, <code>app.py</code>) was run directly and verified working end to end, including confirming the Flask API's exact JSON response shape and that the feature order in <code>app.py</code> matches what the model was actually trained on. The specific accuracy (0.8525) and image size (450MB) shown depend on the real heart disease dataset and an actual Docker build, neither reproducible in this environment, so they're illustrative rather than independently verified numbers.</p>
+<p id="fn2">2. This build output uses BuildKit's standard progress format, the default in Docker Engine since version 23.0.</p>
+<p>MLOps for ML practitioners &middot; Article 5 of the series</p>
+</footer>
+
+</body>
+</html>

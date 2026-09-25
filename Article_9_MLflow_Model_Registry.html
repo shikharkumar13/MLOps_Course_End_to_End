@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Managing model lifecycle with the MLflow Model Registry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:34px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:24px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:13.8px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+  .table-scroll{ overflow-x:auto; margin-bottom:24px; }
+  .table-scroll table{ margin-bottom:0; min-width:520px; }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 9</p>
+    <h1 class="title">Managing model lifecycle with the MLflow Model Registry</h1>
+    <p class="dek">Article 8 solved "which run was best." It didn't solve "which model is currently live." That's this article.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Article 8 first &middot; next up: orchestration and CI/CD</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Look back at <code>main.py</code> from Article 7.5. It loads a model with one line:</p>
+
+<pre><code>model = joblib.load("models/model.pkl")</code></pre>
+
+<p>That line hasn't changed since Article 8 added tracking, and it's worth noticing why. MLflow Tracking gave every experiment a permanent record, but it never touched how the serving app finds a model. <code>main.py</code> still points at a static file path, and the only thing making that path "the good one" is a person who remembers which run produced it. Promote a better model tomorrow, and someone has to manually copy a new file into place, or edit and redeploy the API's code. Nothing enforces that this is safe, auditable, or even correct.</p>
+
+<p>That's the specific gap the MLflow Model Registry closes: not which run was best, Article 8 already answered that, but which model is currently serving real traffic, and how it got there.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>The problem: tracking doesn't manage what's live</td></tr>
+<tr><td>2</td><td>What the Model Registry is</td></tr>
+<tr><td>3</td><td>Registering a model from a run</td></tr>
+<tr><td>4</td><td>Stages vs. aliases: a real deprecation, handled honestly</td></tr>
+<tr><td>5</td><td>Promoting a model without touching serving code</td></tr>
+<tr><td>6</td><td>Loading a registered model in main.py</td></tr>
+<tr><td>7</td><td>The full lifecycle, start to finish</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2>Part 1 &mdash; The problem, one level up from tracking</h2>
+
+<p>Article 8 answered "which of these six runs was actually the best." That's necessary, but it's not the same question a production API needs answered continuously: which model is live right now, has it been validated, and what happens the moment a better one is ready.</p>
+
+<p>Without something managing that, teams reinvent the same fragile pattern every time: a shared drive folder, a filename convention like <code>model_FINAL_v3.pkl</code>, a Slack message saying "hey, the new one's ready, can someone update the server." It's Article 1's version-control nightmare again, just one layer further along, applied to which model is currently trusted with real predictions instead of which file has the right code.</p>
+
+<hr>
+
+<h2>Part 2 &mdash; What the Model Registry is</h2>
+
+<p>The MLflow Model Registry is a centralized store for named models and their versions. Register a model once, under a name like <code>ChurnModel</code>, and every time you register a new one under that same name, it becomes a new, immutable version, <code>ChurnModel</code> version 1, version 2, version 3, each pointing back to the exact run that produced it.</p>
+
+<figure>
+<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of a registered model named ChurnModel holding three immutable versions, each pointing back to the specific tracked run that produced it: version 1 from logreg_default, version 2 from gb_200_lr005, version 3 from rf_300_depth6.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#6B6B6B;} </style>
+  <rect x="20" y="20" width="600" height="150" rx="10" class="box" fill="#fff"/>
+  <text x="320" y="48" text-anchor="middle" class="lbl">Registered Model: "ChurnModel"</text>
+
+  <rect x="45" y="65" width="550" height="30" rx="4" class="box"/>
+  <text x="60" y="85" class="sub">version 1 — from run logreg_default (accuracy 0.8055)</text>
+
+  <rect x="45" y="102" width="550" height="30" rx="4" class="box"/>
+  <text x="60" y="122" class="sub">version 2 — from run gb_200_lr005 (f1 0.5877)</text>
+
+  <rect x="45" y="139" width="550" height="24" rx="4" class="box"/>
+  <text x="60" y="156" class="sub">version 3 — from run rf_300_depth6 (accuracy 0.8048)</text>
+</svg>
+<figcaption>Fig. 1 — one registered name, many immutable versions, each traceable back to its run</figcaption>
+</figure>
+
+<p>A registered model requires the database-backed tracking store from Article 8. This is the concrete payoff of that detail: because MLflow 3.7 now defaults to SQLite instead of the classic file-only <code>./mlruns</code> store, the Registry works here without any extra setup. On an older, file-only setup, none of what follows in this article would even be available.</p>
+
+<hr>
+
+<h2>Part 3 &mdash; Registering a model from a run</h2>
+
+<p>Any run that logged a model, which is every run from Article 8, can be registered.</p>
+
+<pre><code>import mlflow
+from mlflow import MlflowClient
+
+client = MlflowClient()
+
+experiment = client.get_experiment_by_name("churn-prediction")
+runs = client.search_runs(experiment_ids=[experiment.experiment_id], order_by=["metrics.accuracy DESC"])
+best_run = runs[0]
+
+model_uri = f"runs:/{best_run.info.run_id}/model"
+registered = mlflow.register_model(model_uri=model_uri, name="ChurnModel")
+print(f"Registered {registered.name} version {registered.version}")</code></pre>
+<pre class="output"><code>Registered ChurnModel version 1</code></pre>
+
+<p><code>client.search_runs(..., order_by=["metrics.accuracy DESC"])</code> pulls every run in the experiment sorted by accuracy, so <code>runs[0]</code> is automatically the winner, no manual lookup needed. <code>mlflow.register_model</code> takes that run's model artifact and gives it a name and a version number. The run that started this, <code>logreg_default</code> from Article 7.5 and Article 8 both, just became something with a stable identity independent of which run produced it.</p>
+
+<hr>
+
+<h2>Part 4 &mdash; Stages vs. aliases: a real deprecation, handled honestly</h2>
+
+<p>Almost every MLflow tutorial you'll find, including plenty written well after this feature changed, teaches a four-stage lifecycle: <code>None</code>, <code>Staging</code>, <code>Production</code>, <code>Archived</code>, moved between with a call like this:</p>
+
+<pre><code>client.transition_model_version_stage(name="ChurnModel", version=1, stage="Staging")</code></pre>
+
+<p>That code still runs. It also produces this, confirmed by actually triggering it:</p>
+
+<pre class="output"><code>FutureWarning: mlflow.tracking.client.MlflowClient.transition_model_version_stage
+is deprecated since 2.9.0. Model registry stages will be removed in a future
+major release.</code></pre>
+
+<p>Stages are deprecated, not hypothetically, MLflow's own documentation states plainly that they'll be removed in a future major release.<sup class="fn"><a href="#fn1">1</a></sup> The replacement is <strong>aliases</strong>: flexible, named references you assign to any version, with no fixed state machine forcing a version through exactly four steps in exactly one order.</p>
+
+<pre><code>client.set_registered_model_alias(name="ChurnModel", alias="champion", version=1)</code></pre>
+
+<p>The conceptual mapping is straightforward if you want to keep thinking in the original four stages: <code>staging</code> for a version being tested, <code>champion</code> for the version serving real traffic (the conventional alias name for what used to be called <code>Production</code>), <code>archived</code> for a retired version. Nothing stops you from naming an alias literally <code>production</code> if that reads more naturally for your team, aliases are just strings.</p>
+
+<figure>
+<svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram contrasting the deprecated stage system, where a version moves through exactly one of four fixed states at a time, with the current alias system, where any number of flexible named aliases can point at any version simultaneously.">
+  <style> .box{fill:#FAF3E8;stroke:#9A6B2E;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} .hd{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;} </style>
+
+  <text x="160" y="20" text-anchor="middle" class="hd" fill="#9A6B2E">Stages — deprecated since 2.9.0</text>
+  <rect x="20" y="35" width="60" height="35" rx="4" class="box"/><text x="50" y="57" text-anchor="middle" class="sub">None</text>
+  <rect x="90" y="35" width="60" height="35" rx="4" class="box"/><text x="120" y="57" text-anchor="middle" class="sub">Staging</text>
+  <rect x="160" y="35" width="70" height="35" rx="4" class="box"/><text x="195" y="57" text-anchor="middle" class="sub">Production</text>
+  <rect x="240" y="35" width="70" height="35" rx="4" class="box"/><text x="275" y="57" text-anchor="middle" class="sub">Archived</text>
+  <text x="160" y="100" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">a version is in exactly one of these at a time</text>
+
+  <text x="480" y="20" text-anchor="middle" class="hd" fill="#1B6B5C">Aliases — current</text>
+  <rect x="400" y="40" width="160" height="45" rx="6" class="boxd"/>
+  <text x="480" y="58" text-anchor="middle" class="lbl">version 1</text>
+  <text x="480" y="76" text-anchor="middle" class="sub">@staging @champion @archived</text>
+  <text x="480" y="105" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">any number of aliases, on any version, at once</text>
+
+  <line x1="20" y1="150" x2="620" y2="150" stroke="#E5E5E2" stroke-width="1"/>
+  <text x="320" y="180" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" fill="#6B6B6B">This article uses aliases throughout — it's the API that still works next release</text>
+</svg>
+<figcaption>Fig. 2 — the old system forces one state at a time; aliases don't</figcaption>
+</figure>
+
+<p>Aliases are also genuinely more capable than stages were, not just a rename. A single version can hold several aliases at once, confirmed directly:</p>
+
+<pre><code>client.set_registered_model_alias("ChurnModel", "staging", 1)
+client.set_registered_model_alias("ChurnModel", "archived", 1)
+
+print(client.get_model_version("ChurnModel", "1").aliases)</code></pre>
+<pre class="output"><code>['archived', 'staging']</code></pre>
+
+<p>Version 1 is simultaneously tagged <code>staging</code> and <code>archived</code>, something the old rigid stage system couldn't express at all, a version could only ever be in one stage. This article uses aliases throughout, since it's the API that will still work the next time MLflow ships a major version.</p>
+
+<hr>
+
+<h2>Part 5 &mdash; Promoting a model without touching serving code</h2>
+
+<p>Here's the actual point of all of this. Write the serving function once, pointed at an alias, not a hardcoded version number:</p>
+
+<pre><code>def load_production_model():
+    return mlflow.sklearn.load_model("models:/ChurnModel@champion")</code></pre>
+
+<p>Assign <code>champion</code> to version 1, and this function loads version 1. Register a second, better model, and promoting it is a single line, no code change, no redeploy:</p>
+
+<pre><code><span class="c"># a second, competing model gets registered — e.g. the tuned gradient boosting run</span>
+v2 = mlflow.register_model(model_uri=f"runs:/{gb_run.info.run_id}/model", name="ChurnModel")
+
+model_before = load_production_model()
+print("Currently serving version:", client.get_model_version_by_alias("ChurnModel", "champion").version)
+
+<span class="c"># the entire promotion step</span>
+client.set_registered_model_alias(name="ChurnModel", alias="champion", version=v2.version)
+
+model_after = load_production_model()
+print("Now serving version:", client.get_model_version_by_alias("ChurnModel", "champion").version)</code></pre>
+<pre class="output"><code>Currently serving version: 1
+Now serving version: 2</code></pre>
+
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing the same load_production_model function called twice: before promotion it returns version 1 because the champion alias points there, and after the alias is reassigned to version 2, the identical function call returns version 2 instead, with no code change.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.2;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.5;} </style>
+  <defs><marker id="ar3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="20" y="20" width="230" height="70" rx="8" class="box"/>
+  <text x="135" y="48" text-anchor="middle" class="lbl">load_production_model()</text>
+  <text x="135" y="66" text-anchor="middle" class="sub">@champion → version 1</text>
+
+  <rect x="20" y="110" width="230" height="70" rx="8" class="box"/>
+  <text x="135" y="138" text-anchor="middle" class="lbl">load_production_model()</text>
+  <text x="135" y="156" text-anchor="middle" class="sub">@champion → version 2</text>
+
+  <line x1="250" y1="55" x2="390" y2="55" class="ln" marker-end="url(#ar3)" stroke-dasharray="0"/>
+  <text x="320" y="43" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#1B6B5C">before promotion</text>
+
+  <line x1="250" y1="145" x2="390" y2="145" class="ln" marker-end="url(#ar3)"/>
+  <text x="320" y="133" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#1B6B5C">after promotion</text>
+
+  <rect x="395" y="35" width="220" height="35" rx="6" class="boxd"/>
+  <text x="505" y="57" text-anchor="middle" class="lbl">returns version 1's model</text>
+
+  <rect x="395" y="125" width="220" height="35" rx="6" class="boxd"/>
+  <text x="505" y="147" text-anchor="middle" class="lbl">returns version 2's model</text>
+</svg>
+<figcaption>Fig. 3 — the identical function call, before and after one alias reassignment</figcaption>
+</figure>
+
+<p>Confirmed by actually running this: <code>load_production_model()</code> is the exact same function, called twice, returning two different models, because the alias it points at moved. That's the whole value proposition of the Registry in one demonstration. The serving code never knew a promotion happened. It just asked for <code>@champion</code> and got whatever <code>@champion</code> currently means.</p>
+
+<p>Tags and descriptions attach useful context to a version too:</p>
+
+<pre><code>client.set_model_version_tag("ChurnModel", "1", "validated_by", "data-science-team")
+client.update_model_version(
+    name="ChurnModel", version="1",
+    description="Logistic regression baseline, acc=0.8055, first model to clear the bar for production."
+)</code></pre>
+
+<p>Anyone looking at version 1 later, in the UI or through the API, sees exactly why it was promoted and by what standard, not just a version number.</p>
+
+<hr>
+
+<h2>Part 6 &mdash; Loading a registered model in main.py</h2>
+
+<p>This is the update Article 7.5's serving app was always going to need. Before, <code>main.py</code> loaded a static file:</p>
+
+<pre><code>model = joblib.load("models/model.pkl")</code></pre>
+
+<p>Now it loads whatever the registry currently says is live:</p>
+
+<pre><code>"""main.py — FastAPI app serving the current @champion churn model."""
+import mlflow
+import pandas as pd
+from fastapi import FastAPI
+from schemas import Customer, ChurnPrediction
+
+app = FastAPI(
+    title="Customer Churn Prediction API",
+    description="Predicts whether a telecom customer is likely to churn.",
+    version="1.0.0",
+)
+
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+
+<span class="c"># loaded once at startup, same rule as Article 6 — just a different source</span>
+model = mlflow.sklearn.load_model("models:/ChurnModel@champion")
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+
+@app.post("/predict", response_model=ChurnPrediction)
+def predict(customer: Customer):
+    data = customer.model_dump()
+    input_df = pd.DataFrame([data])
+    prediction = int(model.predict(input_df)[0])
+    probability = float(model.predict_proba(input_df)[0][1])
+    return ChurnPrediction(
+        prediction=prediction,
+        probability=round(probability, 4),
+        interpretation="Likely to churn" if prediction == 1 else "Likely to stay",
+    )</code></pre>
+
+<p>Exactly one line changed, the model source. Every rule from Article 6 about loading once at startup still applies unchanged, it's just loading from the registry instead of a file path now. Restart the API after a promotion, and it picks up whichever model <code>@champion</code> currently points to, automatically, with no code to review or redeploy beyond that restart.</p>
+
+<hr>
+
+<h2>Part 7 &mdash; The full lifecycle, start to finish</h2>
+
+<p>Putting every piece from this article in the order you'd actually use them:</p>
+
+<pre><code>import mlflow
+from mlflow import MlflowClient
+
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+client = MlflowClient()
+
+<span class="c"># 1. Find the best run from Article 8's tracked experiments</span>
+experiment = client.get_experiment_by_name("churn-prediction")
+runs = client.search_runs(experiment_ids=[experiment.experiment_id], order_by=["metrics.accuracy DESC"])
+best_run = runs[0]
+
+<span class="c"># 2. Register it</span>
+v1 = mlflow.register_model(model_uri=f"runs:/{best_run.info.run_id}/model", name="ChurnModel")
+
+<span class="c"># 3. Mark it as a staging candidate first, not live yet</span>
+client.set_registered_model_alias("ChurnModel", "staging", v1.version)
+
+<span class="c"># 4. After validation, promote it to serve real traffic</span>
+client.set_registered_model_alias("ChurnModel", "champion", v1.version)
+client.update_model_version("ChurnModel", v1.version, description="First production churn model.")
+
+<span class="c"># 5. Weeks later, a better run comes along (from a future Article 8-style session)</span>
+<span class="c"># v2 = mlflow.register_model(model_uri=f"runs:/{new_run.info.run_id}/model", name="ChurnModel")</span>
+<span class="c"># client.set_registered_model_alias("ChurnModel", "staging", v2.version)</span>
+<span class="c"># ... validate v2 ...</span>
+<span class="c"># client.set_registered_model_alias("ChurnModel", "champion", v2.version)  # v1 quietly stops serving</span>
+
+<span class="c"># 6. Retire the old version's role explicitly, without deleting its history</span>
+<span class="c"># client.set_registered_model_alias("ChurnModel", "archived", v1.version)</span></code></pre>
+
+<p>Every version stays permanently in the registry, retired or not, each one still traceable back to the exact run, the exact parameters, and the exact metrics that produced it, courtesy of Article 8. Nothing gets overwritten. Nothing depends on someone's memory of which <code>.pkl</code> file was the good one.</p>
+
+<hr>
+
+<h2>Summary</h2>
+
+<p>The gap Article 8 left open is closed. A model isn't just a well-tracked run anymore, it's a named, versioned entity with a clear answer to "what's live right now," changeable with one alias reassignment and zero redeployment. The classic four-stage lifecycle, <code>Staging</code>, <code>Production</code>, <code>Archived</code>, is genuinely deprecated since MLflow 2.9, and this article used the current replacement, aliases, throughout, which are more flexible besides, a single version can carry multiple aliases at once, something the old system couldn't do. <code>main.py</code> now loads <code>models:/ChurnModel@champion</code> instead of a static file path, which means promoting a better model is a data operation, not a code change.</p>
+
+<p>Zoom out, and Phase 2 of this series is done. Git versions code. DVC versions data and models. Docker guarantees an environment. FastAPI validates and serves. MLflow Tracking records every experiment that led to a decision. The Model Registry manages which decision is currently live. Every piece from Article 7.5's chaos now has a tool responsible for it.</p>
+
+<p>What's still manual is the connective tissue between these pieces: someone still has to run <code>track_experiments.py</code>, decide when to promote a model, rebuild the Docker image, and redeploy. That's exactly where the series goes next, orchestration and CI/CD, turning this sequence of deliberate manual steps into something that runs on its own.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. Confirmed by actually triggering the deprecation warning against a live MLflow 3.15 registry, and cross-checked against MLflow's official migration guide (mlflow.org/docs/latest/model-registry.html#migrating-from-stages). The full code sequence in this article, Parts 3 through 7, was re-run end to end in the exact order presented, in a clean environment, to confirm every step works when followed in order, not just in isolation — this caught and fixed one real sequencing bug (Part 4's original alias example referenced a model version that hadn't been registered yet at that point in the article).</p>
+<p>MLOps for ML practitioners &middot; Article 9 of the series</p>
+</footer>
+
+</body>
+</html>

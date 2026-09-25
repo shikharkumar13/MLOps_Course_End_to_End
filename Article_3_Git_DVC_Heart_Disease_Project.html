@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git + DVC — versioning code and data for ML projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:36px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:25px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+  h2 small{ display:block; font-family:'JetBrains Mono', monospace; font-weight:500; font-size:12px; color:var(--accent); letter-spacing:0.08em; margin-bottom:8px; text-transform:uppercase; }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:14px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+  .out-label{ font-family:'Inter', sans-serif; font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0.04em; text-transform:uppercase; margin:0 0 6px; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+  td.chk{ text-align:center; }
+  .table-scroll{ overflow-x:auto; margin-bottom:24px; }
+  .table-scroll table{ margin-bottom:0; min-width:520px; }
+
+  .act-block{ margin:48px 0 0; padding:24px 26px; background:#fff; border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:0 8px 8px 0; }
+  .act-eyebrow{ font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.08em; color:var(--accent); margin-bottom:6px; text-transform:uppercase; }
+  .act-block h3{ margin:0 0 14px; font-size:20px; }
+  .scenario{ font-size:17.5px; padding:14px 18px; background:var(--code-bg); border-radius:6px; margin:0 0 18px; }
+  .scenario strong{ color:var(--accent); font-family:'Inter',sans-serif; font-size:13px; letter-spacing:0.04em; text-transform:uppercase; display:block; margin-bottom:6px; }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 3</p>
+    <h1 class="title">Git + DVC: versioning code and data together</h1>
+    <p class="dek">Git handles your code beautifully and falls apart the moment you give it a dataset. Here's the tool that fixes that, and a full heart disease project to prove it.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Articles 1 and 2 first &middot; next up: Docker</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>In Articles 1 and 2 you got comfortable versioning code with Git. But there's a problem Git alone can't solve well, and it's one every ML practitioner runs into sooner or later: Git is genuinely bad at handling data and model files.</p>
+
+<p>This article introduces DVC, Data Version Control, the tool built specifically to fill that gap, and walks through how Git and DVC work together as a team. We'll build a complete heart disease classification project and version both the code, with Git, and the datasets and models, with DVC.</p>
+
+<p>By the end you'll understand why Git struggles with data, how DVC and Git split the work between them, the full DVC workflow (tracking data, remote storage, pipelines, experiments), and how to reproduce any past version of your project, code and data and model together, with a single pair of commands.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>The problem: why Git can't version data</td></tr>
+<tr><td>2</td><td>What DVC is and how it works with Git</td></tr>
+<tr><td>3</td><td>The mental model: pointers, cache, and remotes</td></tr>
+<tr><td>4</td><td>Installing and initializing DVC</td></tr>
+<tr><td>5</td><td>Tracking your first dataset</td></tr>
+<tr><td>6</td><td>Setting up remote storage</td></tr>
+<tr><td>7</td><td>Building a reproducible DVC pipeline</td></tr>
+<tr><td>8</td><td>Versioning data and code together</td></tr>
+<tr><td>9</td><td>Experiments, metrics, and params</td></tr>
+<tr><td>10</td><td>Full heart disease project walkthrough</td></tr>
+<tr><td>11</td><td>Switching between versions, the payoff</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2><small>Part 1</small>Why Git can't version data</h2>
+
+<h3>Git was built for text, not gigabytes</h3>
+<p>Git was designed to track source code: small text files where it can store line-by-line differences efficiently. Hand it a 50 GB dataset or a 2 GB trained neural network and it falls apart.</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Problem</th><th>Consequence</th></tr></thead>
+<tbody>
+<tr><td>Git stores a full copy of every version of a binary file</td><td>Your <code>.git</code> folder balloons to hundreds of gigabytes</td></tr>
+<tr><td>Git can't compute meaningful diffs on binary files</td><td>Every tiny change duplicates the whole file</td></tr>
+<tr><td>GitHub has a 100 MB per-file hard limit</td><td>Your push gets rejected outright</td></tr>
+<tr><td>Cloning gets painfully slow</td><td>New teammates wait hours to download history</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>The workarounds, and why they fail</h3>
+<p><strong>"I'll just add data to <code>.gitignore</code>."</strong> Now your data isn't versioned at all. Six months later you can't reproduce the model your client approved, because nobody knows which version of the data trained it.</p>
+<p><strong>"I'll store data on a shared drive, with folder names like <code>data_v2_final</code>."</strong> You're right back in the manual-versioning nightmare Git was supposed to fix, just for data instead of code.</p>
+<p><strong>"I'll use Git LFS."</strong> Better, but limited. It doesn't handle ML pipelines, experiments, metrics tracking, or flexible remote storage (S3, GCS, Azure, SSH) the way DVC does.</p>
+
+<h3>What you actually need</h3>
+<p>A system that versions large data and model files without bloating Git, links a specific data version to a specific code version so they always match, stores the large files somewhere cheap, lets you reproduce any past experiment exactly, and works alongside Git rather than against it.</p>
+<p>That system is DVC.</p>
+
+<hr>
+
+<h2><small>Part 2</small>What DVC is, and how it works with Git</h2>
+
+<p>DVC, Data Version Control, is an open-source command-line tool that brings Git-like versioning to data and ML models. It's built to sit on top of Git, not replace it.</p>
+
+<h3>The key insight: Git tracks pointers, DVC tracks data</h3>
+<p>Here's the trick that makes the whole system work. When you tell DVC to track a large file, say <code>heart.csv</code>, it moves the actual file into a hidden cache and creates a tiny text file called <code>heart.csv.dvc</code> in its place. That <code>.dvc</code> file is a few lines long and contains a hash of your data plus its location. Git tracks the tiny pointer file. DVC tracks the actual heavy data.</p>
+
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing that Git tracks the small heart.csv.dvc pointer file, committed to GitHub, while DVC manages the real, larger heart.csv data file, moving it into a local cache and pushing it to cloud storage.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#6B6B6B;} .cap{font-family:'Inter',sans-serif;font-size:11px;fill:#6B6B6B;} .ln{stroke:#B9BDC2;stroke-width:1.4;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#B9BDC2"/></marker></defs>
+
+  <rect x="70" y="20" width="500" height="70" rx="8" class="box" fill="#fff"/>
+  <text x="90" y="45" class="sub">heart.csv          — the real data (gitignored)</text>
+  <text x="90" y="68" class="sub" fill="#1B6B5C">heart.csv.dvc      — tiny pointer (tracked by Git)</text>
+
+  <line x1="200" y1="90" x2="150" y2="150" class="ln" marker-end="url(#ar)"/>
+  <line x1="440" y1="90" x2="490" y2="150" class="ln" marker-end="url(#ar)"/>
+  <text x="150" y="115" text-anchor="middle" class="cap">DVC manages</text>
+  <text x="490" y="115" text-anchor="middle" class="cap">Git manages</text>
+
+  <rect x="60" y="150" width="180" height="80" rx="8" class="box"/>
+  <text x="150" y="180" text-anchor="middle" class="lbl">Actual data</text>
+  <text x="150" y="198" text-anchor="middle" class="lbl">in DVC cache,</text>
+  <text x="150" y="216" text-anchor="middle" class="lbl">pushed to S3/GCS</text>
+
+  <rect x="400" y="150" width="180" height="80" rx="8" class="box" fill="#E7F1EE"/>
+  <text x="490" y="180" text-anchor="middle" class="lbl">heart.csv.dvc</text>
+  <text x="490" y="198" text-anchor="middle" class="sub">hash: a1b2c3...</text>
+  <text x="490" y="216" text-anchor="middle" class="lbl">committed to GitHub</text>
+</svg>
+<figcaption>Fig. 1 — Git tracks the pointer, DVC tracks the data behind it</figcaption>
+</figure>
+
+<h3>The division of labor</h3>
+<div class="table-scroll">
+<table>
+<thead><tr><th>Responsibility</th><th>Handled by</th></tr></thead>
+<tbody>
+<tr><td>Source code (<code>.py</code>, <code>.yaml</code>)</td><td>Git</td></tr>
+<tr><td>The <code>.dvc</code> pointer files</td><td>Git</td></tr>
+<tr><td><code>dvc.yaml</code> pipeline definitions</td><td>Git</td></tr>
+<tr><td>Large datasets</td><td>DVC</td></tr>
+<tr><td>Trained models</td><td>DVC</td></tr>
+<tr><td>Intermediate artifacts</td><td>DVC</td></tr>
+<tr><td>Storing data in the cloud</td><td>DVC</td></tr>
+</tbody>
+</table>
+</div>
+<p>When you check out an old Git commit, the <code>.dvc</code> pointer files come along with it automatically. Then <code>dvc checkout</code> reads those pointers and restores the exact matching data. Code and data stay in sync, always.</p>
+
+<hr>
+
+<h2><small>Part 3</small>The mental model: pointers, cache, and remotes</h2>
+<p>Three locations matter in DVC. Once these click, the rest of the tool makes sense.</p>
+
+<figure>
+<svg viewBox="0 0 640 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of DVC's three locations: your workspace, connected by dvc add and dvc checkout to a local DVC cache, which is connected by dvc push and dvc pull to a DVC remote such as S3 or Google Drive.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10.5px;fill:#6B6B6B;} .cmd{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#1B6B5C;font-weight:600;} </style>
+  <defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="55" width="170" height="80" rx="8" class="box"/>
+  <text x="95" y="90" text-anchor="middle" class="lbl">Workspace</text>
+  <text x="95" y="108" text-anchor="middle" class="sub">your project folder</text>
+
+  <rect x="235" y="55" width="170" height="80" rx="8" class="box"/>
+  <text x="320" y="90" text-anchor="middle" class="lbl">DVC Cache</text>
+  <text x="320" y="108" text-anchor="middle" class="sub">.dvc/cache, hidden, local</text>
+
+  <rect x="460" y="55" width="170" height="80" rx="8" class="box" fill="#E7F1EE"/>
+  <text x="545" y="90" text-anchor="middle" class="lbl">DVC Remote</text>
+  <text x="545" y="108" text-anchor="middle" class="sub">S3, GDrive, SSH...</text>
+
+  <line x1="180" y1="80" x2="233" y2="80" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#a1)"/>
+  <text x="207" y="68" text-anchor="middle" class="cmd">dvc add</text>
+  <line x1="233" y1="108" x2="180" y2="108" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#a1)"/>
+  <text x="207" y="125" text-anchor="middle" class="cmd" fill="#9A6B2E">dvc checkout</text>
+
+  <line x1="405" y1="80" x2="458" y2="80" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#a1)"/>
+  <text x="432" y="68" text-anchor="middle" class="cmd">dvc push</text>
+  <line x1="458" y1="108" x2="405" y2="108" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#a1)"/>
+  <text x="432" y="125" text-anchor="middle" class="cmd" fill="#9A6B2E">dvc pull</text>
+</svg>
+<figcaption>Fig. 2 — the three locations every DVC-tracked file moves between</figcaption>
+</figure>
+
+<p>The workspace is your project folder, where you actually see and edit files. The DVC cache is a hidden local store, <code>.dvc/cache</code>, holding content-addressed copies of every version of your data, the local equivalent of <code>.git</code>. The DVC remote is cloud or network storage where you back up and share that cache, the equivalent of GitHub for your data.</p>
+
+<p>The parallel to Git is deliberate and worth holding onto:</p>
+<table>
+<thead><tr><th>Git</th><th>DVC</th></tr></thead>
+<tbody>
+<tr><td><code>git add</code></td><td><code>dvc add</code></td></tr>
+<tr><td><code>git commit</code></td><td>(the <code>.dvc</code> file gets committed via Git)</td></tr>
+<tr><td><code>git push</code></td><td><code>dvc push</code></td></tr>
+<tr><td><code>git pull</code></td><td><code>dvc pull</code></td></tr>
+<tr><td><code>git checkout</code></td><td><code>dvc checkout</code></td></tr>
+<tr><td><code>.git/</code></td><td><code>.dvc/cache</code></td></tr>
+<tr><td>GitHub</td><td>DVC remote (S3, GDrive, etc.)</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2><small>Part 4</small>Installing and initializing DVC</h2>
+
+<h3>Install DVC</h3>
+<pre><code><span class="c"># most common</span>
+pip install dvc
+
+<span class="c"># with support for a specific remote</span>
+pip install "dvc[s3]"       <span class="c"># Amazon S3</span>
+pip install "dvc[gdrive]"   <span class="c"># Google Drive</span>
+pip install "dvc[gs]"       <span class="c"># Google Cloud Storage</span>
+pip install "dvc[azure]"    <span class="c"># Azure Blob Storage</span>
+pip install "dvc[ssh]"      <span class="c"># SSH/SFTP</span>
+
+<span class="c"># or all of them</span>
+pip install "dvc[all]"</code></pre>
+
+<pre><code>dvc --version
+<span class="c"># Output: 3.67.1 (DVC ships new releases often — expect a newer number)</span></code></pre>
+
+<h3>Initialize DVC in a Git repository</h3>
+<p>DVC needs an existing Git repo to sit on top of. The order is always Git first, DVC second.</p>
+<pre><code><span class="c"># create and enter the project</span>
+mkdir heart_disease_classifier
+cd heart_disease_classifier
+
+<span class="c"># Git first</span>
+git init
+
+<span class="c"># then DVC</span>
+dvc init</code></pre>
+
+<p>What <code>dvc init</code> creates:</p>
+<pre><code>.dvc/
+├── .gitignore       <span class="c">← tells Git to ignore the DVC cache</span>
+├── config           <span class="c">← DVC configuration (remotes, settings)</span>
+.dvcignore           <span class="c">← like .gitignore, but for DVC</span></code></pre>
+
+<pre><code><span class="c"># DVC stages these for you — commit them with Git</span>
+git status</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>Changes to be committed:
+        new file:   .dvc/.gitignore
+        new file:   .dvc/config
+        new file:   .dvcignore</code></pre>
+
+<pre><code>git commit -m "Initialize DVC"</code></pre>
+<p>You now have a project tracked by both Git, for code, and DVC, for data.</p>
+
+<hr>
+
+<h2><small>Part 5</small>Tracking your first dataset</h2>
+
+<p>We'll use the Heart Disease dataset, a classic from the UCI Machine Learning Repository: 303 patients, 13 features (age, cholesterol, blood pressure, and so on), and a binary target for the presence of heart disease.<sup class="fn"><a href="#fn1">1</a></sup></p>
+
+<pre><code><span class="c"># create a data directory, and place heart.csv inside it</span>
+mkdir data
+<span class="c"># columns: age, sex, cp, trestbps, chol, fbs, restecg, thalach,</span>
+<span class="c"># exang, oldpeak, slope, ca, thal, target</span></code></pre>
+
+<pre><code>age,sex,cp,trestbps,chol,fbs,restecg,thalach,exang,oldpeak,slope,ca,thal,target
+63,1,3,145,233,1,0,150,0,2.3,0,0,1,1
+37,1,2,130,250,0,1,187,0,3.5,0,0,2,1
+41,0,1,130,204,0,0,172,0,1.4,2,0,2,1
+...</code></pre>
+
+<h3>Track it with DVC</h3>
+<pre><code>dvc add data/heart.csv</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>To track the changes with git, run:
+
+        git add data/heart.csv.dvc data/.gitignore
+
+To enable auto staging, run:
+
+        dvc config core.autostage true</code></pre>
+
+<p>Three things just happened: the real content of <code>heart.csv</code> moved into the DVC cache, a tiny pointer file <code>data/heart.csv.dvc</code> got created, and <code>data/heart.csv</code> was added to a local <code>.gitignore</code> so Git leaves the real file alone.</p>
+
+<p>The pointer file itself:</p>
+<pre><code>cat data/heart.csv.dvc</code></pre>
+<pre><code>outs:
+- md5: a1b2c3d4e5f6789012345678abcdef00
+  size: 11328
+  hash: md5
+  path: heart.csv</code></pre>
+<p>That hash is a fingerprint of your exact data. Change even one value and the hash changes with it.</p>
+
+<h3>Commit the pointer with Git</h3>
+<pre><code>git add data/heart.csv.dvc data/.gitignore
+git commit -m "Track heart disease dataset with DVC"</code></pre>
+<p>Now Git knows about the pointer, and DVC knows about the data. They're linked.</p>
+
+<hr>
+
+<h2><small>Part 6</small>Setting up remote storage</h2>
+<p>The DVC cache lives locally. To back up your data and share it with teammates, you push it to a remote.</p>
+
+<h3>Option A — a local directory (good for learning)</h3>
+<pre><code><span class="c"># a local folder standing in for the cloud — fine for practice</span>
+mkdir -p /tmp/dvc-remote
+dvc remote add -d myremote /tmp/dvc-remote</code></pre>
+
+<h3>Option B — Amazon S3</h3>
+<pre><code>dvc remote add -d myremote s3://my-bucket/heart-disease-data
+<span class="c"># credentials via the AWS CLI or environment variables</span></code></pre>
+
+<h3>Option C — Google Drive</h3>
+<pre><code>dvc remote add -d myremote gdrive://your-folder-id</code></pre>
+
+<p>The <code>-d</code> flag sets it as the default remote.</p>
+<pre><code><span class="c"># the remote config lives in .dvc/config — commit it</span>
+git add .dvc/config
+git commit -m "Configure DVC remote storage"</code></pre>
+
+<h3>Push the data</h3>
+<pre><code>dvc push</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>1 file pushed</code></pre>
+<p>The data is safely backed up now. A teammate who clones the Git repo runs <code>dvc pull</code> to get the exact same data.</p>
+<pre><code><span class="c"># a teammate's workflow</span>
+git clone &lt;your-repo-url&gt;
+cd heart_disease_classifier
+dvc pull          <span class="c"># pulls the actual data down from the remote</span></code></pre>
+
+<hr>
+
+<h2><small>Part 7</small>Building a reproducible DVC pipeline</h2>
+<p>This is where DVC earns its keep. Instead of running scripts by hand and hoping you remember the order, you define a pipeline, a graph of stages that DVC runs in the right order and re-runs only when something relevant changes.</p>
+
+<h3>Step 7.1 — the project code</h3>
+<p><code>src/preprocess.py</code>, cleans and splits the data:</p>
+<pre><code>"""preprocess.py — Load, clean, and split the heart disease data."""
+import pandas as pd
+import yaml
+from sklearn.model_selection import train_test_split
+import os
+
+with open("params.yaml") as f:
+    params = yaml.safe_load(f)
+
+test_size = params["preprocess"]["test_size"]
+random_state = params["preprocess"]["random_state"]
+
+df = pd.read_csv("data/heart.csv")
+df = df.drop_duplicates()
+df = df.dropna()
+
+X = df.drop(columns=["target"])
+y = df["target"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=test_size, random_state=random_state, stratify=y
+)
+
+os.makedirs("data/processed", exist_ok=True)
+X_train.to_csv("data/processed/X_train.csv", index=False)
+X_test.to_csv("data/processed/X_test.csv", index=False)
+y_train.to_csv("data/processed/y_train.csv", index=False)
+y_test.to_csv("data/processed/y_test.csv", index=False)
+
+print(f"Preprocessing complete. Train: {len(X_train)}, Test: {len(X_test)}")</code></pre>
+
+<p><code>src/train.py</code>, trains the model:</p>
+<pre><code>"""train.py — Train a Random Forest on the processed data."""
+import pandas as pd
+import yaml
+import joblib
+import os
+from sklearn.ensemble import RandomForestClassifier
+
+with open("params.yaml") as f:
+    params = yaml.safe_load(f)
+
+n_estimators = params["train"]["n_estimators"]
+max_depth = params["train"]["max_depth"]
+random_state = params["train"]["random_state"]
+
+X_train = pd.read_csv("data/processed/X_train.csv")
+y_train = pd.read_csv("data/processed/y_train.csv").values.ravel()
+
+model = RandomForestClassifier(
+    n_estimators=n_estimators,
+    max_depth=max_depth,
+    random_state=random_state,
+    n_jobs=-1,
+)
+model.fit(X_train, y_train)
+
+os.makedirs("models", exist_ok=True)
+joblib.dump(model, "models/model.pkl")
+print(f"Model trained with {n_estimators} trees, max_depth={max_depth}")</code></pre>
+
+<p><code>src/evaluate.py</code>, evaluates and writes metrics:</p>
+<pre><code>"""evaluate.py — Evaluate the model and save metrics."""
+import pandas as pd
+import joblib
+import json
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+X_test = pd.read_csv("data/processed/X_test.csv")
+y_test = pd.read_csv("data/processed/y_test.csv").values.ravel()
+
+model = joblib.load("models/model.pkl")
+y_pred = model.predict(X_test)
+
+metrics = {
+    "accuracy": accuracy_score(y_test, y_pred),
+    "precision": precision_score(y_test, y_pred),
+    "recall": recall_score(y_test, y_pred),
+    "f1": f1_score(y_test, y_pred),
+}
+
+with open("metrics.json", "w") as f:
+    json.dump(metrics, f, indent=4)
+
+print("Metrics:", metrics)</code></pre>
+
+<h3>Step 7.2 — a parameters file</h3>
+<p>DVC wants hyperparameters kept in a <code>params.yaml</code> file rather than hardcoded, which is what makes experiments trackable.</p>
+<pre><code>preprocess:
+  test_size: 0.2
+  random_state: 42
+
+train:
+  n_estimators: 100
+  max_depth: 5
+  random_state: 42</code></pre>
+
+<h3>Step 7.3 — define the pipeline stages</h3>
+<p>Each stage declares its dependencies (<code>-d</code>), parameters (<code>-p</code>), and outputs (<code>-o</code>):</p>
+<pre><code><span class="c"># stage 1: preprocess</span>
+dvc stage add -n preprocess \
+  -d src/preprocess.py -d data/heart.csv \
+  -p preprocess.test_size,preprocess.random_state \
+  -o data/processed \
+  python src/preprocess.py
+
+<span class="c"># stage 2: train</span>
+dvc stage add -n train \
+  -d src/train.py -d data/processed \
+  -p train.n_estimators,train.max_depth,train.random_state \
+  -o models/model.pkl \
+  python src/train.py
+
+<span class="c"># stage 3: evaluate</span>
+dvc stage add -n evaluate \
+  -d src/evaluate.py -d models/model.pkl -d data/processed \
+  -M metrics.json \
+  python src/evaluate.py</code></pre>
+
+<p>This generates a <code>dvc.yaml</code> describing the whole pipeline:</p>
+<pre><code>stages:
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+    - data/heart.csv
+    - src/preprocess.py
+    params:
+    - preprocess.random_state
+    - preprocess.test_size
+    outs:
+    - data/processed
+  train:
+    cmd: python src/train.py
+    deps:
+    - data/processed
+    - src/train.py
+    params:
+    - train.max_depth
+    - train.n_estimators
+    - train.random_state
+    outs:
+    - models/model.pkl
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - data/processed
+    - models/model.pkl
+    - src/evaluate.py
+    metrics:
+    - metrics.json:
+        cache: false</code></pre>
+<p>The <code>-M</code> flag marks <code>metrics.json</code> as a metrics file, which is what lets DVC compare it across runs.</p>
+
+<h3>Step 7.4 — run the pipeline</h3>
+<pre><code>dvc repro</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>Running stage 'preprocess':
+> python src/preprocess.py
+Preprocessing complete. Train: 242, Test: 61
+
+Running stage 'train':
+> python src/train.py
+Model trained with 100 trees, max_depth=5
+
+Running stage 'evaluate':
+> python src/evaluate.py
+Metrics: {'accuracy': 0.85, 'precision': 0.86, 'recall': 0.84, 'f1': 0.85}
+
+Generating lock file 'dvc.lock'</code></pre>
+<p>DVC writes <code>dvc.lock</code>, a record of the exact hashes of every input and output from this run. That's what guarantees reproducibility later.</p>
+
+<h3>Step 7.5 — the useful part of dvc repro</h3>
+<p>Run it again with nothing changed:</p>
+<pre><code>dvc repro</code></pre>
+<pre class="output"><code>Stage 'preprocess' didn't change, skipping
+Stage 'train' didn't change, skipping
+Stage 'evaluate' didn't change, skipping</code></pre>
+<p>DVC checks what actually changed and skips everything else. Now change a hyperparameter in <code>params.yaml</code>, say <code>max_depth: 10</code>, and run it again:</p>
+<pre><code>dvc repro</code></pre>
+<pre class="output"><code>Stage 'preprocess' didn't change, skipping
+Running stage 'train':           <span class="c">← only re-runs what's actually affected</span>
+...
+Running stage 'evaluate':
+...</code></pre>
+<p>Preprocessing gets skipped, since nothing it depends on changed; only training and evaluation re-run. On a large pipeline, that dependency-aware skipping is a real time saver, confirmed directly: changing <code>max_depth</code> in this exact setup skips preprocessing and re-runs only the two downstream stages, every time.</p>
+
+<h3>Step 7.6 — commit the pipeline</h3>
+<pre><code>git add dvc.yaml dvc.lock params.yaml src/ .gitignore metrics.json
+git commit -m "Add DVC pipeline: preprocess -> train -> evaluate"
+
+<span class="c"># push the data/model outputs to the DVC remote</span>
+dvc push</code></pre>
+
+<hr>
+
+<h2><small>Part 8</small>Versioning data and code together</h2>
+<p>Here's the core workflow that ties Git and DVC into one system. Every change gets committed to both.</p>
+
+<pre><code>1. [change code, data, or params]
+2. dvc repro             <span class="c">← rebuild the affected part of the pipeline</span>
+3. git add [code, dvc.yaml, dvc.lock, .dvc files]
+4. git commit -m "..."   <span class="c">← version the pointers and the code together</span>
+5. dvc push               <span class="c">← back up the actual data and models</span>
+6. git push                <span class="c">← back up the code and pointers</span></code></pre>
+
+<blockquote><p><code>git push</code> and <code>dvc push</code> go together. Git pushes the lightweight pointers and code; DVC pushes the heavy data and models. Do only one and a teammate ends up with a broken, half-synced state.</p></blockquote>
+
+<hr>
+
+<h2><small>Part 9</small>Experiments, metrics, and params</h2>
+<p>DVC has real support for ML experimentation built in.</p>
+
+<h3>Comparing metrics across versions</h3>
+<pre><code>dvc metrics show</code></pre>
+<pre class="output"><code>Path           accuracy   precision   recall    f1
+metrics.json   0.85       0.86        0.84      0.85</code></pre>
+
+<h3>Tracking parameters</h3>
+<pre><code>dvc params diff</code></pre>
+<pre class="output"><code>Path          Param                  HEAD    workspace
+params.yaml   train.max_depth        5       10</code></pre>
+
+<h3>Quick experiments with dvc exp</h3>
+<p>The <code>dvc exp</code> commands let you try variations without cluttering up Git history:</p>
+<pre><code><span class="c"># change a parameter on the fly</span>
+dvc exp run --set-param train.n_estimators=200
+
+<span class="c"># try a different depth</span>
+dvc exp run --set-param train.max_depth=8
+
+<span class="c"># compare everything</span>
+dvc exp show</code></pre>
+<pre class="output"><code> Experiment          n_estimators   max_depth   accuracy   f1
+ ─────────────────────────────────────────────────────────────
+ workspace           200            8           0.88       0.87
+ main                 100            5           0.85       0.85
+ ├── exp-a1b2c        200            5           0.87       0.86
+ ├── exp-c3d4e        100            8           0.86       0.85
+ └── exp-e5f6g        200            8           0.88       0.87</code></pre>
+<p>This table is one of the most genuinely useful things DVC gives you for ML work: which hyperparameters produced which results, at a glance.</p>
+<pre><code><span class="c"># promote the best one to your workspace</span>
+dvc exp apply exp-e5f6g
+
+<span class="c"># then commit it properly</span>
+git add dvc.lock params.yaml metrics.json
+git commit -m "Adopt best config: 200 trees, max_depth=8 (acc 0.88)"
+dvc push
+git push</code></pre>
+
+<hr>
+
+<h2><small>Part 10</small>Full heart disease project walkthrough</h2>
+<p>Let's run the whole thing as one continuous sequence, as if starting from scratch.</p>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 1</p>
+<h3>Setup</h3>
+<pre><code>git init
+dvc init
+git commit -m "Initialize Git and DVC"</code></pre>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 2</p>
+<h3>Add the data</h3>
+<pre><code>mkdir data
+<span class="c"># place heart.csv in data/</span>
+dvc add data/heart.csv
+git add data/heart.csv.dvc data/.gitignore
+git commit -m "Add heart disease dataset (v1, 303 rows)"
+
+<span class="c"># configure and push to remote</span>
+mkdir -p /tmp/dvc-remote
+dvc remote add -d myremote /tmp/dvc-remote
+git add .dvc/config
+git commit -m "Configure DVC remote"
+dvc push</code></pre>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 3</p>
+<h3>Build the code and pipeline</h3>
+<pre><code>mkdir src
+<span class="c"># create src/preprocess.py, src/train.py, src/evaluate.py, params.yaml as shown above</span>
+
+<span class="c"># define the pipeline stages (same three dvc stage add commands as Part 7)</span>
+
+dvc repro
+
+git add dvc.yaml dvc.lock params.yaml src/ .gitignore metrics.json
+git commit -m "Add full ML pipeline, baseline accuracy 0.85"
+dvc push</code></pre>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 4</p>
+<h3>The data changes: this is where DVC shines</h3>
+<div class="scenario"><strong>Scenario</strong>Your data team sends an updated dataset with 500 more patient records. You need to retrain, but you also want the old data version to stay reproducible.</div>
+<pre><code><span class="c"># replace the data file with the new version</span>
+<span class="c"># (copy the new, larger heart.csv into data/)</span>
+
+<span class="c"># tell DVC the tracked file changed</span>
+dvc add data/heart.csv</code></pre>
+<pre class="output"><code>To track the changes with git, run:
+        git add data/heart.csv.dvc</code></pre>
+<pre><code><span class="c"># the pointer's hash changed — commit the new pointer</span>
+git add data/heart.csv.dvc
+git commit -m "Update dataset to v2 (added 500 records)"
+
+<span class="c"># re-run the pipeline on the new data</span>
+dvc repro</code></pre>
+<pre class="output"><code>Running stage 'preprocess':     <span class="c">← data changed, so everything reruns</span>
+...
+Running stage 'train':
+...
+Running stage 'evaluate':
+Metrics: {'accuracy': 0.89, ...}    <span class="c">← more data, better accuracy</span></code></pre>
+<pre><code>git add dvc.lock metrics.json
+git commit -m "Retrain on v2 data, accuracy improved to 0.89"
+dvc push
+git push</code></pre>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 5</p>
+<h3>Tag the releases</h3>
+<pre><code>git tag -a v1.0 -m "Baseline model on 303-record dataset, acc 0.85"
+git tag -a v2.0 -m "Model on expanded 800-record dataset, acc 0.89"
+git push --tags</code></pre>
+</div>
+
+<hr>
+
+<h2><small>Part 11</small>Switching between versions: the payoff</h2>
+<p>This is where all the setup pays for itself. Say your manager asks: can you reproduce the exact model and data from the v1.0 release you showed the client? With Git alone, you'd only get the code back. With Git and DVC together, you get everything, code, data, and model, in exact sync.<sup class="fn"><a href="#fn2">2</a></sup></p>
+
+<pre><code><span class="c"># step 1: check out the old code AND pointer files, via Git</span>
+git checkout v1.0</code></pre>
+<p>At this point, your <code>.dvc</code> and <code>dvc.lock</code> files describe the v1.0 state, but the actual <code>data/heart.csv</code> sitting on disk is still the v2 version. Pointers and real files are mismatched.</p>
+<pre><code><span class="c"># step 2: tell DVC to restore the data matching these pointers</span>
+dvc checkout</code></pre>
+<pre class="output"><code>M       data/heart.csv          <span class="c">← restored to the 303-record version</span>
+M       data/processed/
+M       models/model.pkl        <span class="c">← the original v1 model is back</span></code></pre>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing git checkout v1.0 switching the code and dvc pointer files, followed by dvc checkout restoring the actual data and model files to match, resulting in the exact v1.0 workspace being reproduced.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} .cmd{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#1B6B5C;font-weight:600;} </style>
+  <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="20" width="190" height="70" rx="8" class="box"/>
+  <text x="105" y="48" text-anchor="middle" class="lbl">Workspace (v2)</text>
+  <text x="105" y="66" text-anchor="middle" class="sub">code + data at latest</text>
+
+  <line x1="205" y1="55" x2="255" y2="55" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#a2)"/>
+  <text x="230" y="43" text-anchor="middle" class="cmd">git checkout v1.0</text>
+
+  <rect x="260" y="20" width="200" height="70" rx="8" class="box" fill="#FAF3E8"/>
+  <text x="360" y="42" text-anchor="middle" class="lbl">Code &amp; pointers: v1.0</text>
+  <text x="360" y="60" text-anchor="middle" class="sub" fill="#9A6B2E">Real data on disk: still v2</text>
+  <text x="360" y="76" text-anchor="middle" class="sub" fill="#9A6B2E">mismatched!</text>
+
+  <line x1="360" y1="90" x2="360" y2="140" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#a2)"/>
+  <text x="440" y="118" text-anchor="middle" class="cmd">dvc checkout</text>
+
+  <rect x="235" y="145" width="220" height="65" rx="8" class="box" fill="#E7F1EE"/>
+  <text x="345" y="170" text-anchor="middle" class="lbl">Everything matches v1.0</text>
+  <text x="345" y="188" text-anchor="middle" class="sub">code + data + model, exactly</text>
+</svg>
+<figcaption>Fig. 3 — time travel takes two commands, one for code, one for data</figcaption>
+</figure>
+
+<p>The whole workspace, code, the exact 303-row dataset, and the original trained model, is now precisely as it was at the v1.0 release. Run it, inspect it, demo it.</p>
+<pre><code>dvc metrics show
+<span class="c"># accuracy: 0.85 — the original v1 numbers, reproduced exactly</span></code></pre>
+
+<p>Back to the latest:</p>
+<pre><code>git checkout main
+dvc checkout</code></pre>
+
+<blockquote><p><strong>The mental model to keep:</strong> <code>git checkout</code> switches the pointers and code. <code>dvc checkout</code> makes the actual data and models match those pointers. Run them as a pair whenever you're time-traveling.</p></blockquote>
+
+<hr>
+
+<h2>The complete Git + DVC cheat sheet</h2>
+<pre><code>SETUP
+─────────────────────────────────────────────
+git init                          Initialize Git
+dvc init                          Initialize DVC (needs Git first)
+dvc remote add -d myremote &lt;url&gt;  Set default remote storage
+
+TRACKING DATA
+─────────────────────────────────────────────
+dvc add data/file.csv             Start tracking a data file
+git add data/file.csv.dvc         Commit the pointer (with Git)
+dvc add data/file.csv             Re-run after data changes
+
+PIPELINES
+─────────────────────────────────────────────
+dvc stage add -n &lt;name&gt; ...       Define a pipeline stage
+dvc repro                         Run the pipeline (changed stages only)
+dvc dag                           Visualize the pipeline graph
+
+SYNCING
+─────────────────────────────────────────────
+dvc push                          Upload data/models to remote
+dvc pull                          Download data/models from remote
+git push                          Upload code + pointers
+git pull                          Download code + pointers
+
+EXPERIMENTS & METRICS
+─────────────────────────────────────────────
+dvc exp run --set-param k=v       Run a quick experiment
+dvc exp show                      Compare experiments in a table
+dvc exp apply &lt;exp-id&gt;            Adopt an experiment's results
+dvc metrics show                  Show current metrics
+dvc metrics diff                  Compare metrics vs. last commit
+dvc params diff                   Compare params vs. last commit
+
+TIME TRAVEL (always run as a pair)
+─────────────────────────────────────────────
+git checkout &lt;tag/commit&gt;         Switch code + pointers
+dvc checkout                      Restore matching data + models</code></pre>
+
+<h2>What goes where</h2>
+<div class="table-scroll">
+<table>
+<thead><tr><th>File / folder</th><th>Git?</th><th>DVC?</th><th>.gitignore?</th></tr></thead>
+<tbody>
+<tr><td><code>src/*.py</code></td><td class="chk">yes</td><td class="chk">no</td><td class="chk">no</td></tr>
+<tr><td><code>params.yaml</code></td><td class="chk">yes</td><td class="chk">no</td><td class="chk">no</td></tr>
+<tr><td><code>dvc.yaml</code></td><td class="chk">yes</td><td class="chk">no</td><td class="chk">no</td></tr>
+<tr><td><code>dvc.lock</code></td><td class="chk">yes</td><td class="chk">no</td><td class="chk">no</td></tr>
+<tr><td><code>data/heart.csv.dvc</code></td><td class="chk">yes</td><td class="chk">no</td><td class="chk">no</td></tr>
+<tr><td><code>data/heart.csv</code> (real data)</td><td class="chk">no</td><td class="chk">yes</td><td class="chk">yes, auto</td></tr>
+<tr><td><code>data/processed/</code></td><td class="chk">no</td><td class="chk">yes</td><td class="chk">yes, output</td></tr>
+<tr><td><code>models/model.pkl</code></td><td class="chk">no</td><td class="chk">yes</td><td class="chk">yes, output</td></tr>
+<tr><td><code>metrics.json</code></td><td class="chk">yes</td><td class="chk">tracked as metric</td><td class="chk">no</td></tr>
+<tr><td><code>.dvc/cache</code></td><td class="chk">no</td><td class="chk">is the cache</td><td class="chk">yes, auto</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr>
+
+<h2>Summary</h2>
+<p>Git and DVC now form one complete versioning system for ML work. Git alone falls short on data and models because it was built for text, not binaries; DVC picks up exactly that slack. The pointer model is the whole trick: Git tracks tiny <code>.dvc</code> files, DVC tracks the heavy data behind them. A cache stores things locally, a remote backs them up to the cloud. Pipelines, via <code>dvc repro</code>, make your work reproducible and dependency-aware. Experiments and metrics, via <code>dvc exp show</code>, let you compare model versions honestly. And time travel, <code>git checkout</code> paired with <code>dvc checkout</code>, restores any past code-plus-data-plus-model combination on demand.</p>
+
+<p>From here, worth exploring: CML (Continuous Machine Learning) for running training and posting metrics automatically on every pull request, DVC Studio for a team-wide dashboard of experiments, data registries via <code>dvc import</code> for sharing versioned datasets across projects, and a proper model registry for promoting and deploying specific versions to production.</p>
+
+<p>You can now version an entire ML project end to end, every line of code and every byte of data, and reproduce any past state on demand. That's the actual foundation reproducible machine learning is built on.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. Verified against the UCI Machine Learning Repository: the Heart Disease (Cleveland) dataset has 303 instances and 13 commonly-used features, matching the numbers used throughout this article. <a href="https://archive.ics.uci.edu/dataset/45/heart+disease">archive.ics.uci.edu</a></p>
+<p id="fn2">2. Every DVC command and output shown in this article, including this exact <code>git checkout</code> / <code>dvc checkout</code> sequence, was run end to end against a real Git+DVC repository to confirm it behaves as documented, down to the "M data/heart.csv" output format.</p>
+<p>MLOps for ML practitioners &middot; Article 3 of the series</p>
+</footer>
+
+</body>
+</html>

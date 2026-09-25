@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git &amp; GitHub — the complete guide for ML practitioners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB;
+    --text:#1C1C1C;
+    --text-muted:#6B6B6B;
+    --accent:#1B6B5C;
+    --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3;
+    --code-border:#E8E8E5;
+    --border:#E5E5E2;
+    --amber:#9A6B2E;
+    --amber-soft:#FAF3E8;
+    --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Lora', Georgia, serif;
+    font-size:19px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+
+  h1,h2,h3,h4{
+    font-family:'Inter', -apple-system, sans-serif;
+    color:var(--text);
+    font-weight:650;
+    line-height:1.3;
+    letter-spacing:-0.01em;
+  }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:14px;
+  }
+  h1.title{ font-size:38px; margin:0 0 14px; line-height:1.2; }
+  p.dek{
+    font-family:'Lora', serif;
+    font-style:italic;
+    font-size:20px;
+    color:var(--text-muted);
+    margin:0 0 28px;
+    line-height:1.55;
+  }
+  .meta-line{
+    font-family:'Inter', sans-serif;
+    font-size:13.5px;
+    color:var(--text-muted);
+    padding-bottom:32px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:40px;
+  }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  article > .wrap > p:first-of-type{ margin-top:0; }
+
+  h2{ font-size:26px; margin:56px 0 20px; }
+  h3{ font-size:20px; margin:36px 0 14px; color:var(--text); }
+  h2 small, h3 small{
+    display:block;
+    font-family:'Inter', sans-serif;
+    font-weight:500;
+    font-size:13px;
+    color:var(--text-muted);
+    letter-spacing:0.02em;
+    margin-bottom:6px;
+    text-transform:none;
+  }
+
+  a{ color:var(--accent); }
+
+  code{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.82em;
+    background:var(--code-bg);
+    border:1px solid var(--code-border);
+    padding:0.1em 0.4em;
+    border-radius:4px;
+    color:#2B2B2B;
+  }
+
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--code-border);
+    border-radius:8px;
+    padding:18px 20px;
+    overflow-x:auto;
+    margin:0 0 24px;
+  }
+  pre code{
+    background:none;
+    border:none;
+    padding:0;
+    font-size:14.5px;
+    line-height:1.65;
+    color:#2B2B2B;
+    white-space:pre;
+  }
+  .c{ color:#8A8F98; } /* comment */
+  .s{ color:var(--accent); } /* string / emphasis token */
+  .del{ color:#A33B2A; }
+  .add{ color:#1B6B5C; }
+
+  blockquote{
+    margin:24px 0;
+    padding:16px 20px;
+    background:var(--accent-soft);
+    border-left:3px solid var(--accent);
+    border-radius:0 6px 6px 0;
+    font-size:17.5px;
+  }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; }
+  blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:0 0 26px;
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+  }
+  th{
+    text-align:left;
+    background:var(--accent-soft);
+    color:var(--text);
+    padding:9px 14px;
+    font-weight:600;
+    border-bottom:1px solid var(--border);
+  }
+  td{
+    padding:10px 14px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+    line-height:1.5;
+  }
+  .table-scroll{ overflow-x:auto; margin-bottom:26px; }
+  .table-scroll table{ margin-bottom:0; min-width:480px; }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    color:var(--text-muted);
+    text-align:center;
+    margin-top:12px;
+  }
+
+  .command-entry{ margin-top:36px; }
+  .command-entry h3{
+    font-family:'JetBrains Mono', monospace;
+    font-size:18px;
+    font-weight:600;
+    color:var(--text);
+    margin-bottom:12px;
+  }
+  .command-entry .label{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    color:var(--accent);
+  }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; }
+  sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:0 24px 64px;
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    color:var(--text-muted);
+    border-top:1px solid var(--border);
+    padding-top:28px;
+  }
+  footer p{ margin:0 0 10px; }
+  footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 1</p>
+    <h1 class="title">Git &amp; GitHub: the complete guide for ML practitioners</h1>
+    <p class="dek">Why Git exists, how it actually works, and every command you'll use day to day, explained for people who came from notebooks, not software engineering.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read <a href="#">the introduction</a> first if you haven't &middot; next up: Article 2, a hands-on Git project</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<blockquote>
+<p><strong>New to development?</strong> This article assumes you can open a terminal, run basic commands, and have Git installed. If that feels shaky, the companion prerequisites series covers exactly this ground first, particularly the pieces on the terminal and on installing Git, Python, and VS Code.</p>
+</blockquote>
+
+<p>This is the first article in a two-part series. This one teaches you Git and GitHub end to end: every concept, every command, every workflow you'll actually use. The next one takes a small ML project and runs it through the same commands for practice.</p>
+
+<hr>
+
+<h2 id="part-1"><small>Part 1</small>Why Git? The problem it solves</h2>
+
+<h3>The nightmare without version control</h3>
+
+<p>Imagine you're building a machine learning model to predict customer churn. Over the course of two weeks, your project folder ends up looking like this:</p>
+
+<pre><code>churn_model/
+├── model.py
+├── model_v2.py
+├── model_v2_final.py
+├── model_v2_final_ACTUALLY_FINAL.py
+├── model_backup_before_i_broke_it.py
+├── model_johns_changes.py
+├── model_johns_changes_merged_with_mine.py</code></pre>
+
+<p>This isn't hypothetical. It's what every developer and data scientist does before learning Git. Now think about what happens when you break something that was working yesterday and can't remember what you changed, when a teammate edits the same file you did and you both overwrite each other's work, when your manager asks whether you can roll back to the version from last Tuesday that the client approved, when you want to try a different algorithm without breaking your working code, or when you want to show your work publicly so recruiters or collaborators can see it.</p>
+
+<p>Every one of those is painful without version control. Git solves all of them cleanly.</p>
+
+<h3>What Git actually does</h3>
+
+<p>Git is a distributed version control system. Version control means Git tracks every change you make to your files over time: who changed what, when, and why. It's a bit like Google Docs version history, but for an entire codebase and with much more precision. Distributed means every developer has the complete history of the project on their own machine. There's no single point of failure. Even if the server goes down, your full history is still sitting on your laptop.</p>
+
+<p>Here's what that gets you in concrete terms:</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Problem</th><th>Git's solution</th></tr></thead>
+<tbody>
+<tr><td>"I broke something, how do I go back?"</td><td>Revert to any previous commit</td></tr>
+<tr><td>"I want to try something risky"</td><td>Create a branch, merge only when it works</td></tr>
+<tr><td>"My teammate overwrote my code"</td><td>Merge system handles conflicts explicitly</td></tr>
+<tr><td>"What changed since yesterday?"</td><td><code>git diff</code>, <code>git log</code> show exact changes</td></tr>
+<tr><td>"Can we release v1 while working on v2?"</td><td>Branches for stable vs. development versions</td></tr>
+<tr><td>"I need to share my code with the world"</td><td>Push to GitHub</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Git vs. GitHub: not the same thing</h3>
+
+<p>This is the most common point of confusion for beginners. Git is a tool that runs on your computer and tracks changes locally. GitHub is a website that hosts your Git repositories in the cloud.</p>
+
+<p>A useful way to hold the two apart: Git is like Microsoft Word's "Track Changes" feature. GitHub is like Google Drive, a place to store and share the documents. You can use Git without GitHub, purely locally. You can't really use GitHub without Git. In ML work you'll use both together: Git locally to track experiments, GitHub to collaborate, deploy, and share what you've built.</p>
+
+<hr>
+
+<h2 id="part-2"><small>Part 2</small>Core concepts you need before anything else</h2>
+
+<p>Four ideas underpin everything else in Git. Don't rush past them.</p>
+
+<h3>Repository</h3>
+
+<p>A repository (or "repo") is a directory that Git is tracking. It contains all your project files plus a hidden <code>.git</code> folder where Git stores its entire history. Running <code>git init</code> in a folder is what turns it into a repository.</p>
+
+<pre><code>my_ml_project/       <span class="c">← this is your repository</span>
+├── .git/            <span class="c">← hidden folder, Git's brain. Don't touch it manually</span>
+├── train.py
+├── model.py
+└── requirements.txt</code></pre>
+
+<h3>The three zones</h3>
+
+<p>This is the single most important concept in Git. Every file you work with lives in one of three zones: your working directory, a staging area, and the local repository.</p>
+
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of Git's three zones: working directory, staging area, and local repository, connected by git add and git commit, with git restore going back, and git push going out to a remote repository on GitHub.">
+  <defs>
+    <marker id="arrow1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker>
+    <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#9A6B2E"/></marker>
+  </defs>
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.2;} .lbl{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10.5px;fill:#6B6B6B;} .cmd{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#1B6B5C;font-weight:600;} .cmd2{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#9A6B2E;font-weight:600;} </style>
+
+  <rect x="10" y="60" width="150" height="90" rx="8" class="box"/>
+  <text x="85" y="98" text-anchor="middle" class="lbl">Working</text>
+  <text x="85" y="115" text-anchor="middle" class="lbl">Directory</text>
+  <text x="85" y="134" text-anchor="middle" class="sub">files on disk</text>
+
+  <rect x="245" y="60" width="150" height="90" rx="8" class="box"/>
+  <text x="320" y="98" text-anchor="middle" class="lbl">Staging</text>
+  <text x="320" y="115" text-anchor="middle" class="lbl">Area</text>
+  <text x="320" y="134" text-anchor="middle" class="sub">changes to save</text>
+
+  <rect x="480" y="60" width="150" height="90" rx="8" class="box"/>
+  <text x="555" y="98" text-anchor="middle" class="lbl">Local</text>
+  <text x="555" y="115" text-anchor="middle" class="lbl">Repository</text>
+  <text x="555" y="134" text-anchor="middle" class="sub">permanent history</text>
+
+  <line x1="160" y1="90" x2="243" y2="90" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#arrow1)"/>
+  <text x="201" y="78" text-anchor="middle" class="cmd">git add</text>
+
+  <line x1="243" y1="118" x2="160" y2="118" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#arrow2)"/>
+  <text x="201" y="135" text-anchor="middle" class="cmd2">git restore</text>
+
+  <line x1="395" y1="90" x2="478" y2="90" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#arrow1)"/>
+  <text x="437" y="78" text-anchor="middle" class="cmd">git commit</text>
+
+  <rect x="480" y="200" width="150" height="50" rx="8" class="box" fill="#E7F1EE"/>
+  <text x="555" y="222" text-anchor="middle" class="lbl">Remote</text>
+  <text x="555" y="238" text-anchor="middle" class="sub">GitHub</text>
+
+  <line x1="555" y1="150" x2="555" y2="198" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#arrow1)"/>
+  <text x="600" y="178" text-anchor="middle" class="cmd">git push</text>
+</svg>
+<figcaption>Fig. 1 — the three zones every file moves through, plus the push to a remote</figcaption>
+</figure>
+
+<p>The working directory is where you edit files normally; Git knows they exist but may or may not be tracking their changes yet. The staging area is a waiting room: you selectively add changes here before committing, which lets you commit only part of your work at a time. The local repository is the permanent history. Once something's committed, it's saved for good unless you explicitly remove it. And the remote repository is the copy of all of this sitting on GitHub.</p>
+
+<h3>Commit</h3>
+
+<p>A commit is a snapshot of your staged changes, saved to the repository along with a message describing what you did. Think of commits as save points in a video game: you can always return to any of them.</p>
+
+<p>Each commit carries a unique ID (a "SHA hash," something like <code>a3f5c2d</code>), the author's name and email, a timestamp, the message you wrote, and a pointer back to the previous commit, which is what forms the chain.</p>
+
+<h3>Branch</h3>
+
+<p>A branch is an independent line of development. The default branch is called <code>main</code> (or <code>master</code> in older repos). Creating a new branch gives you a copy of the current state to experiment on without touching the original.</p>
+
+<pre><code>main branch:    A ── B ── C ──────────────── F (merged)
+                               \            /
+feature branch:                 D ── E ────</code></pre>
+
+<p>In ML work you'll typically use branches like <code>main</code> for stable, production-ready code, something like <code>feature/add-random-forest</code> while you're experimenting with a new model, and <code>fix/memory-leak</code> for a bug fix.</p>
+
+<hr>
+
+<h2 id="part-3"><small>Part 3</small>Installation and first-time setup</h2>
+
+<h3>Installing Git</h3>
+
+<p><strong>macOS:</strong></p>
+<pre><code>brew install git
+<span class="c"># or just type 'git' in terminal — macOS will prompt you to install Xcode tools</span></code></pre>
+
+<p><strong>Ubuntu/Debian Linux:</strong></p>
+<pre><code>sudo apt update
+sudo apt install git</code></pre>
+
+<p><strong>Windows:</strong> download from <code>git-scm.com/download/win</code> and run the installer. It also installs Git Bash, a terminal for running Git commands on Windows.</p>
+
+<p><strong>Verify it installed:</strong></p>
+<pre><code>git --version
+<span class="c"># Output: git version 2.43.0</span></code></pre>
+
+<h3>First-time configuration</h3>
+
+<p>Git needs to know who you are before it lets you commit anything. Run these once on any new machine:</p>
+
+<pre><code><span class="c"># Your name, appears in every commit you make</span>
+git config --global user.name "Your Name"
+
+<span class="c"># Your email, use the same one as your GitHub account</span>
+git config --global user.email "you@example.com"
+
+<span class="c"># Default branch name — 'main' is the modern standard</span>
+git config --global init.defaultBranch main
+
+<span class="c"># VS Code as your default editor (optional but recommended)</span>
+git config --global core.editor "code --wait"
+
+<span class="c"># How 'git pull' reconciles diverging branches (avoids a common first-run warning)</span>
+git config --global pull.rebase false</code></pre>
+
+<p><code>--global</code> applies a setting to every repo on the machine. You can also set config per-project by leaving it off, inside that project's folder.</p>
+
+<blockquote>
+<p><strong>Why the <code>pull.rebase</code> line?</strong> The first time you run <code>git pull</code> on a modern Git install, you'll likely see a warning that pulling without specifying how to reconcile divergent branches is discouraged. Setting <code>pull.rebase false</code> tells Git to use a regular merge, the simpler default for beginners, and the warning goes away for good. Once rebasing feels familiar (Part 5), you can switch to <code>pull.rebase true</code> if you'd rather keep a linear history.</p>
+</blockquote>
+
+<p><strong>View your settings:</strong></p>
+<pre><code>git config --list</code></pre>
+
+<h3>Connecting to GitHub over SSH</h3>
+
+<blockquote>
+<p><strong>Note:</strong> GitHub stopped accepting account passwords for Git operations over HTTPS in August 2021.<sup class="fn"><a href="#fn1">1</a></sup> HTTPS now needs a personal access token instead, generated under GitHub's developer settings, which you paste in wherever it asks for a password. SSH sidesteps this entirely: set it up once below and you won't be prompted for credentials again.</p>
+</blockquote>
+
+<pre><code><span class="c"># 1. Generate an SSH key pair</span>
+ssh-keygen -t ed25519 -C "you@example.com"
+<span class="c"># press Enter three times to accept the defaults</span>
+
+<span class="c"># 2. Copy your PUBLIC key</span>
+cat ~/.ssh/id_ed25519.pub
+
+<span class="c"># 3. GitHub → Settings → SSH Keys → New SSH Key</span>
+<span class="c"># paste what you copied and save</span>
+
+<span class="c"># 4. Test the connection</span>
+ssh -T git@github.com
+<span class="c"># Output: Hi username! You've successfully authenticated.</span></code></pre>
+
+<hr>
+
+<h2 id="part-4"><small>Part 4</small>Essential daily commands</h2>
+
+<p>Everything in this section is something you'll type most days. Each entry covers what it does, when you'd reach for it, and a real example.</p>
+
+<div class="command-entry">
+<h3>git init</h3>
+<p><span class="label">What it does:</span> Turns any folder into a Git repository by creating a hidden <code>.git</code> folder inside it.</p>
+<p><span class="label">When to use it:</span> At the very start of a new project.</p>
+<pre><code>mkdir iris_classifier
+cd iris_classifier
+git init
+<span class="c"># Output: Initialized empty Git repository in /iris_classifier/.git/</span></code></pre>
+<blockquote class="warn"><p>Never run <code>git init</code> inside an existing Git repo, like your home folder. It creates a "nested repo" and just causes confusion.</p></blockquote>
+</div>
+
+<div class="command-entry">
+<h3>git clone</h3>
+<p><span class="label">What it does:</span> Downloads a complete copy of a remote repository, including all history, branches, and commits.</p>
+<p><span class="label">When to use it:</span> When you want to work on an existing project that's already on GitHub.</p>
+<pre><code><span class="c"># HTTPS</span>
+git clone https://github.com/username/iris_classifier.git
+
+<span class="c"># SSH (preferred once you've set it up)</span>
+git clone git@github.com:username/iris_classifier.git
+
+<span class="c"># clone into a specific folder name</span>
+git clone git@github.com:username/iris_classifier.git my_project</code></pre>
+<p>After cloning, Git sets up a remote called <code>origin</code> automatically, pointing back to GitHub.</p>
+</div>
+
+<div class="command-entry">
+<h3>git status</h3>
+<p><span class="label">What it does:</span> Shows the current state of your working directory and staging area: which files are modified, staged, or untracked.</p>
+<p><span class="label">When to use it:</span> Constantly, before and after almost everything. Treat it as your GPS.</p>
+<pre><code>git status</code></pre>
+<pre><code>On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:      <span class="c">← modified but not yet staged</span>
+  (use "git add &lt;file&gt;..." to update what will be committed)
+        modified:   model.py
+
+Untracked files:                    <span class="c">← new files Git has never seen</span>
+  (use "git add &lt;file&gt;..." to include in what will be committed)
+        requirements.txt
+
+nothing added to commit but untracked files present</code></pre>
+<p>Short form:</p>
+<pre><code>git status -s
+<span class="c"># M  model.py         (M = modified)</span>
+<span class="c"># ?? requirements.txt  (?? = untracked)</span></code></pre>
+</div>
+
+<div class="command-entry">
+<h3>git add</h3>
+<p><span class="label">What it does:</span> Moves changes from the working directory into the staging area, ready for the next commit.</p>
+<p><span class="label">When to use it:</span> After editing files, before committing. You decide exactly what goes into each commit.</p>
+<pre><code><span class="c"># stage a single file</span>
+git add model.py
+
+<span class="c"># stage several specific files</span>
+git add model.py train.py
+
+<span class="c"># stage every change in the current directory (use with care)</span>
+git add .
+
+<span class="c"># stage every .py file</span>
+git add *.py
+
+<span class="c"># stage part of a file interactively (lets you commit half a file)</span>
+git add -p model.py</code></pre>
+<p>One habit worth building early: don't reach for <code>git add .</code> on autopilot in ML projects. It's an easy way to accidentally stage a large data file or a set of trained model weights. Check <code>git status</code> first, or lean on a proper <code>.gitignore</code>.</p>
+</div>
+
+<div class="command-entry">
+<h3>git commit</h3>
+<p><span class="label">What it does:</span> Saves a permanent snapshot of everything currently staged, along with a message.</p>
+<p><span class="label">When to use it:</span> Once you've staged the changes you want. Commit often; small, focused commits beat giant ones.</p>
+<pre><code><span class="c"># standard commit with an inline message</span>
+git commit -m "Add logistic regression baseline model"
+
+<span class="c"># stage every modified TRACKED file and commit in one step</span>
+<span class="c"># (skips staging for files Git already knows about)</span>
+git commit -am "Fix accuracy calculation bug"
+
+<span class="c"># open your editor for a longer message</span>
+git commit</code></pre>
+<p>Good commit messages matter more than most beginners assume:</p>
+<pre><code><span class="c"># weak messages</span>
+git commit -m "fix"
+git commit -m "changes"
+git commit -m "asdfgh"
+
+<span class="c"># better — present tense, imperative mood</span>
+git commit -m "Add random forest classifier with 5-fold cross-validation"
+git commit -m "Fix data leakage in train-test split"
+git commit -m "Remove hardcoded file paths, use config instead"</code></pre>
+<p>A good message completes the sentence: "If applied, this commit will ___."</p>
+</div>
+
+<div class="command-entry">
+<h3>git log</h3>
+<p><span class="label">What it does:</span> Shows the commit history on the current branch.</p>
+<p><span class="label">When to use it:</span> To understand what's been done, find a specific commit, or trace when a bug crept in.</p>
+<pre><code><span class="c"># full, verbose log</span>
+git log
+
+<span class="c"># compact, one line per commit — most useful day to day</span>
+git log --oneline
+
+<span class="c"># last 5 commits</span>
+git log --oneline -5
+
+<span class="c"># a visual graph of all branches</span>
+git log --oneline --graph --all
+
+<span class="c"># what files changed in each commit</span>
+git log --stat
+
+<span class="c"># search commit messages by keyword</span>
+git log --grep="accuracy"
+
+<span class="c"># commits by one author</span>
+git log --author="Jane"</code></pre>
+<p><code>git log --oneline --graph --all</code> looks something like this:</p>
+<pre><code>* a3f5c2d (HEAD -> main) Add evaluation metrics
+* b1e2d4f Fix preprocessing bug
+| * c9d3a11 (feature/random-forest) Add random forest model
+|/
+* 8a7b3e2 Initial project structure</code></pre>
+</div>
+
+<div class="command-entry">
+<h3>git diff</h3>
+<p><span class="label">What it does:</span> Shows the line-by-line differences between file versions.</p>
+<p><span class="label">When to use it:</span> Before staging or committing, to review exactly what changed.</p>
+<pre><code><span class="c"># working directory vs. last commit (unstaged changes)</span>
+git diff
+
+<span class="c"># staging area vs. last commit (staged changes) — identical to git diff --cached</span>
+git diff --staged
+
+<span class="c"># between two commits</span>
+git diff a3f5c2d b1e2d4f
+
+<span class="c"># between two branches</span>
+git diff main feature/random-forest
+
+<span class="c"># one file only</span>
+git diff model.py</code></pre>
+<p>Reading diff output:</p>
+<pre><code><span class="del">- accuracy = correct / total</span>        <span class="c">← removed</span>
+<span class="add">+ accuracy = correct / len(y_test)</span>  <span class="c">← added</span></code></pre>
+</div>
+
+<div class="command-entry">
+<h3>git push</h3>
+<p><span class="label">What it does:</span> Sends your local commits to the remote repository on GitHub.</p>
+<p><span class="label">When to use it:</span> After committing locally, whenever you want to share the work or back it up.</p>
+<pre><code><span class="c"># push the current branch to its remote counterpart</span>
+git push
+
+<span class="c"># first push of a new branch</span>
+git push -u origin feature/random-forest
+<span class="c"># -u sets the upstream — future 'git push' on this branch needs no arguments</span>
+
+<span class="c"># push to a specific remote and branch</span>
+git push origin main
+
+<span class="c"># force push (dangerous — rewrites remote history)</span>
+git push --force</code></pre>
+<blockquote class="warn"><p><code>git push --force</code> on a shared branch like <code>main</code> can destroy a teammate's work. Keep it to your own private branches.</p></blockquote>
+</div>
+
+<div class="command-entry">
+<h3>git pull</h3>
+<p><span class="label">What it does:</span> Fetches new commits from the remote and merges them into your current branch. Effectively <code>git fetch</code> + <code>git merge</code> in one step.</p>
+<p><span class="label">When to use it:</span> At the start of each work session, or whenever someone tells you they pushed new code.</p>
+<pre><code>git pull
+git pull origin main
+
+<span class="c"># rebase instead of merge (cleaner history, once you're comfortable with rebase)</span>
+git pull --rebase origin main</code></pre>
+</div>
+
+<div class="command-entry">
+<h3>git fetch</h3>
+<p><span class="label">What it does:</span> Downloads new commits and branches from the remote without touching your local working files. A safe way to look at what's changed before merging it in.</p>
+<p><span class="label">When to use it:</span> When you want to see what others have pushed without immediately merging it.</p>
+<pre><code>git fetch origin
+git diff main origin/main
+git merge origin/main   <span class="c"># when you're ready</span></code></pre>
+<p><code>pull</code> is automatic. <code>fetch</code> lets you inspect first. Fine to default to <code>pull</code> as a beginner; on a team, <code>fetch</code> gives you more control.</p>
+</div>
+
+<hr>
+
+<h2 id="part-5"><small>Part 5</small>Branching and merging</h2>
+
+<p>This is where Git's real power shows up. It matters most on ML projects, where you're often experimenting with different models, hyperparameters, or preprocessing approaches at the same time.</p>
+
+<h3>Creating and switching branches</h3>
+<pre><code><span class="c"># list local branches (* marks the current one)</span>
+git branch
+
+<span class="c"># include remote branches too</span>
+git branch -a
+
+<span class="c"># create a branch without switching to it</span>
+git branch feature/add-svm-model
+
+<span class="c"># switch to an existing branch</span>
+git switch feature/add-svm-model
+<span class="c"># (older syntax: git checkout feature/add-svm-model)</span>
+
+<span class="c"># create AND switch in one step — the common case</span>
+git switch -c feature/add-svm-model
+<span class="c"># (older syntax: git checkout -b feature/add-svm-model)</span>
+
+<span class="c"># delete a branch, only once it's merged</span>
+git branch -d feature/add-svm-model
+
+<span class="c"># force-delete an unmerged branch (permanent)</span>
+git branch -D feature/add-svm-model</code></pre>
+
+<h3>Merging branches</h3>
+<p><span class="label">What it does:</span> Folds the changes from one branch into another.</p>
+<pre><code><span class="c"># switch to the branch you want to merge INTO</span>
+git switch main
+
+<span class="c"># merge the feature branch into it</span>
+git merge feature/add-svm-model</code></pre>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram comparing a fast-forward merge, where main simply catches up to the feature branch, with a three-way merge, where both branches added new commits and Git creates a dedicated merge commit joining them.">
+  <style> .c1{fill:#1B6B5C;} .c2{fill:#9A6B2E;} .lbl{font-family:'Inter',sans-serif;font-size:12px;fill:#1C1C1C;} .hd{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;fill:#1C1C1C;} .ln{stroke:#B9BDC2;stroke-width:1.6;} </style>
+
+  <text x="10" y="24" class="hd">Fast-forward merge</text>
+  <line x1="40" y1="55" x2="220" y2="55" class="ln"/>
+  <circle cx="40" cy="55" r="7" class="c1"/><text x="40" y="80" text-anchor="middle" class="lbl">A</text>
+  <circle cx="130" cy="55" r="7" class="c1"/><text x="130" y="80" text-anchor="middle" class="lbl">B</text>
+  <line x1="130" y1="55" x2="220" y2="55" class="ln" stroke-dasharray="4 3"/>
+  <circle cx="220" cy="55" r="7" class="c2"/><text x="220" y="80" text-anchor="middle" class="lbl">C</text>
+  <text x="130" y="35" text-anchor="middle" class="lbl" fill="#6B6B6B">main has no new commits, so it just catches up</text>
+
+  <line x1="40" y1="130" x2="360" y2="130" class="ln"/>
+  <circle cx="40" cy="130" r="7" class="c1"/>
+  <circle cx="130" cy="130" r="7" class="c1"/>
+  <circle cx="220" cy="130" r="7" class="c1"/>
+  <circle cx="310" cy="130" r="7" class="c2"/>
+  <text x="40" y="153" text-anchor="middle" class="lbl">A</text>
+  <text x="130" y="153" text-anchor="middle" class="lbl">B</text>
+  <text x="220" y="153" text-anchor="middle" class="lbl">C</text>
+  <text x="310" y="153" text-anchor="middle" class="lbl">D (feature caught up)</text>
+
+  <text x="10" y="205" class="hd">Three-way merge</text>
+  <line x1="40" y1="235" x2="420" y2="235" class="ln"/>
+  <circle cx="40" cy="235" r="7" class="c1"/><text x="40" y="260" text-anchor="middle" class="lbl">A</text>
+  <circle cx="130" cy="235" r="7" class="c1"/><text x="130" y="260" text-anchor="middle" class="lbl">B</text>
+  <circle cx="220" cy="235" r="7" class="c1"/><text x="220" y="260" text-anchor="middle" class="lbl">E</text>
+  <line x1="220" y1="235" x2="420" y2="235" class="ln"/>
+  <circle cx="420" cy="235" r="8" class="c1"/><text x="420" y="260" text-anchor="middle" class="lbl">M (merge)</text>
+
+  <path d="M130,235 Q175,290 220,290 T310,290" class="ln" fill="none" stroke-dasharray="4 3"/>
+  <circle cx="220" cy="290" r="7" class="c2"/><text x="220" y="278" text-anchor="middle" class="lbl">C</text>
+  <circle cx="310" cy="290" r="7" class="c2"/><text x="310" y="278" text-anchor="middle" class="lbl">D</text>
+  <path d="M310,290 Q365,290 420,243" class="ln" fill="none" stroke-dasharray="4 3"/>
+</svg>
+<figcaption>Fig. 2 — a fast-forward merge just moves the pointer; a three-way merge creates a dedicated merge commit joining both histories</figcaption>
+</figure>
+
+<p>A fast-forward merge is the clean case: no merge commit is created, main simply catches up. A three-way merge happens once both branches have new commits, so Git creates a dedicated merge commit joining the two histories together.</p>
+
+<h3>Merge conflicts: don't panic</h3>
+
+<p>A merge conflict happens when two branches changed the same line of the same file in different ways. Git can't decide which version to keep, so it asks you.</p>
+
+<pre><code>git merge feature/new-preprocessing
+<span class="c"># CONFLICT (content): Merge conflict in preprocess.py</span>
+<span class="c"># Automatic merge failed; fix conflicts and then commit the result.</span></code></pre>
+
+<p>Open <code>preprocess.py</code> and you'll see conflict markers:</p>
+
+<pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD                         <span class="c">← your current branch (main)</span>
+scaler = StandardScaler()
+=======                              <span class="c">← divider</span>
+scaler = MinMaxScaler()
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/new-preprocessing    <span class="c">← the incoming branch</span></code></pre>
+
+<p>To resolve it: edit the file down to the version you actually want (delete the markers), then <code>git add preprocess.py</code>, then <code>git commit</code> (Git writes the merge commit message for you).</p>
+
+<h3>git rebase — an alternative to merge</h3>
+<p><span class="label">What it does:</span> Replays your branch's commits on top of another branch, giving you a linear history instead of a merge commit. It looks like you branched off the latest code all along.</p>
+<pre><code><span class="c"># from your feature branch</span>
+git rebase main</code></pre>
+<pre><code>Before rebase:   main:    A ── B ── E
+                               \
+                 feature:       C ── D
+
+After rebase:    main:    A ── B ── E
+                                     \
+                 feature:             C' ── D'  (replayed on top of E)</code></pre>
+<blockquote><p>Rebase your own feature branches to keep history clean. Never rebase a shared branch like <code>main</code>. It rewrites history and breaks everyone else's work.</p></blockquote>
+
+<hr>
+
+<h2 id="part-6"><small>Part 6</small>Undoing mistakes</h2>
+
+<p>Everyone makes mistakes. Git is built to let you undo almost anything safely, as long as you know which tool fits which situation.</p>
+
+<h3>git restore</h3>
+<p><span class="label">What it does:</span> Discards changes in the working directory, putting a file back to its last committed state.</p>
+<pre><code><span class="c"># discard changes in one file (permanent — be careful)</span>
+git restore model.py
+
+<span class="c"># discard all unstaged changes</span>
+git restore .
+
+<span class="c"># unstage a file, moving it back to the working directory</span>
+git restore --staged model.py</code></pre>
+<blockquote class="warn"><p><code>git restore</code> on the working directory is permanent. Unsaved edits are just gone. Only run it when you're sure.</p></blockquote>
+
+<p><code>git restore</code> only touches files Git is already tracking; it won't remove new, untracked files, like a stray <code>debug_output.csv</code> left over from testing. For those, reach for <code>git clean</code>:</p>
+<pre><code><span class="c"># preview what would be deleted — do this first, always</span>
+git clean -n
+
+<span class="c"># actually delete untracked files</span>
+git clean -f
+
+<span class="c"># also delete untracked folders</span>
+git clean -fd</code></pre>
+<blockquote class="warn"><p>Like <code>git restore</code>, <code>git clean -f</code> is permanent. Run <code>git clean -n</code> first, every time, to see exactly what would go.</p></blockquote>
+
+<h3>git reset</h3>
+<p><span class="label">What it does:</span> Moves the current branch's tip back to an earlier commit. It has three modes.</p>
+<pre><code><span class="c"># --soft: uncommit but keep changes staged</span>
+git reset --soft HEAD~1
+
+<span class="c"># --mixed (default): uncommit and unstage, keep changes in the working dir</span>
+git reset HEAD~1
+
+<span class="c"># --hard: uncommit, unstage, AND discard the changes (dangerous)</span>
+git reset --hard HEAD~1
+
+<span class="c"># reset to a specific commit</span>
+git reset --hard a3f5c2d</code></pre>
+<p><code>HEAD</code> is the current commit; <code>~1</code> means one commit before it, <code>~3</code> means three commits back.</p>
+<div class="table-scroll">
+<table>
+<thead><tr><th>Mode</th><th>Commit undone?</th><th>Staging cleared?</th><th>Working dir changed?</th></tr></thead>
+<tbody>
+<tr><td><code>--soft</code></td><td>Yes</td><td>No</td><td>No</td></tr>
+<tr><td><code>--mixed</code></td><td>Yes</td><td>Yes</td><td>No</td></tr>
+<tr><td><code>--hard</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>git revert</h3>
+<p><span class="label">What it does:</span> Creates a new commit that undoes a specific commit's changes. Unlike reset, it doesn't rewrite history, which makes it safe on shared branches.</p>
+<pre><code>git revert HEAD
+git revert a3f5c2d
+git revert HEAD --no-edit   <span class="c"># skip the editor, auto-generate the message</span></code></pre>
+<p>Use <code>reset</code> only on commits that exist purely locally and haven't been pushed. Use <code>revert</code> once a commit is already on GitHub and shared with others.</p>
+
+<h3>git stash</h3>
+<p><span class="label">What it does:</span> Puts your uncommitted changes on a temporary stack and cleans the working directory, so you can switch context without committing half-finished work.</p>
+<pre><code>git stash push -m "WIP: experimenting with gradient boosting"
+
+git stash list
+<span class="c"># stash@{0}: On main: WIP: experimenting with gradient boosting</span>
+<span class="c"># stash@{1}: On main: trying new feature engineering</span>
+
+git stash apply       <span class="c"># apply the most recent, keep it in the list</span>
+git stash pop          <span class="c"># apply AND remove from the list</span>
+git stash apply stash@{1}
+git stash drop stash@{0}
+git stash clear</code></pre>
+<p>A real scenario: you're mid-way through rewriting your feature engineering code when your manager flags a production bug that needs fixing now. You stash the half-done work, switch to <code>main</code>, fix the bug, commit and push, then come back and <code>git stash pop</code> to pick up where you left off.</p>
+
+<h3>git cherry-pick</h3>
+<p><span class="label">What it does:</span> Applies one specific commit from any branch onto your current branch.</p>
+<pre><code>git cherry-pick a3f5c2d</code></pre>
+<p>Say you fixed a data normalization bug on a feature branch. Rather than merging the whole branch, you can cherry-pick just that one fix onto <code>main</code>.</p>
+
+<hr>
+
+<h2 id="part-7"><small>Part 7</small>Working with GitHub</h2>
+
+<h3>Creating a new GitHub repository</h3>
+<ol>
+<li>On github.com, click "New repository."</li>
+<li>Name it, e.g. <code>iris-classifier</code>.</li>
+<li>Set it to public or private.</li>
+<li>Skip the README if you already have local code, to avoid a conflict on first push.</li>
+<li>Click "Create repository."</li>
+</ol>
+<p>Then connect your local repo:</p>
+<pre><code><span class="c"># add GitHub as the remote, named 'origin'</span>
+git remote add origin git@github.com:username/iris-classifier.git
+
+git remote -v
+<span class="c"># origin  git@github.com:username/iris-classifier.git (fetch)</span>
+<span class="c"># origin  git@github.com:username/iris-classifier.git (push)</span>
+
+<span class="c"># push local code to GitHub for the first time</span>
+git push -u origin main</code></pre>
+
+<h3>Forking a repository</h3>
+<p>A fork is your own personal copy of someone else's repository, living under your account with full control. It's how open-source collaboration usually works.</p>
+<ol>
+<li>On GitHub, open the repo you want to contribute to and click "Fork."</li>
+<li>Clone your fork locally: <code>git clone git@github.com:YOUR_USERNAME/original-repo.git</code></li>
+<li>Add the original as an "upstream" remote so you can pull future updates: <code>git remote add upstream git@github.com:ORIGINAL_OWNER/original-repo.git</code></li>
+<li>Sync your fork when needed: <code>git fetch upstream</code> then <code>git merge upstream/main</code></li>
+</ol>
+
+<h3>Pull requests</h3>
+<p>A pull request is a proposal to merge your branch or fork into another branch. It's the standard way to contribute code, on a team or in open source.</p>
+
+<p><strong>Step 1 — branch, commit, push:</strong></p>
+<pre><code>git switch -c feature/add-xgboost-model
+
+git add .
+git commit -m "Add XGBoost model with GridSearchCV tuning"
+
+git push -u origin feature/add-xgboost-model</code></pre>
+
+<p><strong>Step 2 — open the PR:</strong> GitHub will show a prompt on the repo page, "Compare &amp; pull request." Click it, write a clear title and description, and request reviewers if you're on a team.</p>
+
+<p><strong>Step 3 — after approval:</strong> click "Merge pull request."</p>
+
+<h3>Tags: marking releases</h3>
+<p>Tags mark specific commits as milestones, like <code>v1.0</code> or <code>v2.0-beta</code>. There are two styles; pick one per tag, since running both on the same name back to back will error out (the tag already exists after the first).</p>
+<pre><code><span class="c"># Option A: lightweight — just a name</span>
+git tag v1.0
+
+<span class="c"># Option B: annotated — includes a message, author, and date (preferred)</span>
+git tag -a v1.0 -m "First stable model release"</code></pre>
+<pre><code>git tag                          <span class="c"># list all tags</span>
+git push origin v1.0             <span class="c"># tags aren't pushed by default with plain 'git push'</span>
+git push --tags                  <span class="c"># push all of them at once</span>
+git show v1.0                    <span class="c"># view tag details</span>
+git tag -d v1.0                  <span class="c"># delete locally</span>
+git push origin --delete v1.0    <span class="c"># delete from GitHub too</span></code></pre>
+<blockquote><p>If you ever run <code>git checkout v1.0</code>, checking out a tag directly rather than a branch, Git will warn you that you're in a "detached HEAD" state. That just means you're viewing that exact snapshot rather than sitting on a branch, which is normal. To get back to normal, switch to a branch: <code>git switch main</code>.</p></blockquote>
+
+<hr>
+
+<h2 id="part-8"><small>Part 8</small>.gitignore for ML projects</h2>
+
+<p>A <code>.gitignore</code> file tells Git which files to never track. For ML projects specifically, this matters because data files can run into gigabytes, trained models can be hundreds of megabytes, credentials should never be committed at all, and temporary files just clutter your history.</p>
+
+<pre><code><span class="c"># Python</span>
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+<span class="c"># Jupyter notebooks</span>
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+<span class="c"># Data files (track with DVC or store in S3 instead)</span>
+data/raw/
+data/processed/
+*.csv
+*.tsv
+*.json
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.npy
+*.npz
+
+<span class="c"># Trained models (can be large)</span>
+models/
+*.pt
+*.pth
+*.onnx
+*.pb
+*.joblib
+*.model
+
+<span class="c"># Secrets and config — never commit these</span>
+.env
+.env.local
+config/secrets.yaml
+*.key
+*.pem
+
+<span class="c"># IDE and OS</span>
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+<span class="c"># MLflow / experiment tracking</span>
+mlruns/
+mlflow.db
+
+<span class="c"># Logs and outputs</span>
+logs/
+*.log
+outputs/</code></pre>
+
+<blockquote class="warn"><p>A blanket pattern can bite you. Rules like <code>*.csv</code> and <code>*.json</code> ignore every file with that extension anywhere in the project, including a small sample CSV you actually want to track, or a <code>metrics.json</code> file you want to commit (which the Git + DVC article later in this series does). Two fixes: scope the rule to a folder instead of the whole project (<code>data/raw/*.csv</code> rather than <code>*.csv</code>), or add a negation line like <code>!metrics.json</code> to re-include one file even though the broader pattern excludes it.</p></blockquote>
+
+<p>What you do commit: code, config files without secrets, <code>requirements.txt</code>, a README, small sample data for testing, and notebooks, though large notebooks are debated.</p>
+
+<hr>
+
+<h2 id="part-9"><small>Part 9</small>Collaboration workflows</h2>
+
+<h3>The feature branch workflow</h3>
+<p>This is the standard pattern on most ML teams: <code>main</code> stays stable and deployable, and every piece of work, a feature, a fix, an experiment, gets its own branch.</p>
+
+<pre><code>main  ←── always stable, deployable code
+ │
+ ├── feature/data-augmentation
+ ├── feature/hyperparameter-tuning
+ ├── fix/fix-class-imbalance
+ └── experiment/vision-transformer</code></pre>
+
+<figure>
+<svg viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A circular workflow diagram: pull latest main, create a feature branch, commit work, push the branch, open a pull request, merge, then loop back to pulling latest main.">
+  <style> .node{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.2;} .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;fill:#1C1C1C;} .ln{stroke:#1B6B5C;stroke-width:1.6;fill:none;} </style>
+  <defs><marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <circle cx="320" cy="60" r="52" class="node"/><text x="320" y="55" text-anchor="middle" class="lbl">Pull</text><text x="320" y="70" text-anchor="middle" class="lbl">latest main</text>
+
+  <circle cx="500" cy="140" r="52" class="node"/><text x="500" y="135" text-anchor="middle" class="lbl">Create</text><text x="500" y="150" text-anchor="middle" class="lbl">feature branch</text>
+
+  <circle cx="500" cy="260" r="52" class="node"/><text x="500" y="255" text-anchor="middle" class="lbl">Commit</text><text x="500" y="270" text-anchor="middle" class="lbl">your work</text>
+
+  <circle cx="320" cy="310" r="52" class="node"/><text x="320" y="305" text-anchor="middle" class="lbl">Push &amp;</text><text x="320" y="320" text-anchor="middle" class="lbl">open a PR</text>
+
+  <circle cx="140" cy="260" r="52" class="node"/><text x="140" y="255" text-anchor="middle" class="lbl">Review &amp;</text><text x="140" y="270" text-anchor="middle" class="lbl">merge</text>
+
+  <circle cx="140" cy="140" r="52" class="node"/><text x="140" y="140" text-anchor="middle" class="lbl">Delete branch,</text><text x="140" y="155" text-anchor="middle" class="lbl">start again</text>
+
+  <path d="M368,75 Q440,95 460,115" class="ln" marker-end="url(#arrow3)"/>
+  <path d="M500,192 L500,208" class="ln" marker-end="url(#arrow3)"/>
+  <path d="M460,300 Q400,320 372,315" class="ln" marker-end="url(#arrow3)"/>
+  <path d="M270,305 Q200,295 178,285" class="ln" marker-end="url(#arrow3)"/>
+  <path d="M140,208 L140,192" class="ln" marker-end="url(#arrow3)"/>
+  <path d="M178,110 Q240,80 268,68" class="ln" marker-end="url(#arrow3)"/>
+</svg>
+<figcaption>Fig. 3 — the day-to-day loop most ML teams run, over and over, per feature</figcaption>
+</figure>
+
+<h3>Day-to-day workflow</h3>
+<pre><code><span class="c"># 1. always start by pulling the latest main</span>
+git switch main
+git pull origin main
+
+<span class="c"># 2. create a feature branch</span>
+git switch -c feature/add-bert-embeddings
+
+<span class="c"># 3. work on your feature across multiple commits</span>
+git add embeddings.py
+git commit -m "Add BERT tokenizer integration"
+
+git add train.py
+git commit -m "Update training loop for embedding inputs"
+
+<span class="c"># 4. keep your branch current as others merge code</span>
+git fetch origin
+git rebase origin/main
+
+<span class="c"># 5. push and open a pull request</span>
+git push -u origin feature/add-bert-embeddings
+<span class="c"># then open the PR on GitHub</span></code></pre>
+
+<h3>Command reference</h3>
+<div class="table-scroll">
+<table>
+<thead><tr><th>Command</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>git init</code></td><td>Initialize a new repository</td></tr>
+<tr><td><code>git clone &lt;url&gt;</code></td><td>Download a remote repository</td></tr>
+<tr><td><code>git status</code></td><td>Show working dir &amp; staging area state</td></tr>
+<tr><td><code>git add &lt;file&gt;</code></td><td>Stage a file</td></tr>
+<tr><td><code>git add .</code></td><td>Stage all changes</td></tr>
+<tr><td><code>git commit -m "msg"</code></td><td>Commit staged changes</td></tr>
+<tr><td><code>git log --oneline</code></td><td>Compact commit history</td></tr>
+<tr><td><code>git diff</code></td><td>Show unstaged changes</td></tr>
+<tr><td><code>git diff --staged</code></td><td>Show staged changes</td></tr>
+<tr><td><code>git push</code></td><td>Upload commits to GitHub</td></tr>
+<tr><td><code>git pull</code></td><td>Download &amp; merge remote changes</td></tr>
+<tr><td><code>git fetch</code></td><td>Download remote changes, no merge</td></tr>
+<tr><td><code>git branch</code></td><td>List branches</td></tr>
+<tr><td><code>git switch -c &lt;name&gt;</code></td><td>Create &amp; switch to a new branch</td></tr>
+<tr><td><code>git switch &lt;name&gt;</code></td><td>Switch to an existing branch</td></tr>
+<tr><td><code>git merge &lt;branch&gt;</code></td><td>Merge a branch into the current one</td></tr>
+<tr><td><code>git rebase &lt;branch&gt;</code></td><td>Rebase onto another branch</td></tr>
+<tr><td><code>git restore &lt;file&gt;</code></td><td>Discard working directory changes</td></tr>
+<tr><td><code>git restore --staged &lt;file&gt;</code></td><td>Unstage a file</td></tr>
+<tr><td><code>git reset --soft HEAD~1</code></td><td>Undo last commit, keep staged</td></tr>
+<tr><td><code>git reset --hard HEAD~1</code></td><td>Undo last commit, discard changes</td></tr>
+<tr><td><code>git revert HEAD</code></td><td>Safely undo last commit (new commit)</td></tr>
+<tr><td><code>git stash</code></td><td>Save unfinished work temporarily</td></tr>
+<tr><td><code>git stash pop</code></td><td>Restore stashed work</td></tr>
+<tr><td><code>git cherry-pick &lt;sha&gt;</code></td><td>Copy one commit to the current branch</td></tr>
+<tr><td><code>git tag -a v1.0 -m "msg"</code></td><td>Create an annotated tag</td></tr>
+<tr><td><code>git remote add origin &lt;url&gt;</code></td><td>Link the local repo to GitHub</td></tr>
+<tr><td><code>git remote -v</code></td><td>View remote URLs</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr>
+
+<h2>Summary</h2>
+
+<p>You now know why Git exists and what specific problems it solves for ML work, the three zones that everything else builds on, and the full set of daily commands with real examples behind them. You can branch and merge for parallel experimentation, undo mistakes safely with restore, reset, revert, and stash, and use GitHub for remotes, pull requests, forks, and tags. You've got a <code>.gitignore</code> that actually fits an ML project, and a feature-branch workflow you can use on a real team starting today.</p>
+
+<p>Article 2 puts all of this into practice on a real ML classification project, running through every command in context.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. GitHub, <em>"Token authentication requirements for Git operations"</em> — password authentication for Git operations over HTTPS on GitHub.com ended August 13, 2021. <a href="https://github.blog/security/application-security/token-authentication-requirements-for-git-operations/">github.blog</a></p>
+<p>MLOps for ML practitioners &middot; Article 1 of the series</p>
+</footer>
+
+</body>
+</html>

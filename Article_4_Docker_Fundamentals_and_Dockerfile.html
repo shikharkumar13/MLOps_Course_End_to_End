@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Containerization with Docker — the complete beginner's guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:36px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:25px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+  h4{ font-family:'JetBrains Mono', monospace; font-size:16.5px; font-weight:600; color:var(--accent); margin:34px 0 12px; }
+  h2 small{ display:block; font-family:'JetBrains Mono', monospace; font-weight:500; font-size:12px; color:var(--accent); letter-spacing:0.08em; margin-bottom:8px; text-transform:uppercase; }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:14px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  .c{ color:#8A8F98; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+  .table-scroll{ overflow-x:auto; margin-bottom:24px; }
+  .table-scroll table{ margin-bottom:0; min-width:480px; }
+
+  .concept{ margin:32px 0; padding:20px 22px; background:#fff; border:1px solid var(--border); border-radius:8px; }
+  .concept h4{ margin:0 0 10px; font-family:'Inter',sans-serif; font-size:17px; color:var(--text); }
+  .concept .label{ font-family:'Inter',sans-serif; font-weight:600; font-size:13px; color:var(--accent); text-transform:uppercase; letter-spacing:0.03em; }
+  .concept p{ margin:0 0 10px; } .concept p:last-child{ margin-bottom:0; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 4</p>
+    <h1 class="title">Containerization with Docker: the complete beginner's guide</h1>
+    <p class="dek">Why containers exist, what Docker actually is, how it works underneath, and a full walkthrough of the Dockerfile, the one file that ties it all together.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Articles 1&ndash;3 first &middot; next up: Dockerizing a real ML project</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>So far in this series you've learned to version your code with Git and your data and models with DVC. But there's one more problem that breaks ML projects constantly, and it has nothing to do with versioning.</p>
+
+<blockquote><p><strong>"It works on my machine."</strong></p></blockquote>
+
+<p>You build a model, it runs perfectly on your laptop. You send it to a teammate, or deploy it to a server, and it crashes. Wrong Python version. Missing library. Different operating system. A dependency that needs a system package you forgot about.</p>
+
+<p>Docker solves this. It packages your entire application, code, dependencies, system libraries, the exact runtime, into one portable unit that runs identically everywhere. This article explains what Docker is, how it works, every core piece of it, with analogies, and finishes with a full deep dive into the Dockerfile.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>The problem: "it works on my machine"</td></tr>
+<tr><td>2</td><td>Virtual machines vs. containers</td></tr>
+<tr><td>3</td><td>What Docker is and how it works</td></tr>
+<tr><td>4</td><td>Core Docker concepts (image, container, registry...)</td></tr>
+<tr><td>5</td><td>Docker architecture (daemon, client, engine)</td></tr>
+<tr><td>6</td><td>Essential Docker commands</td></tr>
+<tr><td>7</td><td>The Dockerfile: a complete deep dive</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2><small>Part 1</small>The problem: "it works on my machine"</h2>
+
+<h3>The shipping analogy (where the name comes from)</h3>
+<p>Before containers existed in computing, think about how physical goods used to be shipped. Loading coffee beans, cars, bananas, and machinery onto a ship one at a time, each with different needs, refrigeration for bananas, dry storage for machinery, securing for cars, was slow and chaotic, and every port handled it differently.</p>
+<p>Then came the standardized shipping container. Suddenly it didn't matter what was inside, coffee or cars: every container was the same size, and any crane, ship, truck, or port in the world could handle it the same way, with the contents isolated and protected. This one change reshaped global shipping.</p>
+<p>Docker does the same thing for software. It doesn't matter whether your "cargo" is a Python ML model, a Node.js web app, or a database. Docker packages it into a standard container that runs identically on any machine that has Docker, your laptop, a colleague's Mac, a cloud server, anywhere.</p>
+
+<h3>What actually goes wrong without it</h3>
+<p>An ML project on your machine depends on far more than just your code:</p>
+<pre><code>Your ML Project Actually Depends On:
+┌────────────────────────────────────────┐
+│  Your code (train.py, model.py)         │
+│  Python 3.11 (specific version!)        │
+│  scikit-learn 1.4.0                     │
+│  numpy 1.26.4                           │
+│  pandas 2.2.0                           │
+│  System libraries (libgomp, BLAS...)    │
+│  Operating system (Ubuntu? Mac? Win?)   │
+│  Environment variables                  │
+└────────────────────────────────────────┘</code></pre>
+
+<p>If even one of these differs on another machine, things break:</p>
+<div class="table-scroll">
+<table>
+<thead><tr><th>Scenario</th><th>What breaks</th></tr></thead>
+<tbody>
+<tr><td>Teammate has Python 3.9, you used 3.11</td><td>Syntax features fail</td></tr>
+<tr><td>Server has an older numpy</td><td>Model unpickling crashes</td></tr>
+<tr><td>Mac vs. Linux line endings / paths</td><td>Scripts fail mysteriously</td></tr>
+<tr><td>Missing system library (e.g. <code>libgomp</code>)</td><td>scikit-learn won't import</td></tr>
+<tr><td>"I forgot to add that to requirements.txt"</td><td>Import errors in production</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>requirements.txt</code> only captures Python packages. It captures none of the Python version, the OS, or system-level libraries. Docker captures all of it.</p>
+
+<hr>
+
+<h2><small>Part 2</small>Virtual machines vs. containers</h2>
+<p>Before Docker, the standard way to get a consistent environment was a virtual machine. Understanding why containers beat VMs for most of this work means understanding the difference.</p>
+
+<h3>The apartment building analogy</h3>
+<p>Think of a physical server as a plot of land. Virtual machines are separate houses on that land: each one has its own complete operating system, its own foundation, plumbing, electrical. Running three applications in isolation means building three entire houses, secure but wasteful, three kitchens and three furnaces even if the apps themselves are small.</p>
+<p>Containers are more like apartments in one building. They share the building's foundation and structure, the host OS kernel, but each apartment stays private and isolated. You get isolation without rebuilding the infrastructure for every tenant, so you can fit far more containers than VMs on the same underlying hardware.</p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram comparing virtual machines, which each carry a full guest operating system on top of a hypervisor, with containers, which share one host operating system through the Docker engine, making containers far lighter weight.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;fill:#1C1C1C;} .cap{font-family:'Inter',sans-serif;font-size:12px;fill:#6B6B6B;} </style>
+
+  <text x="150" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#1C1C1C">VIRTUAL MACHINES</text>
+  <g>
+    <rect x="15" y="35" width="80" height="26" class="box"/><text x="55" y="52" text-anchor="middle" class="lbl">App</text>
+    <rect x="110" y="35" width="80" height="26" class="box"/><text x="150" y="52" text-anchor="middle" class="lbl">App</text>
+    <rect x="205" y="35" width="80" height="26" class="box"/><text x="245" y="52" text-anchor="middle" class="lbl">App</text>
+    <rect x="15" y="63" width="80" height="26" class="box"/><text x="55" y="80" text-anchor="middle" class="lbl">Libs</text>
+    <rect x="110" y="63" width="80" height="26" class="box"/><text x="150" y="80" text-anchor="middle" class="lbl">Libs</text>
+    <rect x="205" y="63" width="80" height="26" class="box"/><text x="245" y="80" text-anchor="middle" class="lbl">Libs</text>
+    <rect x="15" y="91" width="80" height="26" class="box"/><text x="55" y="108" text-anchor="middle" class="lbl">Guest OS</text>
+    <rect x="110" y="91" width="80" height="26" class="box"/><text x="150" y="108" text-anchor="middle" class="lbl">Guest OS</text>
+    <rect x="205" y="91" width="80" height="26" class="box"/><text x="245" y="108" text-anchor="middle" class="lbl">Guest OS</text>
+    <rect x="15" y="121" width="270" height="26" class="box"/><text x="150" y="138" text-anchor="middle" class="lbl">Hypervisor</text>
+    <rect x="15" y="149" width="270" height="26" class="box"/><text x="150" y="166" text-anchor="middle" class="lbl">Host OS</text>
+    <rect x="15" y="177" width="270" height="26" class="box"/><text x="150" y="194" text-anchor="middle" class="lbl">Hardware</text>
+  </g>
+  <text x="150" y="222" text-anchor="middle" class="cap">Heavy: a full guest OS per app</text>
+
+  <text x="490" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#1C1C1C">CONTAINERS</text>
+  <g>
+    <rect x="355" y="35" width="80" height="26" class="boxd"/><text x="395" y="52" text-anchor="middle" class="lbl">App</text>
+    <rect x="450" y="35" width="80" height="26" class="boxd"/><text x="490" y="52" text-anchor="middle" class="lbl">App</text>
+    <rect x="545" y="35" width="80" height="26" class="boxd"/><text x="585" y="52" text-anchor="middle" class="lbl">App</text>
+    <rect x="355" y="63" width="80" height="26" class="boxd"/><text x="395" y="80" text-anchor="middle" class="lbl">Libs</text>
+    <rect x="450" y="63" width="80" height="26" class="boxd"/><text x="490" y="80" text-anchor="middle" class="lbl">Libs</text>
+    <rect x="545" y="63" width="80" height="26" class="boxd"/><text x="585" y="80" text-anchor="middle" class="lbl">Libs</text>
+    <rect x="355" y="99" width="270" height="26" class="box"/><text x="490" y="116" text-anchor="middle" class="lbl">Docker Engine</text>
+    <rect x="355" y="149" width="270" height="26" class="box"/><text x="490" y="166" text-anchor="middle" class="lbl">Host OS</text>
+    <rect x="355" y="177" width="270" height="26" class="box"/><text x="490" y="194" text-anchor="middle" class="lbl">Hardware</text>
+  </g>
+  <text x="490" y="222" text-anchor="middle" class="cap">Light: one shared host OS kernel</text>
+</svg>
+<figcaption>Fig. 1 — a VM carries its own OS; a container borrows the host's</figcaption>
+</figure>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Aspect</th><th>Virtual machine</th><th>Container</th></tr></thead>
+<tbody>
+<tr><td>Size</td><td>Gigabytes (full OS)</td><td>Megabytes (app + deps)</td></tr>
+<tr><td>Startup time</td><td>Minutes</td><td>Seconds, or less</td></tr>
+<tr><td>Resource use</td><td>Heavy</td><td>Light</td></tr>
+<tr><td>Isolation</td><td>Complete (own OS)</td><td>Process-level (shared kernel)</td></tr>
+<tr><td>How many per server</td><td>A handful</td><td>Hundreds</td></tr>
+</tbody>
+</table>
+</div>
+<p>For ML work, where you're often running many experiments or several model services at once, that lighter weight adds up fast.</p>
+
+<hr>
+
+<h2><small>Part 3</small>What Docker is, and how it works</h2>
+<p>Docker is a platform for building, shipping, and running applications inside containers. It's the tool that makes containerization easy and standardized.</p>
+
+<h3>The restaurant kitchen analogy</h3>
+<p>Think of Docker as a system for running standardized meal kits. A Dockerfile is the recipe, written instructions for preparing the meal. A Docker image is the meal kit, a sealed package with everything pre-measured and ready to cook, a template you can make many meals from. A Docker container is the actual cooked meal, one running instance made from that kit; you can cook many containers from one image, each separate from the others. A Docker registry, like Docker Hub, is the meal-kit warehouse, where kits are stored and shared so anyone can grab one.</p>
+<p>So the flow runs: write a recipe (Dockerfile) &rarr; produce a meal kit (build an image) &rarr; cook meals from it (run containers) &rarr; store kits in the warehouse (push to a registry) so others can use them too.</p>
+
+<figure>
+<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of the core Docker workflow: a Dockerfile is built into an image, the image is run as a container, the image can also be pushed to a registry such as Docker Hub, and other machines can pull that image from the registry.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10.5px;fill:#6B6B6B;} .cmd{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#1B6B5C;font-weight:600;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="20" width="150" height="60" rx="8" class="box"/>
+  <text x="85" y="45" text-anchor="middle" class="lbl">Dockerfile</text>
+  <text x="85" y="63" text-anchor="middle" class="sub">the recipe</text>
+
+  <line x1="160" y1="50" x2="230" y2="50" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="195" y="38" text-anchor="middle" class="cmd">docker build</text>
+
+  <rect x="235" y="20" width="150" height="60" rx="8" class="box"/>
+  <text x="310" y="45" text-anchor="middle" class="lbl">Image</text>
+  <text x="310" y="63" text-anchor="middle" class="sub">the meal kit</text>
+
+  <line x1="385" y1="50" x2="455" y2="50" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="420" y="38" text-anchor="middle" class="cmd">docker run</text>
+
+  <rect x="460" y="20" width="170" height="60" rx="8" class="box" fill="#E7F1EE"/>
+  <text x="545" y="45" text-anchor="middle" class="lbl">Container</text>
+  <text x="545" y="63" text-anchor="middle" class="sub">the cooked meal</text>
+
+  <line x1="310" y1="80" x2="310" y2="130" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="380" y="108" text-anchor="middle" class="cmd">docker push</text>
+  <line x1="440" y1="150" x2="390" y2="150" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="415" y="140" text-anchor="middle" class="cmd" fill="#9A6B2E">docker pull</text>
+
+  <rect x="220" y="130" width="220" height="30" rx="6" class="box"/>
+  <text x="330" y="150" text-anchor="middle" class="lbl">Registry (Docker Hub)</text>
+</svg>
+<figcaption>Fig. 2 — Dockerfile becomes image becomes container, and images travel through a registry</figcaption>
+</figure>
+
+<hr>
+
+<h2><small>Part 4</small>Core Docker concepts, with analogies</h2>
+<p>These are the vocabulary of Docker. Every piece you'll encounter maps to one of these.</p>
+
+<div class="concept">
+<h4>Image</h4>
+<p><span class="label">What it is</span> A read-only template with everything needed to run an application: code, runtime, libraries, environment variables, config. Built in layers (more on this in Part 7).</p>
+<p><span class="label">Analogy</span> A blueprint of a house, or a class in programming. You can't live in a blueprint, but you can build many identical houses from it.</p>
+<pre><code>docker images       <span class="c"># list images on your machine</span></code></pre>
+</div>
+
+<div class="concept">
+<h4>Container</h4>
+<p><span class="label">What it is</span> A running instance of an image, the live, executing version. You can start, stop, and delete containers; many can run from one image, each isolated.</p>
+<p><span class="label">Analogy</span> The actual house built from the blueprint, or an object created from a class. If the image is a cookie cutter, containers are the cookies.</p>
+<pre><code>docker ps           <span class="c"># list running containers</span>
+docker ps -a        <span class="c"># list ALL containers, including stopped ones</span></code></pre>
+</div>
+
+<div class="concept">
+<h4>Dockerfile</h4>
+<p><span class="label">What it is</span> A plain text file with step-by-step instructions to build an image. All of Part 7 is dedicated to this.</p>
+<p><span class="label">Analogy</span> A recipe. Follow it and you get the meal kit, the image.</p>
+</div>
+
+<div class="concept">
+<h4>Registry &amp; repository</h4>
+<p><span class="label">What it is</span> A storage and distribution system for Docker images. Docker Hub is the default public registry; a repository is a collection of related images, different versions of the same app.</p>
+<p><span class="label">Analogy</span> Docker Hub is like GitHub, but for images instead of code. A repository on it is like a single GitHub repo holding versions.</p>
+<pre><code>docker pull python:3.11-slim    <span class="c"># download an image from Docker Hub</span>
+docker push myusername/myapp    <span class="c"># upload your image</span></code></pre>
+</div>
+
+<div class="concept">
+<h4>Docker volume</h4>
+<p><span class="label">What it is</span> A way to store data outside the container, so it survives even after the container itself is deleted. Containers are ephemeral by default; delete one and its internal data goes with it. Volumes fix that.</p>
+<p><span class="label">Analogy</span> An external hard drive. Your computer, the container, can be wiped and rebuilt, but the external drive, the volume, keeps your files safe.</p>
+<pre><code>docker volume create mydata
+docker run -v mydata:/app/data myimage</code></pre>
+<p>For ML this matters a lot: you mount datasets and save trained models to volumes so they survive container restarts.</p>
+</div>
+
+<div class="concept">
+<h4>Docker network</h4>
+<p><span class="label">What it is</span> A system that lets containers talk to each other and to the outside world, for example a model API container talking to a database container.</p>
+<p><span class="label">Analogy</span> The internal phone system in an office building, letting different departments (containers) reach each other.</p>
+</div>
+
+<div class="concept">
+<h4>Port mapping</h4>
+<p><span class="label">What it is</span> Connecting a port inside the container to a port on your host machine, so you can actually reach a service running inside it.</p>
+<p><span class="label">Analogy</span> A building's internal room number mapped to a public street address. Your API might run on port 5000 inside the container; you map it to port 8000 on your laptop so you can visit <code>localhost:8000</code>.</p>
+<pre><code>docker run -p 8000:5000 myimage    <span class="c"># host port 8000 → container port 5000</span></code></pre>
+</div>
+
+<div class="concept">
+<h4>Docker Compose</h4>
+<p><span class="label">What it is</span> A tool for defining and running multi-container applications from a single YAML file, instead of running a pile of <code>docker run</code> commands by hand.</p>
+<p><span class="label">Analogy</span> An orchestra conductor. Instead of directing each musician (container) individually, the conductor coordinates all of them from one score, the YAML file.</p>
+<pre><code>docker compose up      <span class="c"># start every service defined in the compose file</span>
+docker compose down    <span class="c"># stop them all</span></code></pre>
+</div>
+
+<hr>
+
+<h2><small>Part 5</small>Docker architecture</h2>
+<p>Understanding what's happening underneath makes Docker much easier to debug. It runs on a client-server architecture.</p>
+
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│  YOUR MACHINE                                                 │
+│                                                               │
+│   ┌─────────────┐         ┌──────────────────────────────┐  │
+│   │ Docker CLI  │ ──────► │  Docker Daemon (dockerd)     │  │
+│   │ (Client)    │  REST   │                              │  │
+│   │             │  API    │  - builds images             │  │
+│   │ "docker run"│         │  - runs containers           │  │
+│   └─────────────┘         │  - manages volumes/networks  │  │
+│                           └──────────────┬───────────────┘  │
+│                                          │                   │
+│                              ┌───────────┴──────────┐        │
+│                              │  Images   Containers  │        │
+│                              └──────────────────────┘        │
+└──────────────────────────────────────┬───────────────────────┘
+                                        │ pull / push
+                                        ▼
+                            ┌────────────────────────┐
+                            │   Registry (Docker Hub)│
+                            └────────────────────────┘</code></pre>
+
+<p><strong>Docker Client (the CLI).</strong> What you interact with directly. Type <code>docker run</code> or <code>docker build</code> and the client sends that instruction to the daemon. Like the waiter who takes your order.</p>
+<p><strong>Docker Daemon (<code>dockerd</code>).</strong> The background service doing the actual work: building images, running containers, managing storage and networks. The client just gives it instructions. Like the kitchen and the chef.</p>
+<p><strong>Docker Engine.</strong> The umbrella term for the whole system, client plus daemon plus the underlying technology. When people say "install Docker," this is what they mean.</p>
+<p>Client and daemon talk over a REST API. Usually they're on the same machine, but the daemon could just as easily live on a remote server, with the client simply sending commands over the network.</p>
+
+<hr>
+
+<h2><small>Part 6</small>Essential Docker commands</h2>
+
+<h3>Working with images</h3>
+<pre><code><span class="c"># download an image from Docker Hub</span>
+docker pull python:3.11-slim
+
+<span class="c"># list images on your machine</span>
+docker images
+
+<span class="c"># build from a Dockerfile in the current directory</span>
+<span class="c"># -t tags (names) the image; "." means "look here for the Dockerfile"</span>
+docker build -t my-ml-app:v1 .
+
+<span class="c"># remove an image</span>
+docker rmi my-ml-app:v1
+
+<span class="c"># tag an image under another name, e.g. before pushing</span>
+docker tag my-ml-app:v1 myusername/my-ml-app:v1
+
+<span class="c"># push to a registry</span>
+docker push myusername/my-ml-app:v1</code></pre>
+
+<h3>Working with containers</h3>
+<pre><code><span class="c"># run a container from an image</span>
+docker run my-ml-app:v1
+
+<span class="c"># run interactively with a terminal — good for debugging</span>
+docker run -it my-ml-app:v1 /bin/bash
+
+<span class="c"># run detached, in the background</span>
+docker run -d my-ml-app:v1
+
+<span class="c"># run with a port mapping and a name</span>
+docker run -d -p 8000:5000 --name my-api my-ml-app:v1
+
+<span class="c"># run with a volume mounted</span>
+docker run -v $(pwd)/data:/app/data my-ml-app:v1
+
+docker ps           <span class="c"># running containers</span>
+docker ps -a        <span class="c"># all containers, including stopped</span>
+docker stop my-api  <span class="c"># stop one</span>
+docker start my-api <span class="c"># start a stopped one</span>
+docker rm my-api    <span class="c"># remove — must be stopped first</span>
+docker logs my-api  <span class="c"># view its logs</span>
+docker exec -it my-api /bin/bash   <span class="c"># open a shell inside a running container</span></code></pre>
+
+<h3>Cleanup, worth knowing early</h3>
+<p>Images and containers pile up and eat disk space quietly. These help:</p>
+<pre><code>docker container prune      <span class="c"># remove all stopped containers</span>
+docker image prune          <span class="c"># remove all unused images</span>
+docker system prune -a      <span class="c"># remove everything unused</span>
+docker system df            <span class="c"># see how much disk Docker is using</span></code></pre>
+
+<h3>Quick reference</h3>
+<div class="table-scroll">
+<table>
+<thead><tr><th>Command</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>docker pull &lt;image&gt;</code></td><td>Download an image</td></tr>
+<tr><td><code>docker build -t &lt;name&gt; .</code></td><td>Build an image from a Dockerfile</td></tr>
+<tr><td><code>docker images</code></td><td>List images</td></tr>
+<tr><td><code>docker run &lt;image&gt;</code></td><td>Create and start a container</td></tr>
+<tr><td><code>docker ps</code> / <code>docker ps -a</code></td><td>List running / all containers</td></tr>
+<tr><td><code>docker stop &lt;container&gt;</code></td><td>Stop a container</td></tr>
+<tr><td><code>docker rm &lt;container&gt;</code></td><td>Delete a container</td></tr>
+<tr><td><code>docker rmi &lt;image&gt;</code></td><td>Delete an image</td></tr>
+<tr><td><code>docker logs &lt;container&gt;</code></td><td>View container output</td></tr>
+<tr><td><code>docker exec -it &lt;c&gt; bash</code></td><td>Open a shell in a running container</td></tr>
+<tr><td><code>docker push &lt;image&gt;</code></td><td>Upload an image to a registry</td></tr>
+<tr><td><code>docker system prune -a</code></td><td>Clean up unused resources</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr>
+
+<h2><small>Part 7</small>The Dockerfile: a complete deep dive</h2>
+<p>This is the heart of Docker. A Dockerfile is a plain text file, literally named <code>Dockerfile</code>, no extension, containing the step-by-step instructions Docker follows to build an image. Understand this well and you've understood Docker.</p>
+
+<h3>How it works: the layer system</h3>
+<p>Each instruction in a Dockerfile creates a layer, a snapshot of whatever that instruction changed. Layers stack on top of each other to form the final image, a bit like a stack of transparent sheets, each adding something to a drawing, or a sandwich built one ingredient at a time.</p>
+<p>Docker caches each layer. Rebuild without changing a layer's inputs, and Docker reuses the cached version instead of redoing the work, which is what makes rebuilds fast. That's exactly why the <em>order</em> of instructions in a Dockerfile matters so much, which we'll get to below.</p>
+
+<pre><code>Final Image = sum of all layers
+┌─────────────────────────────┐
+│ Layer 5: COPY your code      │  ← changes often
+├─────────────────────────────┤
+│ Layer 4: pip install deps    │  ← changes sometimes
+├─────────────────────────────┤
+│ Layer 3: COPY requirements   │
+├─────────────────────────────┤
+│ Layer 2: set working dir     │
+├─────────────────────────────┤
+│ Layer 1: base OS + Python    │  ← rarely changes
+└─────────────────────────────┘</code></pre>
+
+<h3>The core instructions, one at a time</h3>
+
+<h4>FROM — choose the base image</h4>
+<p><span class="label" style="display:block;margin-bottom:6px;">What it does</span> Every Dockerfile starts with <code>FROM</code>. It sets the base image, the foundation you build on top of. You almost never start from nothing; you start from an existing image, an OS or a Python environment.</p>
+<p><span class="label" style="display:block;margin-bottom:6px;">Analogy</span> Choosing the foundation and frame of a house before you customize it. Nobody builds from raw materials up.</p>
+<pre><code><span class="c"># start from an official Python image; slim = smaller</span>
+FROM python:3.11-slim</code></pre>
+<blockquote><p><strong>ML tip:</strong> use <code>-slim</code> variants for smaller images. For GPU deep learning, reach for specialized bases like <code>pytorch/pytorch</code> or <code>tensorflow/tensorflow:latest-gpu</code>.</p></blockquote>
+
+<h4>WORKDIR — set the working directory</h4>
+<p>Sets the directory inside the container where later commands run, creating it if it doesn't exist. Everything after it, <code>COPY</code>, <code>RUN</code>, and so on, happens relative to this path. Like saying "let's work in the kitchen" once, instead of repeating the location for every instruction.</p>
+<pre><code>WORKDIR /app</code></pre>
+<p>Now everything happens inside <code>/app</code> in the container.</p>
+
+<h4>COPY — copy files into the image</h4>
+<p>Copies files or folders from your machine, the "build context," into the image. Like moving ingredients from the grocery bag onto the counter where you'll actually cook.</p>
+<pre><code><span class="c"># COPY &lt;source on your machine&gt; &lt;destination in image&gt;</span>
+COPY requirements.txt .
+COPY src/ ./src/</code></pre>
+<blockquote><p>There's also <code>ADD</code>, which behaves like <code>COPY</code> but can also fetch URLs and auto-extract archives. Default to <code>COPY</code> unless you specifically need one of those extras; it's more predictable.</p></blockquote>
+
+<h4>RUN — execute commands during the build</h4>
+<p>Runs a command while the image is being <em>built</em>, not when the container later runs. Commonly used for installing dependencies. Each <code>RUN</code> creates a new layer. Like pre-chopping vegetables before cooking.</p>
+<pre><code><span class="c"># install Python dependencies during the build</span>
+RUN pip install --no-cache-dir -r requirements.txt
+
+<span class="c"># any shell command works</span>
+RUN apt-get update && apt-get install -y libgomp1</code></pre>
+<blockquote><p>Combine related commands with <code>&amp;&amp;</code> inside one <code>RUN</code> to keep the layer count down. <code>--no-cache-dir</code> keeps the image smaller by skipping pip's own download cache.</p></blockquote>
+
+<h4>ENV — set environment variables</h4>
+<p>Sets environment variables available inside the container. Like posting house rules on the fridge that everyone inside follows.</p>
+<pre><code>ENV PYTHONUNBUFFERED=1
+ENV MODEL_PATH=/app/models/model.pkl</code></pre>
+<blockquote><p><code>PYTHONUNBUFFERED=1</code> is a common ML setting: it makes Python print logs immediately instead of buffering them, so output shows up in real time.</p></blockquote>
+
+<h4>EXPOSE — document the port</h4>
+<p>Documents which port the container listens on. This is informational only; it doesn't actually publish the port. You still need <code>-p</code> at <code>docker run</code> time to map it. Like a sign that says "reception is on floor 5": it tells people where to go, but you still need an actual door.</p>
+<pre><code>EXPOSE 5000</code></pre>
+
+<h4>CMD — the default command on start</h4>
+<p>The default command that runs when a container starts. Only one <code>CMD</code> takes effect, and it can be overridden at <code>docker run</code> time. The default action when you press "play."</p>
+<pre><code><span class="c"># run the training script when the container starts</span>
+CMD ["python", "src/train.py"]</code></pre>
+<blockquote><p>That <code>["python", "src/train.py"]</code> JSON-array format is called exec form, and it's the preferred style: the command runs directly as the container's PID 1, so it receives signals like a shutdown request correctly. Shell-form CMD instead runs under <code>/bin/sh -c</code>, which becomes PID 1 itself and often fails to forward that signal along, leading to slow or unclean shutdowns.</p></blockquote>
+
+<h4>ENTRYPOINT — the fixed command</h4>
+<p>Similar to <code>CMD</code>, but harder to override. <code>ENTRYPOINT</code> sets the main executable; <code>CMD</code> supplies its default arguments. The difference that matters: <code>CMD</code> gets fully replaced if you pass a command to <code>docker run</code>, while <code>ENTRYPOINT</code> always runs, and anything you pass to <code>docker run</code> becomes arguments to it instead.</p>
+<p>Think of <code>ENTRYPOINT</code> as a fixed machine, a blender that always blends. <code>CMD</code> supplies the default ingredients, but you can swap them without changing the fact that it blends.</p>
+<pre><code>ENTRYPOINT ["python", "src/predict.py"]
+CMD ["--input", "default.csv"]
+<span class="c"># docker run myimage                  → python src/predict.py --input default.csv</span>
+<span class="c"># docker run myimage --input new.csv  → python src/predict.py --input new.csv</span></code></pre>
+<p>For most beginner ML projects, <code>CMD</code> alone is all you need.</p>
+
+<h4>.dockerignore — the Docker equivalent of .gitignore</h4>
+<p>A file named <code>.dockerignore</code> lists what Docker should never copy into the image, keeping builds small and fast. A "do not pack" list for a move: you don't box up the trash.</p>
+<pre><code>__pycache__/
+*.pyc
+.git/
+.venv/
+data/raw/
+*.csv
+.ipynb_checkpoints/
+README.md</code></pre>
+<blockquote><p>For ML specifically, always exclude large data, virtual environments, and <code>.git</code>: they bloat the image and add nothing at runtime.</p></blockquote>
+
+<h3>Putting it together: a full annotated Dockerfile</h3>
+<pre><code><span class="c"># 1. Start from a slim Python base image</span>
+FROM python:3.11-slim
+
+<span class="c"># 2. Set the working directory inside the container</span>
+WORKDIR /app
+
+<span class="c"># 3. Environment variables for clean Python behavior</span>
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+<span class="c"># 4. System dependencies some ML libs need</span>
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+<span class="c"># 5. Copy ONLY requirements first — see the caching note below</span>
+COPY requirements.txt .
+
+<span class="c"># 6. Install Python dependencies</span>
+RUN pip install --no-cache-dir -r requirements.txt
+
+<span class="c"># 7. Copy the rest of the application code</span>
+COPY src/ ./src/
+
+<span class="c"># 8. Document the port the app uses</span>
+EXPOSE 5000
+
+<span class="c"># 9. Default command when the container starts</span>
+CMD ["python", "src/train.py"]</code></pre>
+
+<h3>The #1 Dockerfile habit: order for caching</h3>
+<p>Notice that <code>requirements.txt</code> gets copied and installed <em>before</em> the application code. That's deliberate, and it's the single most important habit in this whole article.</p>
+<p>Docker caches layers. Your code changes constantly; your dependencies change rarely. Install dependencies first, and changing your code later reuses the cached dependency layer, rebuilding only the code-copy step, in seconds. Copy everything at once instead, and every code change invalidates the cache and forces a full dependency reinstall, taking minutes instead.</p>
+
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram comparing two Dockerfile orderings. The slow version copies all files then installs dependencies, so every code change forces a full reinstall. The fast version copies only requirements.txt and installs dependencies first, then copies the rest of the code, so code-only changes reuse the cached dependency layer.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxbad{fill:#FAF3E8;stroke:#9A6B2E;stroke-width:1;} .boxgood{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#1C1C1C;} .hd{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;} </style>
+
+  <text x="160" y="20" text-anchor="middle" class="hd" fill="#9A6B2E">SLOW — rebuilds everything on any code change</text>
+  <rect x="20" y="35" width="280" height="30" rx="4" class="boxbad"/><text x="35" y="55" class="lbl">COPY . .</text>
+  <rect x="20" y="70" width="280" height="30" rx="4" class="boxbad"/><text x="35" y="90" class="lbl">RUN pip install -r requirements.txt</text>
+  <text x="160" y="118" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">any code edit invalidates BOTH layers</text>
+
+  <text x="480" y="20" text-anchor="middle" class="hd" fill="#1B6B5C">FAST — code edits reuse the cached deps layer</text>
+  <rect x="340" y="35" width="280" height="30" rx="4" class="boxgood"/><text x="355" y="55" class="lbl">COPY requirements.txt .</text>
+  <rect x="340" y="70" width="280" height="30" rx="4" class="boxgood"/><text x="355" y="90" class="lbl">RUN pip install -r requirements.txt</text>
+  <rect x="340" y="105" width="280" height="30" rx="4" class="box"/><text x="355" y="125" class="lbl">COPY . .</text>
+  <text x="480" y="153" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">only this last layer rebuilds on a code edit</text>
+</svg>
+<figcaption>Fig. 3 — copying requirements before code is the difference between seconds and minutes</figcaption>
+</figure>
+
+<p>Set up your kitchen and stock the pantry once, slowly, since it rarely changes. Then for each new dish you just swap the fresh ingredients, fast. You don't rebuild the whole kitchen every time you cook.</p>
+
+<hr>
+
+<h2>Summary</h2>
+<p>You now have a working model of containerization end to end. Containers exist to solve "it works on my machine" by packaging everything an app needs into one portable unit. Compared to virtual machines, they share the host OS kernel instead of each carrying a full guest OS, which is what makes them so much lighter. Docker itself maps cleanly onto the recipe, meal-kit, cooked-meal model: Dockerfile becomes image becomes container. You've got the core vocabulary, images, containers, registries, volumes, networks, ports, Compose, and the architecture underneath, client, daemon, and engine working together. You know the commands you'll actually use day to day, and you've been through the Dockerfile instruction by instruction, including the one habit, ordering for layer caching, that matters more than any other single thing in this article.</p>
+
+<p>Article 5 takes all of this and applies it to a real ML project: writing a Dockerfile for a working model, building the image, running it, and walking through what every single line does in context.</p>
+
+</div>
+</article>
+
+<footer>
+<p>MLOps for ML practitioners &middot; Article 4 of the series</p>
+</footer>
+
+</body>
+</html>

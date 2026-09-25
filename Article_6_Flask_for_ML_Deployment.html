@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flask for ML deployment — just enough to serve your model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:34px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:25px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+  h2 small{ display:block; font-family:'JetBrains Mono', monospace; font-weight:500; font-size:12px; color:var(--accent); letter-spacing:0.08em; margin-bottom:8px; text-transform:uppercase; }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:14px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+  .out-label{ font-family:'Inter', sans-serif; font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0.04em; text-transform:uppercase; margin:0 0 6px; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+
+  .step-card{ margin:20px 0; padding:18px 20px; background:#fff; border:1px solid var(--border); border-radius:8px; }
+  .step-card .num{ font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--accent); font-size:13px; text-transform:uppercase; letter-spacing:0.04em; }
+  .step-card p{ margin:8px 0 0; } .step-card p:first-of-type{ margin-top:10px; }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 6</p>
+    <h1 class="title">Flask for ML deployment: just enough to serve your model</h1>
+    <p class="dek">How Flask actually works, and exactly what to write to turn a trained model into an API other programs can actually call.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Article 5 first &middot; next up: FastAPI and Pydantic</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Article 5 used Flask to wrap a heart disease model in an API, but skated past <em>how</em> Flask actually works. This article fills that gap. By the end, you'll understand Flask well enough to take any trained model and expose it as a web service, something other programs, or people, can send data to and get predictions back from.</p>
+
+<p>We're not covering everything Flask can do; it's a full web framework and you could write a whole book on it. We're covering exactly the parts an ML practitioner needs to deploy a model, and nothing more. This is the "just enough Flask" article.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Why does an ML model need a web framework at all?</td></tr>
+<tr><td>2</td><td>What is Flask and how does it work?</td></tr>
+<tr><td>3</td><td>The request-response cycle, the core idea</td></tr>
+<tr><td>4</td><td>Routes, methods, and endpoints</td></tr>
+<tr><td>5</td><td>Handling input: JSON requests</td></tr>
+<tr><td>6</td><td>Sending output: JSON responses</td></tr>
+<tr><td>7</td><td>The complete ML serving pattern</td></tr>
+<tr><td>8</td><td>Testing your API</td></tr>
+<tr><td>9</td><td>Production notes: Gunicorn, and why <code>app.run()</code> isn't enough</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2><small>Part 1</small>Why does an ML model need a web framework?</h2>
+<p>You've trained a model. It lives in a <code>model.pkl</code> file. You can load it in a Python script and call <code>model.predict()</code>. So why bring Flask into it at all?</p>
+
+<h3>The problem: a model file isn't usable by others</h3>
+<p>Think about who actually needs to use your model: a website where users enter their health data and see a risk score, a mobile app sending sensor readings and expecting predictions back, another team's software that needs your fraud-detection score, a business dashboard pulling live predictions.</p>
+<p>None of these are Python scripts running on your laptop. They're separate programs, often on different machines, sometimes written in entirely different languages. They can't just <code>import joblib</code> and load your <code>.pkl</code> file. They need a standard way to ask your model a question and get an answer.</p>
+
+<h3>The restaurant analogy</h3>
+<p>Picture your trained model as a skilled chef locked in a kitchen. The chef cooks brilliantly, but customers can't walk in and talk to the chef directly, that would be chaos. What you need is a waiter and a service window: customers place an order (send data) at the window, the order goes back to the chef (your model), and the finished dish (the prediction) comes back out.</p>
+<p>Flask is that waiter and service window. It stands between the outside world and your model, accepts requests in a standard format (HTTP), passes the data through, and sends the prediction back, so any program from anywhere can use your model.</p>
+
+<h3>What "serving a model" means</h3>
+<p>Turning a model file into a live, callable service is called serving, or deploying, the model. Flask is one of the simplest tools in Python for doing this.</p>
+
+<figure>
+<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram contrasting a model.pkl file, which can only be used inside a Python script on one machine, with the same model wrapped in Flask, which any client anywhere can call over HTTP and get a prediction back from.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.2;} .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} .cap{font-family:'Inter',sans-serif;font-size:11.5px;fill:#6B6B6B;} .hd{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <text x="130" y="20" text-anchor="middle" class="hd">Before Flask</text>
+  <rect x="30" y="35" width="200" height="60" rx="8" class="box"/>
+  <text x="130" y="60" text-anchor="middle" class="lbl">model.pkl</text>
+  <text x="130" y="78" text-anchor="middle" class="sub">usable only inside a Python script</text>
+  <text x="130" y="120" text-anchor="middle" class="cap">isolated, one machine only</text>
+
+  <text x="480" y="20" text-anchor="middle" class="hd">After Flask</text>
+  <rect x="330" y="35" width="130" height="60" rx="8" class="box"/>
+  <text x="395" y="58" text-anchor="middle" class="lbl">Any client</text>
+  <text x="395" y="76" text-anchor="middle" class="sub">web, mobile, other code</text>
+
+  <line x1="460" y1="55" x2="518" y2="55" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="489" y="43" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#1B6B5C">HTTP</text>
+  <line x1="518" y1="80" x2="460" y2="80" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="489" y="96" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#9A6B2E">prediction</text>
+
+  <rect x="520" y="35" width="100" height="60" rx="8" class="boxd"/>
+  <text x="570" y="58" text-anchor="middle" class="lbl">Flask +</text>
+  <text x="570" y="74" text-anchor="middle" class="lbl">model</text>
+  <text x="480" y="120" text-anchor="middle" class="cap">accessible to the whole world</text>
+</svg>
+<figcaption>Fig. 1 — the same model file, before and after Flask stands in front of it</figcaption>
+</figure>
+
+<hr>
+
+<h2><small>Part 2</small>What Flask is, and how it works</h2>
+<p>Flask is a lightweight Python web framework. "Lightweight" means it gives you the essentials for a web service without forcing much structure on you, which suits ML APIs well, since most only need a couple of endpoints.</p>
+
+<h3>What Flask actually does</h3>
+<p>At its core, Flask does one thing: it listens for incoming web requests and runs your Python function to respond to them. You write functions, tell Flask "when a request hits this address, run this function," and it handles the messy networking underneath: listening on a port, parsing the HTTP request, sending the response back.</p>
+
+<h3>The smallest Flask app there is</h3>
+<pre><code>from flask import Flask
+
+<span class="c"># 1. Create the Flask application object</span>
+app = Flask(__name__)
+
+<span class="c"># 2. Define a route: "when someone visits '/', run this function"</span>
+@app.route("/")
+def home():
+    return "Hello, my model is alive!"
+
+<span class="c"># 3. Start the server</span>
+if __name__ == "__main__":
+    app.run()</code></pre>
+<p>Run it with <code>python app.py</code>, open <code>http://localhost:5000</code> in a browser, and you'll see the message. Every Flask app, ML ones included, is built on these same three steps.</p>
+
+<div class="step-card">
+<span class="num">Step 1</span> <code>app = Flask(__name__)</code>
+<p>Creates the application. <code>__name__</code> is a special Python variable telling Flask where the app lives, so it can find files relative to it. You'll write this line, essentially unchanged, in every Flask app you ever build.</p>
+<p><em>Analogy: opening the restaurant and hanging up the "we're open" sign.</em></p>
+</div>
+
+<div class="step-card">
+<span class="num">Step 2</span> <code>@app.route("/")</code>
+<p>A decorator, the <code>@</code> symbol, connecting a web address to a function: "when a request comes to <code>/</code>, run the function below it." <code>/</code> is the root address, the homepage.</p>
+<p><em>Analogy: posting a menu that says "if a customer asks for the homepage, the waiter does this."</em></p>
+</div>
+
+<div class="step-card">
+<span class="num">Step 3</span> <code>app.run()</code>
+<p>Starts the web server, which begins listening for requests. Without this line, nothing happens at all.</p>
+<p><em>Analogy: unlocking the door and letting customers in.</em></p>
+</div>
+
+<hr>
+
+<h2><small>Part 3</small>The request-response cycle</h2>
+<p>Everything in Flask comes down to one pattern: a request comes in, your code runs, a response goes out. Understand this cycle and you understand Flask.</p>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sequence diagram: a client sends a POST request to slash predict with patient data, Flask matches the address to a function and runs it, the function calls model.predict and builds an answer, and Flask sends the prediction back as a response.">
+  <style> .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;fill:#1C1C1C;} .step{font-family:'Inter',sans-serif;font-size:11.5px;fill:#3A4441;} .num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;fill:#1B6B5C;} .ln{stroke:#1C1C1C;stroke-width:1.2;} </style>
+  <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <text x="90" y="24" text-anchor="middle" class="lbl">CLIENT</text>
+  <text x="550" y="24" text-anchor="middle" class="lbl">FLASK SERVER</text>
+  <line x1="90" y1="35" x2="90" y2="200" class="ln" stroke-dasharray="3,3"/>
+  <line x1="550" y1="35" x2="550" y2="200" class="ln" stroke-dasharray="3,3"/>
+
+  <line x1="90" y1="70" x2="548" y2="70" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar2)"/>
+  <text x="95" y="60" class="num">1. REQUEST</text>
+  <text x="95" y="86" class="step">POST /predict — here's patient data</text>
+
+  <text x="330" y="112" text-anchor="middle" class="step"><tspan class="num">2. </tspan>Flask matches the address to your function and runs it</text>
+  <text x="330" y="132" text-anchor="middle" class="step"><tspan class="num">3. </tspan>Your function calls model.predict(), builds an answer</text>
+
+  <line x1="548" y1="170" x2="90" y2="170" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#ar2)"/>
+  <text x="95" y="160" class="num">4. RESPONSE</text>
+  <text x="95" y="186" class="step">prediction: 1, probability: 0.78</text>
+</svg>
+<figcaption>Fig. 2 — the request-response cycle every Flask API runs on</figcaption>
+</figure>
+
+<p>For an ML API specifically: a client sends patient data to your prediction address, Flask receives it and runs your prediction function, that function feeds the data to the model and gets a prediction, Flask sends it back. Everything else in this article is detail layered on top of this one loop.</p>
+
+<h3>A quick word on HTTP methods</h3>
+<p>A request carries a method that signals intent. You only need two for ML work: GET, "give me something," used for simple checks like "are you alive?" and what your browser sends when you visit a URL; and POST, "here's some data, do something with it," used for predictions, since the client is sending the patient's measurements. GET is asking the waiter "are you open?" POST is handing over your order with all the details. Predictions use POST, because the client needs to send input features to the model.</p>
+
+<hr>
+
+<h2><small>Part 4</small>Routes, methods, and endpoints</h2>
+<p>A route, or endpoint, is a specific address in your API paired with the function that handles it. An ML API typically needs just two or three.</p>
+<pre><code>from flask import Flask
+
+app = Flask(__name__)
+
+<span class="c"># a health-check endpoint (GET) — confirms the API is running</span>
+@app.route("/health", methods=["GET"])
+def health():
+    return "OK"
+
+<span class="c"># a prediction endpoint (POST) — does the actual ML work</span>
+@app.route("/predict", methods=["POST"])
+def predict():
+    return "prediction goes here"</code></pre>
+<p><code>@app.route("/health", methods=["GET"])</code> defines an endpoint at <code>/health</code> that only responds to GET; <code>@app.route("/predict", methods=["POST"])</code> defines one at <code>/predict</code> that only responds to POST. The <code>methods=[...]</code> list is what restricts this. Leave it off, and Flask assumes GET only.</p>
+<p>Why bother with a <code>/health</code> endpoint? In real deployments, monitoring systems and container orchestrators, Kubernetes, Docker's own health checks, periodically ping it to confirm your service is alive. It's a tiny endpoint, but a genuine professional standard, exactly what Article 5 used.</p>
+<p><em>Analogy: <code>/health</code> is the "are you open?" sign customers can check. <code>/predict</code> is the actual service counter where the real work happens.</em></p>
+
+<hr>
+
+<h2><small>Part 5</small>Handling input: JSON requests</h2>
+<p>For ML, clients send input as JSON, a simple, universal text format that looks like a Python dictionary. One patient's data:</p>
+<pre><code>{
+  "age": 63,
+  "sex": 1,
+  "cp": 3,
+  "trestbps": 145,
+  "chol": 233
+}</code></pre>
+
+<h3>Reading JSON in Flask</h3>
+<p>Flask gives you a <code>request</code> object holding everything about the incoming request:</p>
+<pre><code>from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    <span class="c"># get the JSON data the client sent</span>
+    data = request.get_json()
+
+    <span class="c"># now 'data' is a plain Python dictionary</span>
+    age = data["age"]
+    chol = data["chol"]
+
+    return f"Received age={age}, chol={chol}"</code></pre>
+<p>The key line is <code>data = request.get_json()</code>: it takes the raw JSON and converts it into a normal Python dictionary, which you handle like any other dictionary from there.</p>
+<p><em>Analogy: the waiter takes the customer's written order (JSON) and reads it out loud in a form the chef understands (a Python dictionary).</em></p>
+<blockquote><p>You do need <code>from flask import request</code> to use this. The <code>request</code> object is automatically available inside your route functions, representing whichever request is currently coming in.</p></blockquote>
+
+<hr>
+
+<h2><small>Part 6</small>Sending output: JSON responses</h2>
+<p>Send predictions back as JSON too. Flask's <code>jsonify</code> function does this cleanly, turning a Python dictionary into a proper JSON response.</p>
+<pre><code>from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
+
+    <span class="c"># (model prediction logic would go here)</span>
+    prediction = 1
+    probability = 0.78
+
+    <span class="c"># convert a Python dict into a JSON response</span>
+    return jsonify({
+        "prediction": prediction,
+        "probability": probability,
+        "interpretation": "Heart disease likely"
+    })</code></pre>
+<p>The key line is <code>return jsonify({...})</code>: build a Python dictionary with your results, and <code>jsonify</code> turns it into JSON any client can read.</p>
+<p><em>Analogy: the chef plates the finished dish (jsonify) so it arrives presented the way the customer expects, rather than handed over in a messy pot.</em></p>
+<blockquote><p><strong>Why not just <code>return {...}</code>?</strong> Modern Flask does auto-convert a plain dictionary to JSON, so that often works too. But <code>jsonify</code> is explicit, handles edge cases like content-type headers correctly, and makes your intent clear. Use it.</p></blockquote>
+
+<h3>A real gotcha: NumPy types</h3>
+<p>ML models often return NumPy types, <code>numpy.int64</code>, <code>numpy.float64</code>, instead of plain Python ones, and <code>jsonify</code> genuinely fails on these.<sup class="fn"><a href="#fn1">1</a></sup> Fix it by converting explicitly:</p>
+<pre><code>prediction = int(model.predict(input_df)[0])        <span class="c"># numpy.int64 → int</span>
+probability = float(model.predict_proba(input_df)[0][1])  <span class="c"># numpy.float64 → float</span></code></pre>
+<p>This is exactly why Article 5 wrapped the model's outputs in <code>int(...)</code> and <code>float(...)</code>. Now you know why: it's what makes them JSON-friendly.</p>
+
+<hr>
+
+<h2><small>Part 7</small>The complete ML serving pattern</h2>
+<p>Now assemble the whole thing into the standard pattern you'll reuse for nearly every model you deploy.</p>
+<pre><code>"""app.py — The standard Flask pattern for serving an ML model."""
+from flask import Flask, request, jsonify
+import joblib
+import pandas as pd
+
+<span class="c"># ── 1. Create the app ──────────────────────────────────</span>
+app = Flask(__name__)
+
+<span class="c"># ── 2. Load the model ONCE at startup ──────────────────</span>
+<span class="c"># This runs once when the server starts, NOT on every request.</span>
+model = joblib.load("models/model.pkl")
+
+<span class="c"># The exact feature names/order the model expects</span>
+FEATURES = ["age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
+            "thalach", "exang", "oldpeak", "slope", "ca", "thal"]
+
+<span class="c"># ── 3. Health check endpoint ───────────────────────────</span>
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "healthy"})
+
+<span class="c"># ── 4. Prediction endpoint ─────────────────────────────</span>
+@app.route("/predict", methods=["POST"])
+def predict():
+    <span class="c"># a) Read the incoming JSON</span>
+    data = request.get_json()
+
+    <span class="c"># b) Arrange it into the model's expected format</span>
+    input_df = pd.DataFrame([[data[f] for f in FEATURES]], columns=FEATURES)
+
+    <span class="c"># c) Get the prediction (convert numpy types to Python types)</span>
+    prediction = int(model.predict(input_df)[0])
+    probability = float(model.predict_proba(input_df)[0][1])
+
+    <span class="c"># d) Send the result back as JSON</span>
+    return jsonify({
+        "prediction": prediction,
+        "probability": round(probability, 4),
+        "interpretation": "Heart disease likely" if prediction == 1
+                          else "Heart disease unlikely"
+    })
+
+<span class="c"># ── 5. Start the server ────────────────────────────────</span>
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)</code></pre>
+
+<h3>The design decision that matters most: load the model once</h3>
+<p><code>model = joblib.load("models/model.pkl")</code> sits at the top level, outside any function. That's deliberate. The right way, shown above, loads the model once when the server starts; every request afterward reuses it, fast. Load it inside the <code>predict()</code> function instead, and it reloads from disk on every single request, adding real delay and wasting memory. Don't do that.</p>
+<p><em>Analogy: you hire the chef once, when the restaurant opens, not fresh for every single order. Loading the model per request is like firing and rehiring the chef for every customer.</em></p>
+
+<h3>Why host="0.0.0.0"?</h3>
+<p>This came up in Article 5, and it matters especially inside Docker. <code>app.run()</code> with no host defaults to <code>127.0.0.1</code>, meaning the API is reachable only from the same machine, or the same container. Nothing outside can reach it. <code>host="0.0.0.0"</code> tells Flask to accept requests from any network interface, making it reachable from outside the container or machine.</p>
+<p><em>Analogy: <code>127.0.0.1</code> is a private intercom that only works inside your own house. <code>0.0.0.0</code> is a public phone line the outside world can actually call.</em></p>
+
+<hr>
+
+<h2><small>Part 8</small>Testing your API</h2>
+<p>Once your app is running (<code>python app.py</code>), you've got a few ways to test it.</p>
+
+<h3>Option A — curl</h3>
+<pre><code><span class="c"># health endpoint</span>
+curl http://localhost:5000/health
+
+<span class="c"># a prediction, sending JSON with -d</span>
+curl -X POST http://localhost:5000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"age": 63, "sex": 1, "cp": 3, "trestbps": 145, "chol": 233, "fbs": 1, "restecg": 0, "thalach": 150, "exang": 0, "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1}'</code></pre>
+<p><code>-X POST</code> sets the method; <code>-H "Content-Type: application/json"</code> tells the server what's coming; <code>-d '{...}'</code> is the actual JSON payload.</p>
+
+<h3>Option B — Python, the requests library</h3>
+<p>How another Python program would call your API:</p>
+<pre><code>import requests
+
+response = requests.post(
+    "http://localhost:5000/predict",
+    json={
+        "age": 63, "sex": 1, "cp": 3, "trestbps": 145, "chol": 233,
+        "fbs": 1, "restecg": 0, "thalach": 150, "exang": 0,
+        "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1
+    }
+)
+
+print(response.json())
+<span class="c"># {'prediction': 1, 'probability': 0.78, 'interpretation': 'Heart disease likely'}</span></code></pre>
+<p>The <code>json={...}</code> argument sends your dictionary as JSON automatically; <code>response.json()</code> reads the reply back into a Python dictionary.</p>
+
+<h3>Option C — the browser, GET endpoints only</h3>
+<p>For GET endpoints like <code>/health</code>, just visit <code>http://localhost:5000/health</code> directly. POST endpoints can't be tested this way; typing a URL always sends GET.</p>
+
+<hr>
+
+<h2><small>Part 9</small>Production notes: why app.run() isn't enough</h2>
+<p>Something beginners often miss: run <code>python app.py</code> and Flask may print a warning like this:</p>
+<pre class="output"><code>WARNING: This is a development server. Do not use it in a production deployment.</code></pre>
+<p>Flask's built-in server is meant for development and testing only. It's single-threaded and isn't built to handle real traffic; enough simultaneous users will overwhelm it.<sup class="fn"><a href="#fn2">2</a></sup></p>
+
+<h3>The fix: a production server, Gunicorn</h3>
+<p>For real deployment, run your Flask app through a production-grade server like Gunicorn, short for Green Unicorn.<sup class="fn"><a href="#fn3">3</a></sup> Gunicorn runs multiple worker processes to handle many requests at once.</p>
+<pre><code>pip install gunicorn
+
+<span class="c"># run with 4 worker processes</span>
+<span class="c"># "app:app" means: in app.py, use the object named 'app'</span>
+gunicorn --workers 4 --bind 0.0.0.0:5000 app:app</code></pre>
+<p><code>--workers 4</code> runs 4 parallel processes handling concurrent requests; <code>--bind 0.0.0.0:5000</code> listens on port 5000, reachable from outside; <code>app:app</code> follows the pattern <code>filename:flask_object_name</code>.</p>
+
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram comparing app.run(), a single process handling one request at a time, with Gunicorn running four worker processes in parallel, each capable of handling a request simultaneously.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;fill:#1C1C1C;} .hd{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;} .cap{font-family:'Inter',sans-serif;font-size:11px;fill:#6B6B6B;} </style>
+
+  <text x="130" y="20" text-anchor="middle" class="hd">app.run()</text>
+  <rect x="60" y="40" width="140" height="50" rx="8" class="box"/>
+  <text x="130" y="70" text-anchor="middle" class="lbl">1 process</text>
+  <text x="130" y="115" text-anchor="middle" class="cap">requests wait in line</text>
+
+  <text x="480" y="20" text-anchor="middle" class="hd">gunicorn --workers 4</text>
+  <rect x="335" y="40" width="80" height="40" rx="6" class="boxd"/><text x="375" y="64" text-anchor="middle" class="lbl">worker</text>
+  <rect x="425" y="40" width="80" height="40" rx="6" class="boxd"/><text x="465" y="64" text-anchor="middle" class="lbl">worker</text>
+  <rect x="335" y="88" width="80" height="40" rx="6" class="boxd"/><text x="375" y="112" text-anchor="middle" class="lbl">worker</text>
+  <rect x="425" y="88" width="80" height="40" rx="6" class="boxd"/><text x="465" y="112" text-anchor="middle" class="lbl">worker</text>
+  <text x="420" y="150" text-anchor="middle" class="cap">4 requests handled at once</text>
+</svg>
+<figcaption>Fig. 3 — app.run() is one waiter; Gunicorn is a full waitstaff</figcaption>
+</figure>
+
+<p><em>Analogy: <code>app.run()</code> is a single waiter serving one table at a time, fine for practicing at home. Gunicorn is a full waitstaff serving many tables at once, what you actually need once the restaurant is open to the public.</em></p>
+
+<h3>Connecting back to Docker</h3>
+<p>Article 5's Dockerfile ended with <code>CMD ["python", "app.py"]</code> for simplicity. For production, swap that line for Gunicorn:</p>
+<pre><code><span class="c"># development (Article 5)</span>
+CMD ["python", "app.py"]
+
+<span class="c"># production</span>
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "app:app"]</code></pre>
+<p>Add <code>gunicorn</code> to <code>requirements.txt</code> too. Everything else in the Dockerfile stays the same. One line takes your containerized model from "works for testing" to "ready for real traffic."</p>
+
+<hr>
+
+<h2>Summary</h2>
+<p>You now know enough Flask to deploy any ML model. Models need it to turn an unusable file into something any program can call, the waiter and service window. Flask itself runs on a three-step pattern: create the app, define routes, run the server, all built on the same request-response cycle every API follows. GET handles checks, POST handles predictions. <code>request.get_json()</code> reads input; <code>jsonify()</code> sends output, and numpy types need wrapping in <code>int()</code>/<code>float()</code> first. The full serving pattern loads the model once at startup, never per request. You can test with curl, Python's requests library, or a browser for GET endpoints, and you know why <code>app.run()</code> alone isn't enough in production, and how Gunicorn fixes that.</p>
+
+<table>
+<thead><tr><th>Tool</th><th>Role</th><th>Article</th></tr></thead>
+<tbody>
+<tr><td>Git / GitHub</td><td>Version and share code</td><td>1, 2</td></tr>
+<tr><td>DVC</td><td>Version data and models</td><td>3</td></tr>
+<tr><td>Flask</td><td>Wrap the model in an API</td><td>6 (this one)</td></tr>
+<tr><td>Docker</td><td>Package the API and environment</td><td>4, 5</td></tr>
+</tbody>
+</table>
+
+<p>The natural flow: write model code, versioned with Git; track datasets and trained models with DVC; wrap the model in an API with Flask; package the whole thing into a portable container with Docker, running identically anywhere, served in production by Gunicorn.</p>
+
+<p>Worth exploring next: FastAPI, a modern alternative to Flask with automatic input validation and interactive docs, increasingly the default for ML APIs, which is exactly where this series goes next; Pydantic, for validating incoming requests so bad input fails cleanly instead of crashing; proper request validation and error handling; batch predictions for handling many records in one request; and authentication, protecting your API with keys or tokens before it's public.</p>
+
+<p>You can now take a trained model and turn it into a live, callable service, the last bridge between "I built a model" and "people can actually use it."</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. Reproduced directly: an unwrapped <code>numpy.int64</code> passed to <code>jsonify()</code> throws a real 500 Internal Server Error in a live Flask app. Wrapping it in <code>int()</code> fixes it cleanly, confirmed the same way.</p>
+<p id="fn2">2. Confirmed via Flask/Werkzeug's own behavior and current deployment guidance: the built-in development server is single-threaded and explicitly unsuited to production traffic.</p>
+<p id="fn3">3. Confirmed directly from Gunicorn's own project description: "Gunicorn 'Green Unicorn' is a Python WSGI HTTP Server for UNIX."</p>
+<p>MLOps for ML practitioners &middot; Article 6 of the series</p>
+</footer>
+
+</body>
+</html>

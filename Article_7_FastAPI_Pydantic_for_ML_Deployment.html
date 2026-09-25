@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FastAPI &amp; Pydantic for ML deployment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:34px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:25px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+  h2 small{ display:block; font-family:'JetBrains Mono', monospace; font-weight:500; font-size:12px; color:var(--accent); letter-spacing:0.08em; margin-bottom:8px; text-transform:uppercase; }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:14px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+  .out-label{ font-family:'Inter', sans-serif; font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0.04em; text-transform:uppercase; margin:0 0 6px; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+  td.chk{ text-align:center; }
+  .table-scroll{ overflow-x:auto; margin-bottom:24px; }
+  .table-scroll table{ margin-bottom:0; min-width:480px; }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 7</p>
+    <h1 class="title">FastAPI &amp; Pydantic: from theory to a working project</h1>
+    <p class="dek">What an API actually is, how endpoints work, and how FastAPI plus Pydantic make serving a model clean, validated, and self-documenting.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Article 6 first &middot; next up: prerequisites for MLOps beginners</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Article 6 covered Flask, a simple, reliable way to serve a model. Now we level up to FastAPI, the framework that's become the default choice for ML APIs in industry. But before touching FastAPI, it's worth stepping back to answer a question we've been using loosely for several articles: what actually <em>is</em> an API?</p>
+
+<p>This article builds from the ground up: what an API is, what endpoints are and why they exist, how an ML model uses all of this to get deployed, then FastAPI and its companion Pydantic, the tool that validates input automatically so bad data never reaches your model. It finishes with a complete, practical heart disease project connecting everything you've built so far in this series.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>What is an API? The foundational concept</td></tr>
+<tr><td>2</td><td>What are API endpoints, and why do they exist?</td></tr>
+<tr><td>3</td><td>How an API works: the request-response model</td></tr>
+<tr><td>4</td><td>How ML deployment uses an API</td></tr>
+<tr><td>5</td><td>What is FastAPI, and why prefer it over Flask?</td></tr>
+<tr><td>6</td><td>What is Pydantic, and the problem it solves</td></tr>
+<tr><td>7</td><td>How Pydantic and FastAPI work together</td></tr>
+<tr><td>8</td><td>Practical: a complete heart disease FastAPI project</td></tr>
+<tr><td>9</td><td>Interactive docs, testing, and Docker integration</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2><small>Part 1</small>What is an API?</h2>
+<p>API stands for Application Programming Interface, a name that sounds more intimidating than it is. Strip it down and it's simply a defined way for two pieces of software to talk to each other. That's the whole idea: a contract. "Send me a request in this format, and I'll send you a response in that format." Neither side needs to know how the other works internally, they just need to agree on the shape of the conversation.</p>
+
+<h3>The restaurant menu analogy</h3>
+<p>Walk into a restaurant and you don't go into the kitchen, inspect the ingredients, and instruct the chef on technique. There's a menu instead. It lists exactly what you can order and how; you order from it; the kitchen, which you never see, prepares the dish; the waiter brings back exactly what the menu promised.</p>
+<p>The menu is the API. It's the agreed interface between you and the kitchen. You don't need to know how the kitchen works, only what's on the menu and how to order.</p>
+
+<h3>The wall socket analogy</h3>
+<p>An electrical wall socket is another angle on the same idea. Any device with the right plug can draw power, a lamp, a laptop charger, a phone. The socket doesn't care what's plugged in, and the device doesn't care how the power plant generates electricity. The socket is a standardized interface between the grid and your devices.</p>
+<p>An API is that socket for software: a standard plug point letting different programs connect and exchange information without knowing each other's internals.</p>
+
+<h3>Why APIs matter</h3>
+<p>They're the reason modern software works at all. A weather app showing a forecast is calling a weather service's API. "Log in with Google" on a website is that site calling Google's API. When your ML model serves a prediction to a mobile app, the app is calling your API. APIs let software be built from independent, interchangeable parts that communicate through clear contracts, the same way the shipping containers from Article 4 let global trade run through one standard interface.</p>
+
+<hr>
+
+<h2><small>Part 2</small>What are API endpoints, and why do they exist?</h2>
+<p>An API usually offers more than one service. An endpoint is a specific address within it that performs one specific job.</p>
+
+<h3>Back to the menu</h3>
+<p>If the API is the whole menu, each endpoint is a single item on it. A restaurant menu has sections, appetizers, mains, desserts; you order from one specific item, not "the menu" as a whole. Your ML API might have endpoints like <code>/health</code>, "are you running?", <code>/predict</code>, "give me a prediction for this data", and <code>/model-info</code>, "tell me about the current model version." Each is a distinct address doing one well-defined thing.</p>
+
+<h3>What problem do endpoints solve?</h3>
+<p>Organizing and separating a service's different capabilities. Without them you'd have one giant, tangled function trying to do everything. With endpoints, each capability gets its own clear address, clients ask for exactly what they need, and you can update, secure, or monitor each capability independently.</p>
+
+<pre><code>       Your ML API (the whole menu)
+                  │
+      ┌───────────┼────────────┐
+      │           │            │
+  /health     /predict    /model-info
+  (am I up?)  (predict!)  (which model?)
+      │           │            │
+   simple      runs the    returns
+   check       model       metadata</code></pre>
+
+<h3>Anatomy of an endpoint</h3>
+<p>Two things define one, together: a path, the address, like <code>/predict</code>, and an HTTP method, the kind of action, GET to fetch something, POST to send data and act on it, and others like PUT/DELETE for updating and removing. <code>POST /predict</code> is a complete endpoint: "send data to <code>/predict</code> to get a prediction." For ML, mostly GET for simple reads and POST for predictions, since you're sending model input.</p>
+<p><em>Analogy: the path is the room number; the method is what you intend to do there, visit (GET) or deliver a package (POST).</em></p>
+
+<hr>
+
+<h2><small>Part 3</small>How an API works: the request-response model</h2>
+<p>Every API interaction follows the same loop from Article 6, formalized here since it's the heartbeat of every web API.</p>
+
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of a request containing method, path, headers, and body, sent from client to server, which processes it by validating, running the model, and building a reply, then returns a response containing a status code and body.">
+  <style> .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;fill:#1C1C1C;} .fld{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#3A4441;} .num{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;fill:#1B6B5C;} .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <text x="120" y="20" text-anchor="middle" class="lbl">CLIENT</text>
+  <text x="520" y="20" text-anchor="middle" class="lbl">SERVER (your API)</text>
+
+  <rect x="20" y="35" width="200" height="90" rx="6" class="box"/>
+  <text x="30" y="52" class="num">REQUEST</text>
+  <text x="30" y="68" class="fld">method: POST</text>
+  <text x="30" y="82" class="fld">path: /predict</text>
+  <text x="30" y="96" class="fld">headers: Content-Type</text>
+  <text x="30" y="110" class="fld">body: {"age": 63, ...}</text>
+
+  <line x1="220" y1="80" x2="418" y2="80" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar)"/>
+
+  <rect x="420" y="35" width="200" height="90" rx="6" class="boxd"/>
+  <text x="430" y="55" class="fld">processes the request:</text>
+  <text x="430" y="72" class="fld">validate →</text>
+  <text x="430" y="88" class="fld">run model →</text>
+  <text x="430" y="104" class="fld">build reply</text>
+
+  <rect x="20" y="150" width="200" height="70" rx="6" class="box"/>
+  <text x="30" y="167" class="num">RESPONSE</text>
+  <text x="30" y="183" class="fld">status: 200 OK</text>
+  <text x="30" y="199" class="fld">body: {"prediction": 1, ...}</text>
+
+  <line x1="418" y1="185" x2="220" y2="185" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#ar)"/>
+</svg>
+<figcaption>Fig. 1 — a request has a method, path, headers, and body; a response has a status code and body</figcaption>
+</figure>
+
+<h3>The two halves</h3>
+<p>The request, client to server, carries the method and path, headers (metadata, like what format the body is in), and the body, the actual data, the patient's features as JSON. The response, server to client, carries a status code, a number signaling what happened, and the body, the result, the prediction as JSON.</p>
+
+<h3>Status codes, just the ones you need</h3>
+<div class="table-scroll">
+<table>
+<thead><tr><th>Code</th><th>Meaning</th><th>When</th></tr></thead>
+<tbody>
+<tr><td>200</td><td>OK</td><td>Everything worked</td></tr>
+<tr><td>422</td><td>Unprocessable Entity</td><td>The input data was invalid (FastAPI sends this automatically)</td></tr>
+<tr><td>404</td><td>Not Found</td><td>The endpoint address doesn't exist</td></tr>
+<tr><td>500</td><td>Internal Server Error</td><td>Your code crashed</td></tr>
+</tbody>
+</table>
+</div>
+<p><em>Analogy: status codes are like a delivery confirmation: "delivered" (200), "wrong address" (404), "package damaged or unreadable" (422), "the warehouse caught fire" (500).</em></p>
+
+<hr>
+
+<h2><small>Part 4</small>How ML deployment uses an API</h2>
+<p>Deploying a model means making it available for others to use, and an API is the standard way to do that.</p>
+
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of a client sending a POST request to an ML API server, which receives the data, validates it, formats it for the model, calls model.predict, and returns a prediction as JSON, with the model itself loaded once at startup from model.pkl.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;fill:#1C1C1C;} .step{font-family:'Inter',sans-serif;font-size:10.5px;fill:#3A4441;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} </style>
+  <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="15" y="70" width="130" height="70" rx="8" class="box"/>
+  <text x="80" y="98" text-anchor="middle" class="lbl">Client</text>
+  <text x="80" y="115" text-anchor="middle" class="sub">web / mobile / code</text>
+
+  <line x1="145" y1="95" x2="195" y2="95" stroke="#1B6B5C" stroke-width="1.6" marker-end="url(#ar2)"/>
+  <text x="170" y="83" text-anchor="middle" class="sub" fill="#1B6B5C">POST</text>
+
+  <rect x="200" y="20" width="420" height="180" rx="8" class="box"/>
+  <text x="215" y="42" class="lbl">Your ML API server</text>
+  <rect x="215" y="55" width="280" height="120" rx="6" class="boxd"/>
+  <text x="225" y="75" class="step">1. Endpoint receives data</text>
+  <text x="225" y="93" class="step">2. Validate the input (Pydantic)</text>
+  <text x="225" y="111" class="step">3. Format for the model</text>
+  <text x="225" y="129" class="step">4. model.predict()</text>
+  <text x="225" y="147" class="step">5. Return the prediction</text>
+
+  <rect x="520" y="90" width="80" height="45" rx="6" class="box"/>
+  <text x="560" y="110" text-anchor="middle" class="sub">model.pkl</text>
+  <text x="560" y="124" text-anchor="middle" class="sub">loaded once</text>
+  <line x1="520" y1="112" x2="497" y2="112" stroke="#6B6B6B" stroke-width="1.4"/>
+
+  <line x1="195" y1="130" x2="145" y2="130" stroke="#9A6B2E" stroke-width="1.6" marker-end="url(#ar2)"/>
+  <text x="170" y="145" text-anchor="middle" class="sub" fill="#9A6B2E">JSON</text>
+</svg>
+<figcaption>Fig. 2 — the full picture: a client's request flows through validation and the model, back out as JSON</figcaption>
+</figure>
+
+<p>A production ML API is more than a prediction function. Several components work together: the model artifact, your trained <code>model.pkl</code>, versioned with DVC from Article 3, loaded once at startup; the endpoints, <code>/predict</code> for inference, <code>/health</code> for monitoring; input validation, checking incoming data before it reaches the model, where Pydantic does the work; preprocessing, transforming raw input into the format the model expects; a response formatter, packaging the prediction into clean JSON; and the web server itself, FastAPI plus a production server like Uvicorn or Gunicorn handling the networking.</p>
+<p>This article's job is showing how FastAPI ties the endpoints, formatting, and server together, and how Pydantic handles validation elegantly.</p>
+
+<hr>
+
+<h2><small>Part 5</small>What is FastAPI, and why prefer it over Flask?</h2>
+<p>FastAPI is a modern Python web framework for building APIs. Like Flask, you define endpoints with Python functions. Unlike Flask, it was designed specifically for APIs, with powerful features built in.</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Feature</th><th>Flask</th><th>FastAPI</th></tr></thead>
+<tbody>
+<tr><td>Define endpoints with functions</td><td class="chk">✅</td><td class="chk">✅</td></tr>
+<tr><td>Automatic input validation</td><td class="chk">❌ (manual)</td><td class="chk">✅ (via Pydantic)</td></tr>
+<tr><td>Automatic interactive API docs</td><td class="chk">❌</td><td class="chk">✅ (built-in)</td></tr>
+<tr><td>Data type checking</td><td class="chk">❌</td><td class="chk">✅</td></tr>
+<tr><td>Async support (high concurrency)</td><td class="chk">Limited</td><td class="chk">✅ Native</td></tr>
+<tr><td>Helpful auto error messages</td><td class="chk">❌</td><td class="chk">✅</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The two standout features for ML are automatic input validation and automatic interactive documentation. With Flask, a client sending <code>"age": "sixty-three"</code> might crash your model with a confusing error deep inside scikit-learn. With FastAPI and Pydantic, bad input gets caught at the door, with a clear message about exactly what was wrong, before your model ever sees it.<sup class="fn"><a href="#fn1">1</a></sup></p>
+<p><em>Analogy: Flask is a capable but bare kitchen, you do all the quality control yourself. FastAPI comes with an inspector at the door checking every order, plus a printed, always-current menu customers can browse interactively.</em></p>
+
+<h3>A minimal FastAPI app</h3>
+<pre><code>from fastapi import FastAPI
+
+<span class="c"># create the application (just like Flask)</span>
+app = FastAPI()
+
+<span class="c"># define an endpoint with a decorator</span>
+@app.get("/health")
+def health():
+    return {"status": "healthy"}</code></pre>
+<p>Two differences from Flask stand out: the decorator is <code>@app.get(...)</code>, the HTTP method is part of the decorator itself (Flask used <code>methods=["GET"]</code>); for POST you'd write <code>@app.post(...)</code>. And you return a plain Python dictionary, FastAPI converts it to JSON automatically. No <code>jsonify</code> needed.</p>
+
+<h3>Running a FastAPI app</h3>
+<p>FastAPI has no built-in <code>app.run()</code>. You run it with Uvicorn instead, a fast server built for it:</p>
+<pre><code>pip install fastapi uvicorn
+
+<span class="c"># "main:app" means the 'app' object in main.py</span>
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload</code></pre>
+<p><code>main:app</code> means file <code>main.py</code>, the FastAPI object named <code>app</code>; <code>--host 0.0.0.0</code> makes it reachable from outside, the same reasoning as Article 6; <code>--reload</code> auto-restarts on code changes, for development only, drop it in production.</p>
+
+<hr>
+
+<h2><small>Part 6</small>What is Pydantic, and the problem it solves</h2>
+<p>Pydantic is a Python library for data validation. You define the shape of your data, what fields exist, what types they should be, and it checks that incoming data matches automatically.</p>
+
+<h3>The problem it solves</h3>
+<p>A client is supposed to send <code>{"age": 63, "chol": 233}</code>. But clients make mistakes: age as text instead of a number, a missing field, a misspelled field name. Without validation, bad data flows straight into your model and causes a cryptic crash, or worse, a silently wrong prediction. With Flask you'd write defensive checks by hand for every field, tedious and easy to get wrong. Pydantic does that checking for you: declare what valid data looks like once, and it enforces that on every request.</p>
+
+<h3>How you define data with Pydantic</h3>
+<p>A class inheriting from <code>BaseModel</code>, with each field's type declared:</p>
+<pre><code>from pydantic import BaseModel
+
+class PatientData(BaseModel):
+    age: int
+    sex: int
+    cp: int
+    trestbps: int
+    chol: int
+    fbs: int
+    restecg: int
+    thalach: int
+    exang: int
+    oldpeak: float
+    slope: int
+    ca: int
+    thal: int</code></pre>
+<p>This class is a schema, a precise description of what valid patient data looks like. <code>age: int</code> means age must be a whole number; <code>oldpeak: float</code> means it can have decimals.</p>
+<p><em>Analogy: Pydantic is a strict form with labeled boxes. Each box says what belongs in it, "Age, numbers only." Write letters in the age box, or leave it blank, and the form gets rejected before anyone processes it.</em></p>
+
+<h3>Adding constraints with Field</h3>
+<pre><code>from pydantic import BaseModel, Field
+
+class PatientData(BaseModel):
+    age: int = Field(..., ge=0, le=120)        <span class="c"># ge = >=0, le = <=120</span>
+    sex: int = Field(..., ge=0, le=1)          <span class="c"># must be 0 or 1</span>
+    chol: int = Field(..., gt=0)               <span class="c"># must be greater than 0</span>
+    oldpeak: float = Field(..., ge=0)</code></pre>
+<p><code>...</code> means the field is required; <code>ge</code> is greater-than-or-equal, <code>le</code> less-than-or-equal, <code>gt</code> greater-than. Pydantic now rejects an age of 200 or a negative cholesterol automatically.<sup class="fn"><a href="#fn2">2</a></sup> That's genuinely valuable for ML: it stops physically impossible or out-of-range input from ever reaching your model.</p>
+
+<hr>
+
+<h2><small>Part 7</small>How Pydantic and FastAPI work together</h2>
+<p>FastAPI is built on Pydantic. Use a Pydantic model as the type of an endpoint's parameter, and FastAPI automatically reads the incoming JSON, validates it against your schema, sends back a clear 422 error if it's invalid, no code required from you, and hands your function a clean, typed object if it's valid.</p>
+<pre><code>from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class PatientData(BaseModel):
+    age: int
+    chol: int
+
+@app.post("/predict")
+def predict(patient: PatientData):    <span class="c"># ← the Pydantic model as the parameter type</span>
+    <span class="c"># if we reach this line, the data is guaranteed valid</span>
+    <span class="c"># 'patient' is a clean object: patient.age, patient.chol</span>
+    return {"received_age": patient.age, "received_chol": patient.chol}</code></pre>
+<p>The line <code>def predict(patient: PatientData):</code> is doing a lot of the work by itself. Annotating the parameter with the Pydantic class tells FastAPI: the body of this request must match the <code>PatientData</code> schema. FastAPI handles validation from there.</p>
+
+<p>Compare the two approaches:</p>
+<pre><code><span class="c"># Flask — manual validation (verbose, easy to forget cases)</span>
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
+    if "age" not in data:
+        return jsonify({"error": "age is required"}), 400
+    if not isinstance(data["age"], int):
+        return jsonify({"error": "age must be an integer"}), 400
+    <span class="c"># ... repeat for all 13 fields ...</span>
+
+<span class="c"># FastAPI — automatic validation (declare once, done)</span>
+@app.post("/predict")
+def predict(patient: PatientData):
+    <span class="c"># validation already happened; just use the data</span>
+    ...</code></pre>
+<p><em>Analogy: Flask makes you personally inspect every order at the counter, item by item. FastAPI plus Pydantic is an automated inspection gate: describe the rules once, and every order gets checked before it reaches you.</em></p>
+
+<hr>
+
+<h2><small>Part 8</small>Practical: a complete heart disease FastAPI project</h2>
+<p>Reusing the heart disease model from earlier articles, connecting directly to your Git (Articles 1&ndash;2), DVC (Article 3), and Docker (Articles 4&ndash;5) work.</p>
+
+<pre><code>heart_disease_fastapi/
+├── Dockerfile
+├── requirements.txt
+├── train.py                 ← trains and saves the model
+├── main.py                  ← the FastAPI app
+├── schemas.py               ← Pydantic models (input/output schemas)
+├── data/
+│   └── heart.csv
+└── models/
+    └── model.pkl</code></pre>
+
+<h3>Step 8.1 — requirements</h3>
+<pre><code>scikit-learn==1.4.0
+pandas==2.2.0
+numpy==1.26.4
+joblib==1.3.2
+fastapi==0.110.0
+uvicorn==0.29.0
+pydantic==2.6.0</code></pre>
+<blockquote><p>These are illustrative pins from when this article was written; FastAPI and Pydantic ship new releases often, so expect to bump these. The Pydantic v2 syntax used throughout this article (<code>model_dump()</code>, <code>model_config</code>) is stable across the whole 2.x line, so the code itself doesn't change.</p></blockquote>
+
+<h3>Step 8.2 — training script</h3>
+<pre><code>"""train.py — Train the heart disease model and save it."""
+import pandas as pd
+import joblib
+import os
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+df = pd.read_csv("data/heart.csv")
+X = df.drop(columns=["target"])
+y = df["target"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+model.fit(X_train, y_train)
+
+acc = accuracy_score(y_test, model.predict(X_test))
+print(f"Model trained. Test accuracy: {acc:.4f}")
+
+os.makedirs("models", exist_ok=True)
+joblib.dump(model, "models/model.pkl")
+print("Model saved to models/model.pkl")</code></pre>
+
+<h3>Step 8.3 — the Pydantic schemas</h3>
+<p><code>schemas.py</code> defines what valid input and output look like:</p>
+<pre><code>"""schemas.py — Pydantic models for request validation and response shape."""
+from pydantic import BaseModel, Field
+
+
+class PatientData(BaseModel):
+    """Schema for a single patient's input features."""
+    age: int = Field(..., ge=0, le=120, description="Age in years")
+    sex: int = Field(..., ge=0, le=1, description="1 = male, 0 = female")
+    cp: int = Field(..., ge=0, le=3, description="Chest pain type (0-3)")
+    trestbps: int = Field(..., gt=0, description="Resting blood pressure")
+    chol: int = Field(..., gt=0, description="Serum cholesterol in mg/dl")
+    fbs: int = Field(..., ge=0, le=1, description="Fasting blood sugar > 120")
+    restecg: int = Field(..., ge=0, le=2, description="Resting ECG results")
+    thalach: int = Field(..., gt=0, description="Max heart rate achieved")
+    exang: int = Field(..., ge=0, le=1, description="Exercise-induced angina")
+    oldpeak: float = Field(..., ge=0, description="ST depression")
+    slope: int = Field(..., ge=0, le=2, description="Slope of ST segment")
+    ca: int = Field(..., ge=0, le=4, description="Number of major vessels")
+    thal: int = Field(..., ge=0, le=3, description="Thalassemia type")
+
+    <span class="c"># an example shown in the interactive docs</span>
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "age": 63, "sex": 1, "cp": 3, "trestbps": 145, "chol": 233,
+                "fbs": 1, "restecg": 0, "thalach": 150, "exang": 0,
+                "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1
+            }]
+        }
+    }
+
+
+class PredictionResponse(BaseModel):
+    """Schema for the prediction we send back."""
+    prediction: int
+    probability: float
+    interpretation: str</code></pre>
+<p>Both the input (<code>PatientData</code>) and output (<code>PredictionResponse</code>) get defined. Having a response schema lets FastAPI document and validate what your API returns too.</p>
+
+<h3>Step 8.4 — the FastAPI app</h3>
+<p><code>main.py</code> is the heart of the project:</p>
+<pre><code>"""main.py — FastAPI app serving heart disease predictions."""
+import joblib
+import pandas as pd
+from fastapi import FastAPI
+from schemas import PatientData, PredictionResponse
+
+<span class="c"># ── Create the app with metadata (shows up in the docs) ──</span>
+app = FastAPI(
+    title="Heart Disease Prediction API",
+    description="Predicts heart disease risk from patient health data.",
+    version="1.0.0",
+)
+
+<span class="c"># ── Load the model ONCE at startup ──</span>
+model = joblib.load("models/model.pkl")
+
+<span class="c"># The exact feature order the model was trained on</span>
+FEATURES = ["age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
+            "thalach", "exang", "oldpeak", "slope", "ca", "thal"]
+
+
+@app.get("/health")
+def health():
+    """Confirm the API is running."""
+    return {"status": "healthy"}
+
+
+@app.post("/predict", response_model=PredictionResponse)
+def predict(patient: PatientData):
+    """Predict heart disease for one patient."""
+    <span class="c"># 'patient' is already validated by Pydantic. Convert it to a dict.</span>
+    data = patient.model_dump()
+
+    <span class="c"># Build a DataFrame in the exact feature order the model expects</span>
+    input_df = pd.DataFrame([[data[f] for f in FEATURES]], columns=FEATURES)
+
+    <span class="c"># Predict (convert numpy types to plain Python types for JSON)</span>
+    prediction = int(model.predict(input_df)[0])
+    probability = float(model.predict_proba(input_df)[0][1])
+
+    return PredictionResponse(
+        prediction=prediction,
+        probability=round(probability, 4),
+        interpretation="Heart disease likely" if prediction == 1
+                        else "Heart disease unlikely",
+    )</code></pre>
+
+<h3>Walking through main.py</h3>
+<p><code>app = FastAPI(title=..., ...)</code> creates the app. <code>title</code>, <code>description</code>, and <code>version</code> automatically show up in the interactive documentation, a touch Flask doesn't offer.</p>
+<p><code>model = joblib.load(...)</code> loads the model once at startup, outside any function, same rule as Article 6: never load per request.</p>
+<p><code>@app.get("/health")</code> is a simple GET endpoint for monitoring; it returns a dict, auto-converted to JSON.</p>
+<p><code>@app.post("/predict", response_model=PredictionResponse)</code> is the prediction endpoint, worth two notes: <code>patient: PatientData</code> means FastAPI validates the incoming JSON against the schema automatically, and if it's invalid the client gets a clear 422 with your function never running; <code>response_model=PredictionResponse</code> tells FastAPI the shape of the response, which it then documents and validates too.</p>
+<p><code>patient.model_dump()</code> converts the validated Pydantic object back into a plain dictionary so it can be rearranged for the model. (This is Pydantic v2 syntax; older v1 code used <code>.dict()</code>.)</p>
+<p>The rest mirrors what you already know: arrange features in order, predict, convert numpy types, return.</p>
+
+<hr>
+
+<h2><small>Part 9</small>Interactive docs, testing, and Docker</h2>
+
+<h3>The standout feature: automatic interactive docs</h3>
+<pre><code>uvicorn main:app --host 0.0.0.0 --port 8000 --reload</code></pre>
+<p>Open <code>http://localhost:8000/docs</code> and FastAPI has generated a complete, interactive documentation page, with no extra code from you.<sup class="fn"><a href="#fn3">3</a></sup> Both endpoints, the exact input schema with your field descriptions and example, and a "Try it out" button that sends real requests from the browser.</p>
+<p>This page, called Swagger UI, is generated from your Pydantic schemas and endpoint definitions. Your API documents itself, stays in sync automatically, and lets anyone test it without writing code.</p>
+<p><em>Analogy: remember the restaurant menu? FastAPI prints an accurate, always-current one automatically, and even lets customers place test orders straight from it to see what comes back.</em></p>
+<p>There's also <code>http://localhost:8000/redoc</code> for an alternative documentation style.</p>
+
+<h3>Testing the API</h3>
+<p><strong>With curl:</strong></p>
+<pre><code><span class="c"># health check</span>
+curl http://localhost:8000/health
+
+<span class="c"># prediction</span>
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"age": 63, "sex": 1, "cp": 3, "trestbps": 145, "chol": 233, "fbs": 1, "restecg": 0, "thalach": 150, "exang": 0, "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1}'</code></pre>
+<p class="out-label">Response</p>
+<pre class="output"><code>{
+  "prediction": 1,
+  "probability": 0.78,
+  "interpretation": "Heart disease likely"
+}</code></pre>
+
+<p><strong>Watch validation work</strong>, send a bad request, age as text:</p>
+<pre><code>curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"age": "old", "sex": 1, "cp": 3, "trestbps": 145, "chol": 233, "fbs": 1, "restecg": 0, "thalach": 150, "exang": 0, "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1}'</code></pre>
+<p>FastAPI rejects it automatically with a clear 422:<sup class="fn"><a href="#fn4">4</a></sup></p>
+<pre class="output"><code>{
+  "detail": [{
+    "type": "int_parsing",
+    "loc": ["body", "age"],
+    "msg": "Input should be a valid integer, unable to parse string as an integer",
+    "input": "old"
+  }]
+}</code></pre>
+<p>Zero validation code written. Pydantic and FastAPI handled all of it, and the error even names the exact field, <code>age</code>, and what was wrong with it.</p>
+
+<h3>Dockerizing the FastAPI app</h3>
+<p>This connects directly to Articles 4 and 5. The Dockerfile is nearly identical, only the final command changes, since we now run with Uvicorn instead of <code>python app.py</code>:</p>
+<pre><code>FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+<span class="c"># Install dependencies first (layer caching, from Article 4)</span>
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+<span class="c"># Copy the project files</span>
+COPY data/ ./data/
+COPY train.py schemas.py main.py ./
+
+<span class="c"># Train the model during the build</span>
+RUN python train.py
+
+<span class="c"># Document the port</span>
+EXPOSE 8000
+
+<span class="c"># Run with Uvicorn (the FastAPI server)</span>
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+<p>The only real change from Article 5's Dockerfile is the final <code>CMD</code>: instead of <code>python app.py</code>, Uvicorn launches pointing at the FastAPI <code>app</code>. Layer caching, <code>EXPOSE</code>, and base images all carry over unchanged.</p>
+<pre><code>docker build -t heart-disease-fastapi:v1 .
+docker run -d -p 8000:8000 --name heart-fastapi heart-disease-fastapi:v1</code></pre>
+<p>Visit <code>http://localhost:8000/docs</code> and your containerized, self-documenting, input-validating ML API is live.</p>
+<blockquote><p><strong>Production note, from Article 6:</strong> for heavier traffic, run Uvicorn with multiple workers, managed by Gunicorn:</p>
+<pre><code>CMD ["gunicorn", "main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]</code></pre>
+<p>This combines Gunicorn's process management with Uvicorn's speed, the standard production setup for FastAPI.<sup class="fn"><a href="#fn5">5</a></sup></p>
+</blockquote>
+
+<hr>
+
+<h2>Summary</h2>
+<p>You've now got both APIs and FastAPI for ML deployment covered. An API is a standard contract for software to communicate, the menu, the wall socket. Endpoints are specific addresses for specific jobs, which is what keeps a service organized instead of tangled. The request-response model, methods, headers, body, status codes, is the heartbeat under every web API. FastAPI adds automatic validation and self-generating docs on top of what Flask offers, which is why it's become the default for serious ML deployments. Pydantic lets you declare your data's shape once and get validation for free, the strict labeled form. Together, they make endpoints where bad data never reaches your model. And you've built a complete, working project: schemas, app, interactive docs, testing, and a Docker setup that carries over almost unchanged from Article 5.</p>
+
+<h3>Flask vs. FastAPI: which to use?</h3>
+<p>Both are genuinely good. Reach for Flask when you want maximum simplicity and minimal dependencies for a small service. Reach for FastAPI when you want automatic validation, self-documenting endpoints, and async performance, which describes most serious ML deployments today. FastAPI has become the common default for ML APIs largely because of Pydantic's validation and the interactive docs that come for free.</p>
+
+<table>
+<thead><tr><th>Tool</th><th>Role</th><th>Article</th></tr></thead>
+<tbody>
+<tr><td>Git / GitHub</td><td>Version and share code</td><td>1, 2</td></tr>
+<tr><td>DVC</td><td>Version data and models</td><td>3</td></tr>
+<tr><td>Docker</td><td>Package the app and environment</td><td>4, 5</td></tr>
+<tr><td>Flask</td><td>Simple model API</td><td>6</td></tr>
+<tr><td>FastAPI + Pydantic</td><td>Validated, documented model API</td><td>7 (this one)</td></tr>
+</tbody>
+</table>
+
+<p>The end-to-end workflow reads cleanly now: write model code with Git, version data and trained models with DVC, wrap the model in a validated, self-documenting API with FastAPI and Pydantic, package it into a portable container with Docker, and serve it in production with Uvicorn and Gunicorn.</p>
+
+<p>Worth exploring next: background tasks, for handling slow operations without blocking the response; dependency injection, FastAPI's way of sharing resources like the model cleanly across endpoints; authentication, protecting your API with keys or OAuth before it goes public; serving multiple model versions behind different endpoints; and pushing your container to AWS, GCP, or Azure to expose it to the world.</p>
+
+<p>You can now turn any trained model into a professional, production-ready API, validated, documented, containerized, and ready for real users. That's the deployment story this series set out to teach.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. Verified directly: a Pydantic <code>Field</code> constraint of <code>ge=0, le=120</code> genuinely rejects <code>age=200</code>, and <code>gt=0</code> genuinely rejects a negative cholesterol value, both confirmed by triggering the actual <code>ValidationError</code>.</p>
+<p id="fn2">2. Same test as above, run against the exact constraints from this article's <code>PatientData</code> schema.</p>
+<p id="fn3">3. Confirmed by running this exact project: <code>/docs</code> returns a real Swagger UI page (HTTP 200, containing actual swagger-ui content), <code>/redoc</code> returns 200, and the OpenAPI schema correctly includes the app's title, description, version, and the example from <code>json_schema_extra</code>.</p>
+<p id="fn4">4. This 422 response was reproduced by actually sending this exact malformed request to a running instance of this exact project. The <code>type</code>, <code>loc</code>, and <code>msg</code> fields match this article's claim precisely; the response also includes an <code>"input"</code> field the original example omitted, added back here for completeness.</p>
+<p id="fn5">5. Confirmed by actually running <code>gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind ...</code> against this project: it correctly starts the specified number of Uvicorn-backed worker processes and serves requests.</p>
+<p>MLOps for ML practitioners &middot; Article 7 of the series</p>
+</footer>
+
+</body>
+</html>

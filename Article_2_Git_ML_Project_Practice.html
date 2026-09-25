@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git in action — the Iris classification project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB;
+    --text:#1C1C1C;
+    --text-muted:#6B6B6B;
+    --accent:#1B6B5C;
+    --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3;
+    --code-border:#E8E8E5;
+    --border:#E5E5E2;
+    --amber:#9A6B2E;
+    --amber-soft:#FAF3E8;
+    --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Lora', Georgia, serif;
+    font-size:19px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+
+  h1,h2,h3,h4{
+    font-family:'Inter', -apple-system, sans-serif;
+    color:var(--text);
+    font-weight:650;
+    line-height:1.3;
+    letter-spacing:-0.01em;
+  }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:14px;
+  }
+  h1.title{ font-size:38px; margin:0 0 14px; line-height:1.2; }
+  p.dek{
+    font-family:'Lora', serif;
+    font-style:italic;
+    font-size:20px;
+    color:var(--text-muted);
+    margin:0 0 28px;
+    line-height:1.55;
+  }
+  .meta-line{
+    font-family:'Inter', sans-serif;
+    font-size:13.5px;
+    color:var(--text-muted);
+    padding-bottom:32px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:40px;
+  }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+
+  h2{ font-size:26px; margin:56px 0 20px; }
+  h3{ font-size:19px; margin:34px 0 12px; color:var(--text); }
+  h2 small, h3 small{
+    display:block;
+    font-family:'Inter', sans-serif;
+    font-weight:500;
+    font-size:13px;
+    color:var(--text-muted);
+    letter-spacing:0.02em;
+    margin-bottom:6px;
+  }
+
+  a{ color:var(--accent); }
+
+  code{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.82em;
+    background:var(--code-bg);
+    border:1px solid var(--code-border);
+    padding:0.1em 0.4em;
+    border-radius:4px;
+    color:#2B2B2B;
+  }
+
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--code-border);
+    border-radius:8px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:0 0 20px;
+  }
+  pre code{
+    background:none; border:none; padding:0;
+    font-size:14px; line-height:1.6; color:#2B2B2B; white-space:pre;
+  }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+  .s{ color:var(--accent); }
+  .del{ color:#A33B2A; }
+  .add{ color:#1B6B5C; }
+  .out-label{
+    font-family:'Inter', sans-serif; font-size:12px; font-weight:600;
+    color:var(--text-muted); letter-spacing:0.04em; text-transform:uppercase;
+    margin:0 0 6px;
+  }
+
+  blockquote{
+    margin:22px 0; padding:16px 20px;
+    background:var(--accent-soft); border-left:3px solid var(--accent);
+    border-radius:0 6px 6px 0; font-size:17.5px;
+  }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; }
+  blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted);
+    text-align:center; margin-top:12px;
+  }
+
+  .act-block{
+    margin:52px 0 0;
+    padding:26px 28px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent);
+    border-radius:0 8px 8px 0;
+  }
+  .act-eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:0.08em; color:var(--accent);
+    margin-bottom:6px; text-transform:uppercase;
+  }
+  .act-block h2{ margin:0 0 14px; font-size:23px; }
+  .act-block > p:first-of-type{ margin-top:0; }
+  .step-heading{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:16px;
+    color:var(--text); margin:26px 0 10px;
+  }
+
+  .scenario{
+    font-size:17.5px;
+    padding:14px 18px;
+    background:var(--code-bg);
+    border-radius:6px;
+    margin:0 0 18px;
+  }
+  .scenario strong{ color:var(--accent); font-family:'Inter',sans-serif; font-size:13px; letter-spacing:0.04em; text-transform:uppercase; display:block; margin-bottom:6px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:15px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; }
+  sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  .final-tree{
+    background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px;
+    padding:16px 20px; overflow-x:auto; margin-bottom:20px;
+  }
+  .final-tree code{ font-size:13.5px; line-height:1.7; }
+
+  footer{
+    max-width:var(--maxw); margin:0 auto; padding:0 24px 64px;
+    font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted);
+    border-top:1px solid var(--border); padding-top:28px;
+  }
+  footer p{ margin:0 0 10px; }
+  footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 2</p>
+    <h1 class="title">Git in action: the Iris classification project</h1>
+    <p class="dek">Article 1 taught every command on its own. This one runs all of them, in order, on a real ML project, the way you'd actually use them on a job.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Article 1 first if you haven't &middot; next up: Git + DVC</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>In Article 1 you learned every Git command on its own. Here we build the muscle memory by using all of them together, in a realistic ML project. We'll build a small but complete Iris flower classifier, and at every step pause to explain what the Git operation is actually doing and why, the same way you'd use it on a real job.</p>
+
+<p>By the end you'll have a fully version-controlled ML project on GitHub, hands-on experience with commits, branches, merging, reverting, and stashing, and a workflow you can carry straight into your own projects.</p>
+
+<hr>
+
+<h2>The project</h2>
+
+<p><strong>Task:</strong> classify Iris flowers into three species (setosa, versicolor, virginica) from sepal and petal measurements.<br>
+<strong>Stack:</strong> Python, scikit-learn, pandas, matplotlib.</p>
+
+<p>Here's the structure we're building toward:</p>
+
+<pre><code>iris_classifier/
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── data/
+│   └── iris.csv              (ignored by git)
+├── src/
+│   ├── __init__.py
+│   ├── preprocess.py
+│   ├── train.py
+│   └── evaluate.py
+├── notebooks/
+│   └── exploration.ipynb
+└── models/                   (ignored by git)
+    └── trained_model.pkl</code></pre>
+
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A timeline of the ten acts in this article, from project initialization through building a baseline model, feature branching, merging, fixing a bug, stashing, GitHub and pull requests, tagging a release, resolving a merge conflict, to resetting local mistakes.">
+  <style> .node{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:10.5px;font-weight:600;fill:#1C1C1C;} .num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;fill:#1B6B5C;} .ln{stroke:#B9BDC2;stroke-width:1.4;} </style>
+  <line x1="30" y1="70" x2="610" y2="70" class="ln"/>
+  <g>
+    <circle cx="30" cy="70" r="5" fill="#1B6B5C"/><text x="30" y="50" text-anchor="middle" class="num">1</text><text x="30" y="95" text-anchor="middle" class="lbl">Init</text>
+    <circle cx="95" cy="70" r="5" fill="#1B6B5C"/><text x="95" y="50" text-anchor="middle" class="num">2</text><text x="95" y="95" text-anchor="middle" class="lbl">Baseline</text>
+    <circle cx="160" cy="70" r="5" fill="#1B6B5C"/><text x="160" y="50" text-anchor="middle" class="num">3</text><text x="160" y="95" text-anchor="middle" class="lbl">Branch</text>
+    <circle cx="225" cy="70" r="5" fill="#1B6B5C"/><text x="225" y="50" text-anchor="middle" class="num">4</text><text x="225" y="95" text-anchor="middle" class="lbl">Merge</text>
+    <circle cx="290" cy="70" r="5" fill="#9A6B2E"/><text x="290" y="50" text-anchor="middle" class="num">5</text><text x="290" y="95" text-anchor="middle" class="lbl">Bug &amp; revert</text>
+    <circle cx="355" cy="70" r="5" fill="#1B6B5C"/><text x="355" y="50" text-anchor="middle" class="num">6</text><text x="355" y="95" text-anchor="middle" class="lbl">Stash</text>
+    <circle cx="420" cy="70" r="5" fill="#1B6B5C"/><text x="420" y="50" text-anchor="middle" class="num">7</text><text x="420" y="95" text-anchor="middle" class="lbl">GitHub &amp; PR</text>
+    <circle cx="485" cy="70" r="5" fill="#1B6B5C"/><text x="485" y="50" text-anchor="middle" class="num">8</text><text x="485" y="95" text-anchor="middle" class="lbl">Tag v1.0</text>
+    <circle cx="550" cy="70" r="5" fill="#9A6B2E"/><text x="550" y="50" text-anchor="middle" class="num">9</text><text x="550" y="95" text-anchor="middle" class="lbl">Conflict</text>
+    <circle cx="610" cy="70" r="5" fill="#9A6B2E"/><text x="610" y="50" text-anchor="middle" class="num">10</text><text x="610" y="95" text-anchor="middle" class="lbl">Reset</text>
+  </g>
+  <text x="320" y="140" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" fill="#6B6B6B">Green = building forward &middot; amber = something went wrong, and we fix it</text>
+</svg>
+<figcaption>Fig. 1 — the ten acts ahead, in order</figcaption>
+</figure>
+
+<hr>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 1</p>
+<h2>Project initialization</h2>
+
+<h3 class="step-heading">Step 1.1 — create the project and initialize Git</h3>
+
+<pre><code><span class="c"># create the project directory and move into it</span>
+mkdir iris_classifier
+cd iris_classifier
+
+<span class="c"># initialize as a Git repository</span>
+git init</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>Initialized empty Git repository in /iris_classifier/.git/</code></pre>
+
+<p>You now have an empty Git repository. Nothing is tracked yet.</p>
+
+<pre><code><span class="c"># confirm Git is watching (status on an empty repo)</span>
+git status</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>On branch main
+
+No commits yet
+
+nothing to commit (create/copy files and start working)</code></pre>
+
+<h3 class="step-heading">Step 1.2 — create .gitignore first, always first</h3>
+
+<p>Make this a habit: create <code>.gitignore</code> before you create anything else. If you accidentally track a file and commit it, getting it back out of history is genuinely painful.</p>
+
+<pre><code>touch .gitignore</code></pre>
+
+<p>Open it and add:</p>
+
+<pre><code><span class="c"># Python</span>
+__pycache__/
+*.pyc
+*.pyo
+.Python
+venv/
+.venv/
+*.egg-info/
+
+<span class="c"># Jupyter notebooks</span>
+.ipynb_checkpoints/
+
+<span class="c"># Data files (store separately — DVC, S3, a shared drive)</span>
+data/
+*.csv
+*.tsv
+
+<span class="c"># Trained models (can be large)</span>
+models/
+*.pkl
+*.joblib
+*.h5
+
+<span class="c"># Secrets</span>
+.env
+*.key
+
+<span class="c"># OS</span>
+.DS_Store</code></pre>
+
+<pre><code>git status</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>On branch main
+
+No commits yet
+
+Untracked files:
+  (use "git add &lt;file&gt;..." to include in what will be committed)
+        .gitignore
+
+nothing added to commit but untracked files present</code></pre>
+
+<p>Stage and commit:</p>
+<pre><code>git add .gitignore
+git commit -m "Add .gitignore for Python and ML artifacts"</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>[main (root-commit) 4a1b2c3] Add .gitignore for Python and ML artifacts
+ 1 file changed, 20 insertions(+)
+ create mode 100644 .gitignore</code></pre>
+
+<p>First commit made. Two things worth noticing: <code>root-commit</code> means this is the very first commit in the repo, and <code>4a1b2c3</code> is the short SHA (yours will be different).</p>
+
+<h3 class="step-heading">Step 1.3 — create the README</h3>
+
+<p>The README is the front page of your project on GitHub.</p>
+
+<pre><code><span class="c"># README.md</span>
+# Iris Flower Classifier
+
+A machine learning project that classifies Iris flowers into 3 species
+(Setosa, Versicolor, Virginica) using the classic Iris dataset.
+
+## Project Structure
+- `src/` — source code for preprocessing, training, and evaluation
+- `notebooks/` — exploratory data analysis
+- `requirements.txt` — Python dependencies
+
+## Setup
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+```bash
+python src/train.py
+python src/evaluate.py
+```
+
+## Results
+| Model | Test Accuracy |
+|-------|--------------|
+| Logistic Regression | TBD |
+| Random Forest | TBD |</code></pre>
+
+<pre><code>git add README.md
+git commit -m "Add project README with structure and setup instructions"</code></pre>
+
+<h3 class="step-heading">Step 1.4 — project structure and requirements.txt</h3>
+
+<pre><code><span class="c"># create the directory structure</span>
+mkdir -p src notebooks data models
+
+<span class="c"># placeholder files so Git tracks otherwise-empty directories</span>
+touch src/__init__.py
+touch notebooks/.gitkeep
+
+<span class="c"># requirements.txt</span>
+cat > requirements.txt << 'EOF'
+scikit-learn==1.4.0
+pandas==2.2.0
+numpy==1.26.4
+matplotlib==3.8.2
+seaborn==0.13.2
+joblib==1.3.2
+EOF</code></pre>
+
+<pre><code>git add requirements.txt src/__init__.py notebooks/.gitkeep
+git commit -m "Add project structure and Python dependencies"</code></pre>
+
+<p>Check the log so far:</p>
+<pre><code>git log --oneline</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>9d3f1a2 Add project structure and Python dependencies
+7b2e4c1 Add project README with structure and setup instructions
+4a1b2c3 Add .gitignore for Python and ML artifacts</code></pre>
+
+<p>The project's history is already telling a clean story, three commits in.</p>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 2</p>
+<h2>Building the baseline model, on <code>main</code></h2>
+
+<h3 class="step-heading">Step 2.1 — write the preprocessing code</h3>
+
+<pre><code><span class="c"># src/preprocess.py</span>
+"""
+preprocess.py — Load and prepare the Iris dataset for training.
+"""
+
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+
+
+def load_data():
+    """Load the Iris dataset and return as a DataFrame."""
+    iris = load_iris()
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    df['target'] = iris.target
+    df['species'] = df['target'].map({
+        0: 'setosa',
+        1: 'versicolor',
+        2: 'virginica'
+    })
+    return df
+
+
+def split_data(df, test_size=0.2, random_state=42):
+    """Split into train/test sets."""
+    X = df[['sepal length (cm)', 'sepal width (cm)',
+            'petal length (cm)', 'petal width (cm)']]
+    y = df['target']
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=test_size,
+        random_state=random_state,
+        stratify=y        # keeps class distribution balanced across splits
+    )
+
+    print(f"Train size: {len(X_train)}, Test size: {len(X_test)}")
+    return X_train, X_test, y_train, y_test
+
+
+if __name__ == "__main__":
+    df = load_data()
+    print(df.head())
+    print(f"Dataset shape: {df.shape}")
+    split_data(df)</code></pre>
+
+<pre><code>git add src/preprocess.py
+git commit -m "Add data loading and train-test split with stratification"</code></pre>
+
+<h3 class="step-heading">Step 2.2 — write the baseline training code</h3>
+
+<pre><code><span class="c"># src/train.py</span>
+"""
+train.py — Train a Logistic Regression baseline model.
+"""
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+import joblib
+import os
+from preprocess import load_data, split_data
+
+
+def train_model(X_train, y_train):
+    """Build and train a logistic regression pipeline."""
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', LogisticRegression(
+            max_iter=200,
+            random_state=42
+        ))
+    ])
+    pipeline.fit(X_train, y_train)
+    return pipeline
+
+
+def save_model(model, path='models/logistic_regression.pkl'):
+    """Save trained model to disk."""
+    os.makedirs('models', exist_ok=True)
+    joblib.dump(model, path)
+    print(f"Model saved to {path}")
+
+
+if __name__ == "__main__":
+    df = load_data()
+    X_train, X_test, y_train, y_test = split_data(df)
+
+    print("Training logistic regression...")
+    model = train_model(X_train, y_train)
+
+    save_model(model)
+    print("Training complete!")</code></pre>
+
+<pre><code>git add src/train.py
+git commit -m "Add logistic regression baseline with StandardScaler pipeline"</code></pre>
+
+<h3 class="step-heading">Step 2.3 — write the evaluation code</h3>
+
+<pre><code><span class="c"># src/evaluate.py</span>
+"""
+evaluate.py — Evaluate the trained model on the test set.
+"""
+
+import joblib
+import numpy as np
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix
+)
+import matplotlib.pyplot as plt
+import seaborn as sns
+from preprocess import load_data, split_data
+
+
+def evaluate_model(model, X_test, y_test):
+    """Print evaluation metrics."""
+    y_pred = model.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"\n{'='*40}")
+    print(f"Test Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
+    print(f"{'='*40}\n")
+
+    print("Classification Report:")
+    print(classification_report(
+        y_test, y_pred,
+        target_names=['setosa', 'versicolor', 'virginica']
+    ))
+
+    return y_pred, accuracy
+
+
+def plot_confusion_matrix(y_test, y_pred):
+    """Plot and save confusion matrix."""
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt='d',
+        cmap='Blues',
+        xticklabels=['setosa', 'versicolor', 'virginica'],
+        yticklabels=['setosa', 'versicolor', 'virginica']
+    )
+    plt.title('Confusion Matrix — Logistic Regression')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.tight_layout()
+    plt.savefig('confusion_matrix.png', dpi=150)
+    print("Confusion matrix saved.")
+
+
+if __name__ == "__main__":
+    model = joblib.load('models/logistic_regression.pkl')
+
+    df = load_data()
+    _, X_test, _, y_test = split_data(df)
+
+    y_pred, accuracy = evaluate_model(model, X_test, y_test)
+    plot_confusion_matrix(y_test, y_pred)</code></pre>
+
+<pre><code>git add src/evaluate.py
+git commit -m "Add model evaluation with accuracy, classification report, and confusion matrix"</code></pre>
+
+<p>Check the history:</p>
+<pre><code>git log --oneline</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>e5c1d23 Add model evaluation with accuracy, classification report, and confusion matrix
+3f8b7a4 Add logistic regression baseline with StandardScaler pipeline
+1d2e6c5 Add data loading and train-test split with stratification
+9d3f1a2 Add project structure and Python dependencies
+7b2e4c1 Add project README with structure and setup instructions
+4a1b2c3 Add .gitignore for Python and ML artifacts</code></pre>
+
+<p>A complete baseline, in six clean, meaningful commits.</p>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 3</p>
+<h2>Experimenting with a new model, on a feature branch</h2>
+
+<div class="scenario"><strong>Scenario</strong>The baseline logistic regression lands at 93% accuracy on the test set.<sup class="fn"><a href="#fn1">1</a></sup> You want to try a Random Forest to see if it does better, and you want to do that on a feature branch so <code>main</code> stays clean and working the whole time.</div>
+
+<h3 class="step-heading">Step 3.1 — create a feature branch</h3>
+
+<pre><code><span class="c"># create and switch to a new branch</span>
+git switch -c feature/random-forest-model</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>Switched to a new branch 'feature/random-forest-model'</code></pre>
+
+<pre><code>git branch</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>* feature/random-forest-model     <span class="c">← asterisk marks the current branch</span>
+  main</code></pre>
+
+<p>The new branch is a copy of <code>main</code> at this exact point. All six commits exist here too. Any new commits from here only land on this branch.</p>
+
+<h3 class="step-heading">Step 3.2 — add the Random Forest training script</h3>
+
+<pre><code><span class="c"># src/train_rf.py</span>
+"""
+train_rf.py — Train a Random Forest classifier.
+"""
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+import joblib
+import numpy as np
+import os
+from preprocess import load_data, split_data
+
+
+def train_random_forest(X_train, y_train, n_estimators=100, max_depth=None):
+    """Build and train a Random Forest pipeline."""
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', RandomForestClassifier(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            random_state=42,
+            n_jobs=-1          # use all CPU cores
+        ))
+    ])
+
+    # cross-validation on the training set for a more reliable estimate
+    cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring='accuracy')
+    print(f"5-Fold CV Accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
+
+    pipeline.fit(X_train, y_train)
+    return pipeline
+
+
+def save_model(model, path='models/random_forest.pkl'):
+    """Save trained model to disk."""
+    os.makedirs('models', exist_ok=True)
+    joblib.dump(model, path)
+    print(f"Model saved to {path}")
+
+
+if __name__ == "__main__":
+    df = load_data()
+    X_train, X_test, y_train, y_test = split_data(df)
+
+    print("Training Random Forest with cross-validation...")
+    model = train_random_forest(X_train, y_train, n_estimators=100)
+
+    save_model(model)
+    print("Random Forest training complete!")</code></pre>
+
+<pre><code>git add src/train_rf.py
+git commit -m "Add Random Forest classifier with 5-fold cross-validation"</code></pre>
+
+<h3 class="step-heading">Step 3.3 — update evaluate.py to support both models</h3>
+
+<pre><code><span class="c"># see what's changed since branching</span>
+git diff main feature/random-forest-model</code></pre>
+
+<p>Update the <code>if __name__ == "__main__":</code> block in <code>src/evaluate.py</code>:</p>
+
+<pre><code>if __name__ == "__main__":
+    import sys
+
+    model_path = sys.argv[1] if len(sys.argv) > 1 else 'models/logistic_regression.pkl'
+    model = joblib.load(model_path)
+
+    df = load_data()
+    _, X_test, _, y_test = split_data(df)
+
+    y_pred, accuracy = evaluate_model(model, X_test, y_test)
+    plot_confusion_matrix(y_test, y_pred)</code></pre>
+
+<pre><code>git diff src/evaluate.py</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code><span class="del">-    model = joblib.load('models/logistic_regression.pkl')</span>
+<span class="add">+    import sys
++    model_path = sys.argv[1] if len(sys.argv) > 1 else 'models/logistic_regression.pkl'
++    model = joblib.load(model_path)</span></code></pre>
+
+<pre><code>git add src/evaluate.py
+git commit -m "Make evaluate.py accept model path as CLI argument"</code></pre>
+
+<h3 class="step-heading">Step 3.4 — view branch differences</h3>
+
+<pre><code><span class="c"># commits in the feature branch but not in main</span>
+git log main..feature/random-forest-model --oneline</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>9a8b3c1 Make evaluate.py accept model path as CLI argument
+7c4d2e5 Add Random Forest classifier with 5-fold cross-validation</code></pre>
+
+<pre><code>git log --oneline --graph --all</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>* 9a8b3c1 (HEAD -> feature/random-forest-model) Make evaluate.py accept model path as CLI argument
+* 7c4d2e5 Add Random Forest classifier with 5-fold cross-validation
+* e5c1d23 (main) Add model evaluation with accuracy, classification report, and confusion matrix
+* 3f8b7a4 Add logistic regression baseline with StandardScaler pipeline
+* 1d2e6c5 Add data loading and train-test split with stratification
+* 9d3f1a2 Add project structure and Python dependencies
+* 7b2e4c1 Add project README with structure and setup instructions
+* 4a1b2c3 Add .gitignore for Python and ML artifacts</code></pre>
+
+<p><code>main</code> and <code>feature/random-forest-model</code> diverge from commit <code>e5c1d23</code>.</p>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 4</p>
+<h2>Merging the feature branch</h2>
+
+<p>The Random Forest works well. Time to bring it into <code>main</code>.</p>
+
+<h3 class="step-heading">Step 4.1 — switch to main and merge</h3>
+
+<pre><code>git switch main
+git merge feature/random-forest-model</code></pre>
+<p class="out-label">Output — fast-forward, because main had no new commits</p>
+<pre class="output"><code>Updating e5c1d23..9a8b3c1
+Fast-forward
+ src/evaluate.py  | 5 +++--
+ src/train_rf.py  | 45 +++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 48 insertions(+), 2 deletions(-)
+ create mode 100644 src/train_rf.py</code></pre>
+
+<pre><code><span class="c"># it's merged, so the branch can go</span>
+git branch -d feature/random-forest-model</code></pre>
+
+<pre><code>git log --oneline</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>9a8b3c1 (HEAD -> main) Make evaluate.py accept model path as CLI argument
+7c4d2e5 Add Random Forest classifier with 5-fold cross-validation
+e5c1d23 Add model evaluation with accuracy, classification report, and confusion matrix
+...</code></pre>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 5</p>
+<h2>Simulating a bug, and rolling it back</h2>
+
+<div class="scenario"><strong>Scenario</strong>A junior teammate, or you on a bad day, accidentally drops <code>stratify=y</code> from the train-test split. Class balance breaks. The bug gets committed and pushed. You need to fix it.</div>
+
+<h3 class="step-heading">Step 5.1 — introduce the bug, to practice reverting it</h3>
+
+<pre><code><span class="c"># buggy version — missing stratify=y</span>
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=test_size,
+    random_state=random_state
+    # stratify=y  ← accidentally removed!
+)</code></pre>
+
+<pre><code>git add src/preprocess.py
+git commit -m "Update train-test split parameters"
+<span class="c"># a vague message — exactly the kind of thing a reviewer should flag</span></code></pre>
+
+<p>There's now a bug sitting in your history. Say you notice the model's accuracy dropped.</p>
+
+<h3 class="step-heading">Step 5.2 — find it with git log and git diff</h3>
+
+<pre><code>git log --oneline -5</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>b3c2d1e (HEAD -> main) Update train-test split parameters
+9a8b3c1 Make evaluate.py accept model path as CLI argument
+...</code></pre>
+
+<pre><code>git show b3c2d1e</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code><span class="del">-        stratify=y</span></code></pre>
+
+<p>Found it: <code>stratify=y</code> was removed.</p>
+
+<h3 class="step-heading">Step 5.3 — revert the bug, safely</h3>
+
+<p>Since this commit may already be on GitHub and shared with others, reach for <code>git revert</code> rather than <code>git reset</code>. Revert adds a new commit that undoes the change, and leaves history intact.</p>
+
+<pre><code>git revert HEAD --no-edit</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>[main 4d3e2c1] Revert "Update train-test split parameters"
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre>
+
+<pre><code>git log --oneline -5</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>4d3e2c1 (HEAD -> main) Revert "Update train-test split parameters"
+b3c2d1e Update train-test split parameters    <span class="c">← the bug commit is still here</span>
+9a8b3c1 Make evaluate.py accept model path as CLI argument</code></pre>
+
+<p>The bug commit is still visible in the log. <code>git revert</code> doesn't hide history, it adds a correction on top. That's what makes it honest and safe to use on shared branches.</p>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 6</p>
+<h2>The stash: switching context mid-work</h2>
+
+<div class="scenario"><strong>Scenario</strong>You're halfway through an SVM experiment when your manager pings you that the preprocessing pipeline is failing in production, right now. Your SVM code is half-written, and you can't commit unfinished work.</div>
+
+<h3 class="step-heading">Step 6.1 — stash the half-done work</h3>
+
+<pre><code><span class="c"># a half-written SVM file</span>
+cat > src/train_svm.py << 'EOF'
+"""
+train_svm.py — SVM classifier (work in progress!)
+"""
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+# TODO: add cross-validation
+# TODO: add hyperparameter grid
+def train_svm(X_train, y_train):
+EOF
+
+git status</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>On branch main
+Untracked files:
+        src/train_svm.py</code></pre>
+
+<pre><code>git stash push -m "WIP: SVM classifier, halfway through, no CV yet"
+git status</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>On branch main
+nothing to commit, working tree clean</code></pre>
+
+<pre><code>git stash list</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>stash@{0}: On main: WIP: SVM classifier, halfway through, no CV yet</code></pre>
+
+<h3 class="step-heading">Step 6.2 — fix the production bug</h3>
+
+<pre><code>git switch -c hotfix/fix-feature-scaling-bug</code></pre>
+
+<p>The actual fix, in <code>preprocess.py</code>:</p>
+<pre><code><span class="c"># return copies, not views, so callers can't accidentally mutate the split</span>
+X_train = X_train.copy()
+X_test = X_test.copy()</code></pre>
+
+<pre><code>git add src/preprocess.py
+git commit -m "Fix: return copies from split_data to prevent mutation bugs"
+
+<span class="c"># merge the fix back to main right away</span>
+git switch main
+git merge hotfix/fix-feature-scaling-bug
+git branch -d hotfix/fix-feature-scaling-bug</code></pre>
+
+<h3 class="step-heading">Step 6.3 — restore the stashed work</h3>
+
+<pre><code>git stash pop</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>On branch main
+Untracked files:
+        src/train_svm.py
+
+Dropped stash@{0}: On main: WIP: SVM classifier, halfway through, no CV yet</code></pre>
+
+<p>The SVM file is back exactly where you left it. Pick the work back up.</p>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 7</p>
+<h2>Pushing to GitHub and opening a pull request</h2>
+
+<h3 class="step-heading">Step 7.1 — create a GitHub repository</h3>
+<ol>
+<li>On github.com, click "New repository."</li>
+<li>Name it <code>iris-classifier</code>.</li>
+<li>Make it public, so it's visible on your portfolio.</li>
+<li>Skip the README, since you already have one locally.</li>
+<li>Click "Create repository."</li>
+</ol>
+
+<p>GitHub shows you the setup commands. Use these:</p>
+<pre><code><span class="c"># connect the local repo to GitHub</span>
+git remote add origin git@github.com:YOUR_USERNAME/iris-classifier.git
+
+git remote -v</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>origin  git@github.com:YOUR_USERNAME/iris-classifier.git (fetch)
+origin  git@github.com:YOUR_USERNAME/iris-classifier.git (push)</code></pre>
+
+<pre><code>git push -u origin main</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>Enumerating objects: 28, done.
+Counting objects: 100% (28/28), done.
+...
+Branch 'main' set up to track remote branch 'main' from 'origin'.</code></pre>
+
+<p>The project is live on GitHub.</p>
+
+<h3 class="step-heading">Step 7.2 — simulate a pull request workflow</h3>
+
+<p>This is how teams actually collaborate: create a feature branch, push it, open a PR.</p>
+
+<pre><code>git switch -c feature/svm-classifier</code></pre>
+
+<p>Finish <code>src/train_svm.py</code>:</p>
+
+<pre><code>"""
+train_svm.py — Support Vector Machine classifier with grid search.
+"""
+
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, cross_val_score
+import joblib
+import os
+from preprocess import load_data, split_data
+
+
+def train_svm(X_train, y_train):
+    """Train SVM with hyperparameter tuning via GridSearchCV."""
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', SVC(random_state=42, probability=True))
+    ])
+
+    param_grid = {
+        'classifier__C': [0.1, 1, 10, 100],
+        'classifier__kernel': ['rbf', 'linear'],
+        'classifier__gamma': ['scale', 'auto']
+    }
+
+    grid_search = GridSearchCV(
+        pipeline,
+        param_grid,
+        cv=5,
+        scoring='accuracy',
+        n_jobs=-1,
+        verbose=1
+    )
+
+    grid_search.fit(X_train, y_train)
+
+    print(f"Best Parameters: {grid_search.best_params_}")
+    print(f"Best CV Score: {grid_search.best_score_:.4f}")
+
+    return grid_search.best_estimator_
+
+
+def save_model(model, path='models/svm_model.pkl'):
+    os.makedirs('models', exist_ok=True)
+    joblib.dump(model, path)
+    print(f"Model saved to {path}")
+
+
+if __name__ == "__main__":
+    df = load_data()
+    X_train, X_test, y_train, y_test = split_data(df)
+
+    print("Training SVM with GridSearchCV...")
+    model = train_svm(X_train, y_train)
+    save_model(model)</code></pre>
+
+<pre><code>git add src/train_svm.py
+git commit -m "Add SVM classifier with GridSearchCV hyperparameter tuning"
+
+git push -u origin feature/svm-classifier</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>...
+ * [new branch]      feature/svm-classifier -> feature/svm-classifier
+Branch 'feature/svm-classifier' set up to track remote branch 'feature/svm-classifier' from 'origin'.</code></pre>
+
+<p>On GitHub, you'll see a prompt on the repo page: "Compare &amp; pull request." Click it and fill in the form:</p>
+
+<pre><code>Title: Add SVM classifier with GridSearchCV tuning
+
+Description:
+## What does this PR do?
+Adds a Support Vector Machine (SVM) classifier with automated
+hyperparameter tuning using GridSearchCV (5-fold CV).
+
+## Hyperparameters explored
+- C: [0.1, 1, 10, 100]
+- kernel: ['rbf', 'linear']
+- gamma: ['scale', 'auto']
+
+## Testing
+Run: python src/train_svm.py</code></pre>
+
+<p>After review and approval, click "Merge pull request" on GitHub. Then, locally:</p>
+
+<pre><code><span class="c"># pull the merged changes back down</span>
+git switch main
+git pull origin main
+
+<span class="c"># delete the remote feature branch (GitHub may already have)</span>
+git push origin --delete feature/svm-classifier
+
+<span class="c"># delete the local one too</span>
+git branch -d feature/svm-classifier</code></pre>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 8</p>
+<h2>Tagging a release</h2>
+
+<p>The project now has three models. Time to mark this point as <code>v1.0</code>.</p>
+
+<h3 class="step-heading">Step 8.1 — create the tag</h3>
+
+<pre><code><span class="c"># an annotated tag, with a message</span>
+git tag -a v1.0 -m "First stable release: Logistic Regression, Random Forest, and SVM classifiers"
+
+git tag</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>v1.0</code></pre>
+
+<pre><code>git show v1.0</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>tag v1.0
+Tagger: Your Name &lt;you@example.com&gt;
+Date:   Mon Jan 15 10:30:00 2024 +0800
+
+First stable release: Logistic Regression, Random Forest, and SVM classifiers
+
+commit e4d5c6b (HEAD -> main, tag: v1.0)
+...</code></pre>
+
+<pre><code>git push origin v1.0</code></pre>
+
+<p>On GitHub, this shows up as a proper Release. It's a nice, professional touch on a portfolio.</p>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 9</p>
+<h2>Handling a merge conflict</h2>
+
+<div class="scenario"><strong>Scenario</strong>You and a teammate both edit <code>src/preprocess.py</code> at the same time. When you try to merge, Git finds a genuine conflict.</div>
+
+<h3 class="step-heading">Step 9.1 — simulate the conflict</h3>
+
+<pre><code>git switch -c branch-a</code></pre>
+
+<p>Change <code>test_size</code> in <code>split_data()</code>:</p>
+<pre><code><span class="c"># branch-a version</span>
+def split_data(df, test_size=0.25, random_state=42):  # changed to 0.25</code></pre>
+
+<pre><code>git add src/preprocess.py
+git commit -m "Change test split size to 25% for larger test set"
+git switch main
+
+git switch -c branch-b</code></pre>
+
+<p>Change the same line, differently:</p>
+<pre><code><span class="c"># branch-b version</span>
+def split_data(df, test_size=0.15, random_state=42):  # changed to 0.15</code></pre>
+
+<pre><code>git add src/preprocess.py
+git commit -m "Reduce test split size to 15% for more training data"
+git switch main
+
+<span class="c"># branch-a merges cleanly</span>
+git merge branch-a
+
+<span class="c"># branch-b conflicts</span>
+git merge branch-b</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>Auto-merging src/preprocess.py
+CONFLICT (content): Merge conflict in src/preprocess.py
+Automatic merge failed; fix conflicts and then commit the result.</code></pre>
+
+<h3 class="step-heading">Step 9.2 — resolve it</h3>
+
+<pre><code>git status</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>On branch main
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+
+Unmerged paths:
+  (use "git add &lt;file&gt;..." to mark resolution)
+        both modified:   src/preprocess.py</code></pre>
+
+<p>Open <code>src/preprocess.py</code>. The conflicted section:</p>
+<pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+def split_data(df, test_size=0.25, random_state=42):
+=======
+def split_data(df, test_size=0.15, random_state=42):
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; branch-b</code></pre>
+
+<p>You talk it over with your teammate and land on 0.20, the original default:</p>
+<pre><code>def split_data(df, test_size=0.20, random_state=42):</code></pre>
+
+<p>Delete the <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> markers entirely, then:</p>
+<pre><code>git add src/preprocess.py
+git commit -m "Resolve merge conflict: keep default test_size=0.20"
+
+<span class="c"># clean up</span>
+git branch -d branch-a
+git branch -d branch-b</code></pre>
+</div>
+
+<div class="act-block">
+<p class="act-eyebrow">Act 10 &middot; advanced</p>
+<h2>Reset, to undo local mistakes</h2>
+
+<div class="scenario"><strong>Scenario</strong>You made three commits locally that turn out to be completely wrong. None of them have been pushed, so it's safe to reset them away entirely.</div>
+
+<pre><code>git log --oneline -5</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>d3e4f5a (HEAD -> main) WIP: bad experiment attempt 3
+c2b3d4e WIP: bad experiment attempt 2
+a1b2c3d WIP: bad experiment attempt 1
+f1e2d3c Resolve merge conflict: keep default test_size=0.20</code></pre>
+
+<p>You want to go back to <code>f1e2d3c</code>, right before the three bad commits, and throw them away entirely:</p>
+
+<pre><code><span class="c"># permanently removes those 3 commits and their changes</span>
+git reset --hard f1e2d3c</code></pre>
+<p class="out-label">Output</p>
+<pre class="output"><code>HEAD is now at f1e2d3c Resolve merge conflict: keep default test_size=0.20</code></pre>
+
+<p>Those three commits are gone, and your code is back to that exact state.</p>
+
+<blockquote class="warn"><p>Only do this when the commits haven't been pushed. If they have, use <code>git revert</code> instead.</p></blockquote>
+</div>
+
+<hr>
+
+<h2>The final history</h2>
+
+<p>After all ten acts, the project's history looks like this:</p>
+
+<pre><code>git log --oneline --graph --all</code></pre>
+
+<figure>
+<svg viewBox="0 0 640 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The final commit graph of the project: a main line of commits from the initial gitignore through the baseline model, a fast-forward merge of the random forest branch, a bug and its revert, a hotfix, a proper merge commit bringing in the SVM feature branch tagged v1.0, and finally a merge commit resolving the branch-a and branch-b conflict at the tip.">
+  <style> .c1{fill:#1B6B5C;} .c2{fill:#9A6B2E;} .lbl{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#1C1C1C;} .lbl2{font-family:'Inter',sans-serif;font-size:10px;fill:#6B6B6B;} .ln{stroke:#B9BDC2;stroke-width:1.5;} .tagbox{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} </style>
+
+  <line x1="60" y1="390" x2="60" y2="60" class="ln"/>
+  <circle cx="60" cy="390" r="6" class="c1"/><text x="75" y="394" class="lbl">4a1b2c3 .gitignore</text>
+  <circle cx="60" cy="360" r="6" class="c1"/><text x="75" y="364" class="lbl">7b2e4c1 README</text>
+  <circle cx="60" cy="330" r="6" class="c1"/><text x="75" y="334" class="lbl">9d3f1a2 project structure</text>
+  <circle cx="60" cy="300" r="6" class="c1"/><text x="75" y="304" class="lbl">1d2e6c5 preprocess.py</text>
+  <circle cx="60" cy="270" r="6" class="c1"/><text x="75" y="274" class="lbl">3f8b7a4 baseline model</text>
+  <circle cx="60" cy="240" r="6" class="c1"/><text x="75" y="244" class="lbl">e5c1d23 evaluate.py</text>
+  <circle cx="60" cy="210" r="6" class="c1"/><text x="75" y="214" class="lbl">7c4d2e5 random forest</text>
+  <circle cx="60" cy="180" r="6" class="c1"/><text x="75" y="184" class="lbl">9a8b3c1 evaluate CLI arg</text>
+  <circle cx="60" cy="150" r="6" class="c2"/><text x="75" y="154" class="lbl">b3c2d1e bug (missing stratify)</text>
+  <circle cx="60" cy="120" r="6" class="c1"/><text x="75" y="124" class="lbl">4d3e2c1 revert the bug</text>
+  <circle cx="60" cy="90" r="6" class="c1"/><text x="75" y="94" class="lbl">b0a1f2e hotfix: return copies</text>
+
+  <circle cx="60" cy="60" r="7" class="c1"/>
+  <rect x="240" y="48" width="46" height="22" rx="4" class="tagbox"/><text x="263" y="63" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#1B6B5C">v1.0</text>
+  <text x="75" y="64" class="lbl">e4d5c6b merge: SVM branch</text>
+  <path d="M60,90 L60,60" class="ln"/>
+  <path d="M60,75 Q120,75 150,55" class="ln" fill="none"/>
+  <circle cx="150" cy="55" r="5" class="c1"/><text x="160" y="45" class="lbl2">c7b8a9d SVM classifier</text>
+  <path d="M150,55 Q170,60 200,60" class="ln" fill="none"/>
+
+  <line x1="60" y1="60" x2="60" y2="30" class="ln"/>
+  <circle cx="60" cy="30" r="7" class="c1"/>
+  <text x="75" y="34" class="lbl">f1e2d3c (HEAD) merge conflict resolved</text>
+  <path d="M60,60 Q100,42 130,32" class="ln" fill="none"/>
+  <circle cx="130" cy="32" r="5" class="c1"/><text x="140" y="20" class="lbl2">a7c8d9e branch-a: 25%</text>
+  <path d="M60,45 Q95,20 130,10" class="ln" fill="none"/>
+  <circle cx="130" cy="10" r="5" class="c2"/><text x="140" y="8" class="lbl2">d4e5f6a branch-b: 15%</text>
+</svg>
+<figcaption>Fig. 2 — the final commit graph, main running bottom to top, with the SVM and conflict branches merging back in</figcaption>
+</figure>
+
+<p>Notice that <code>tag: v1.0</code> sits on <code>e4d5c6b</code>, the exact commit that was <code>HEAD</code> back in Act 8 when the tag was created, not on the current tip. Tags are fixed pointers. They mark one commit permanently and don't drift as <code>main</code> keeps advancing, unlike branches, which always slide forward to the latest commit. That's exactly what makes them useful for releases: <code>v1.0</code> will always mean "the SVM release," no matter how many commits pile up on <code>main</code> afterward.</p>
+
+<p>This log tells the whole story: what got built, what broke, what got fixed, and what got tried along the way, including Act 9's conflict (both <code>a7c8d9e</code> and <code>d4e5f6a</code> show up, joined by a real conflict-resolution commit) and Act 10's three discarded commits, which vanished from history entirely once <code>git reset --hard</code> ran.</p>
+
+<hr>
+
+<h2>The workflow, distilled</h2>
+
+<p>This is the loop you'll repeat on pretty much every ML project from here on:</p>
+
+<pre><code>Start of every work session:
+─────────────────────────────
+git switch main
+git pull origin main
+
+Starting new work:
+─────────────────────────────
+git switch -c feature/your-feature-name
+
+During work (repeat many times):
+─────────────────────────────
+[edit files]
+git status
+git diff
+git add &lt;specific files&gt;
+git commit -m "Clear description of what and why"
+
+Keeping your branch updated:
+─────────────────────────────
+git fetch origin
+git rebase origin/main
+
+Finishing:
+─────────────────────────────
+git push -u origin feature/your-feature-name
+[open a pull request on GitHub]
+[merge after review]
+
+After merge:
+─────────────────────────────
+git switch main
+git pull origin main
+git branch -d feature/your-feature-name
+
+Emergency — discard all local changes:
+─────────────────────────────
+git stash           ← save first, if you might want it back
+git restore .        ← the nuclear option
+
+Emergency — undo a commit that's already pushed:
+─────────────────────────────
+git revert HEAD
+git push</code></pre>
+
+<h2>What to do next</h2>
+
+<p>You've now finished the Git &amp; GitHub mini-series, Articles 1 and 2. A few concrete next steps: create a GitHub repo for your next ML project today, practice the feature-branch workflow on something you're already working on, and write a real <code>.gitignore</code> for every project from here on, not just this one.</p>
+
+<p>Worth learning next: DVC for versioning data files and model artifacts alongside Git (covered in the next article in this series), GitHub Actions for running tests and deployments automatically on every push, pre-commit hooks to run formatters and linters before every commit, and Conventional Commits if you're on a larger team and want a structured commit message format.</p>
+
+<p>A few portfolio habits worth building now: pin three to five ML projects on your GitHub profile, give each one a README with actual results and instructions for running it, use tags to mark working versions, and clear notebook cell output before committing, so diffs stay readable.</p>
+
+<p>You're equipped to manage ML projects properly now. Every commit is a small, honest record of what you did and why, and that record is worth keeping clean.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. Verified by running the article's exact code (Python 3, scikit-learn, <code>random_state=42</code>, <code>stratify=y</code>, <code>test_size=0.2</code>) end to end: test accuracy comes out to 93.33%, reproducibly. The original draft cited 97% here; this version corrects it to match what you'll actually see running the code.</p>
+<p>MLOps for ML practitioners &middot; Article 2 of the series</p>
+</footer>
+
+</body>
+</html>

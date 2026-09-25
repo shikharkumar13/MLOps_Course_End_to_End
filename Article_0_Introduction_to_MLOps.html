@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction to MLOps — why machine learning needs its own engineering discipline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB;
+    --text:#1C1C1C;
+    --text-muted:#6B6B6B;
+    --accent:#1B6B5C;
+    --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3;
+    --code-border:#E8E8E5;
+    --border:#E5E5E2;
+    --amber:#9A6B2E;
+    --amber-soft:#FAF3E8;
+    --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Lora', Georgia, serif;
+    font-size:19px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+
+  h1,h2,h3,h4{
+    font-family:'Inter', -apple-system, sans-serif;
+    color:var(--text);
+    font-weight:650;
+    line-height:1.3;
+    letter-spacing:-0.01em;
+  }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:14px;
+  }
+  h1.title{ font-size:38px; margin:0 0 14px; line-height:1.2; }
+  p.dek{
+    font-family:'Lora', serif;
+    font-style:italic;
+    font-size:20px;
+    color:var(--text-muted);
+    margin:0 0 28px;
+    line-height:1.55;
+  }
+  .meta-line{
+    font-family:'Inter', sans-serif;
+    font-size:13.5px;
+    color:var(--text-muted);
+    padding-bottom:32px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:40px;
+  }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  article > .wrap > p:first-of-type{ margin-top:0; }
+  p.lead{ font-size:21px; line-height:1.65; color:var(--text-muted); }
+
+  h2{ font-size:26px; margin:56px 0 20px; }
+  h3{ font-size:20px; margin:36px 0 14px; color:var(--text); }
+  h2 small, h3 small{
+    display:block;
+    font-family:'Inter', sans-serif;
+    font-weight:500;
+    font-size:13px;
+    color:var(--text-muted);
+    letter-spacing:0.02em;
+    margin-bottom:6px;
+    text-transform:none;
+  }
+
+  a{ color:var(--accent); }
+
+  code{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.82em;
+    background:var(--code-bg);
+    border:1px solid var(--code-border);
+    padding:0.1em 0.4em;
+    border-radius:4px;
+    color:#2B2B2B;
+  }
+
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--code-border);
+    border-radius:8px;
+    padding:18px 20px;
+    overflow-x:auto;
+    margin:0 0 24px;
+  }
+  pre code{
+    background:none;
+    border:none;
+    padding:0;
+    font-size:14.5px;
+    line-height:1.65;
+    color:#2B2B2B;
+    white-space:pre;
+  }
+  .c{ color:#8A8F98; }
+
+  blockquote{
+    margin:24px 0;
+    padding:16px 20px;
+    background:var(--accent-soft);
+    border-left:3px solid var(--accent);
+    border-radius:0 6px 6px 0;
+    font-size:17.5px;
+  }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; }
+  blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:0 0 26px;
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+  }
+  th{
+    text-align:left;
+    background:var(--accent-soft);
+    color:var(--text);
+    padding:9px 14px;
+    font-weight:600;
+    border-bottom:1px solid var(--border);
+  }
+  td{
+    padding:10px 14px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+    line-height:1.5;
+  }
+  .table-scroll{ overflow-x:auto; margin-bottom:26px; }
+  .table-scroll table{ margin-bottom:0; min-width:560px; }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    color:var(--text-muted);
+    text-align:center;
+    margin-top:12px;
+  }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; }
+  sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:0 24px 64px;
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    color:var(--text-muted);
+    border-top:1px solid var(--border);
+    padding-top:28px;
+  }
+  footer p{ margin:0 0 10px; }
+  footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Introduction</p>
+    <h1 class="title">Introduction to MLOps</h1>
+    <p class="dek">Why machine learning needs its own engineering discipline, why the gap between a working notebook and a reliable production system costs real companies real money, and how this whole series is organized to close it.</p>
+    <p class="meta-line">Read this before Article 1 &middot; audience: ML builders new to production &middot; next up: Article 1, Git &amp; GitHub</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p class="lead">If you've built a few machine learning projects already, a classifier in a notebook, maybe a Kaggle entry, something you're proud enough of to put on GitHub, you've done the hard intellectual part. You know how to clean data, engineer features, train a model, and squeeze out a good accuracy score.</p>
+
+<p>Here's the question this article sits with: what happens the day after that?</p>
+
+<p>To answer your friend when they ask how to actually use your model, you'd need to figure out how to save it so it survives after the notebook closes, and how someone else's computer runs your code without your exact setup. You'd need a way for a website or app to actually ask your model a question and get an answer back. And you'd need an answer for what happens when you improve the model next month (email everyone the new file?), or when the data six months from now doesn't look like the data you trained on.</p>
+
+<p>None of that is a machine learning question. It's an engineering question, and the discipline built to answer it is called MLOps. This article explains what that means, why it exists, and how the rest of this series, starting with Git and GitHub next, fits together.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>The moment every ML learner hits a wall</td></tr>
+<tr><td>2</td><td>What MLOps actually is</td></tr>
+<tr><td>3</td><td>Why we need it, and the problems it solves</td></tr>
+<tr><td>4</td><td>A real example of what happens without MLOps</td></tr>
+<tr><td>5</td><td>A real example of what mature MLOps looks like</td></tr>
+<tr><td>6</td><td>MLOps vs. DevOps vs. data engineering</td></tr>
+<tr><td>7</td><td>The machine learning lifecycle: a loop, not a line</td></tr>
+<tr><td>8</td><td>The core pillars of MLOps</td></tr>
+<tr><td>9</td><td>A day in the life, before and after MLOps</td></tr>
+<tr><td>10</td><td>Common myths about MLOps</td></tr>
+<tr><td>11</td><td>The roadmap ahead</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2 id="part-1"><small>Part 1</small>The moment every ML learner hits a wall</h2>
+
+<p>Picture a familiar scene. You spend a weekend on a customer churn model: load the data, clean it up, try a few algorithms, land on a random forest that hits 89% accuracy. You feel good about it. You show a friend, and they ask the obvious question.</p>
+<p><em>"Cool, so how do I actually use it?"</em></p>
+<p>And there's the wall.</p>
+<p>Your model lives in a notebook, on your laptop, inside a Python session that vanishes the moment you close it. None of the questions that follow are about machine learning. Your 89% accuracy isn't in doubt. What's in doubt is everything around the model, and that's what MLOps is about.</p>
+
+<figure>
+<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing the gap between a notebook that works once, for you, on your laptop today, with 89 percent accuracy, and a system that works reliably for real users every day even as the world around it changes — this article is about that gap.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:11.5px;fill:#6B6B6B;} </style>
+  <rect x="20" y="30" width="230" height="130" rx="8" class="box"/>
+  <text x="135" y="60" text-anchor="middle" class="lbl">A notebook that works</text>
+  <text x="135" y="80" text-anchor="middle" class="sub">once, for you,</text>
+  <text x="135" y="98" text-anchor="middle" class="sub">on your laptop, today</text>
+  <text x="135" y="130" text-anchor="middle" class="lbl" fill="#1B6B5C">89% accuracy</text>
+
+  <text x="320" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="20" fill="#9A6B2E">?????</text>
+  <text x="320" y="112" text-anchor="middle" class="sub">(this article is about this gap)</text>
+
+  <rect x="390" y="30" width="230" height="130" rx="8" class="boxd"/>
+  <text x="505" y="60" text-anchor="middle" class="lbl">A system that works reliably</text>
+  <text x="505" y="80" text-anchor="middle" class="sub">for real users, every day,</text>
+  <text x="505" y="98" text-anchor="middle" class="sub">even as the world around</text>
+  <text x="505" y="116" text-anchor="middle" class="sub">it changes</text>
+</svg>
+<figcaption>Fig. 1 — the gap every ML learner eventually hits</figcaption>
+</figure>
+
+<p>This gap isn't a minor inconvenience. It's the biggest reason machine learning projects never end up mattering. A commonly cited figure puts it at roughly 87%: for every ten ML projects that get built, eight or nine never make it past the prototype stage into anything a real user or business relies on. That specific number traces back to a single 2019 conference panel, not a rigorous study, so it's worth seeing it alongside a couple of independent estimates rather than treating it as one precise, agreed-upon measurement.</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Source</th><th>Year</th><th>Finding</th></tr></thead>
+<tbody>
+<tr><td>VentureBeat</td><td>2019</td><td>87% of data science projects never reach production (from a Transform 2019 conference panel)</td></tr>
+<tr><td>Gartner</td><td>2022</td><td>Only 54% of AI models move from pilot to production</td></tr>
+<tr><td>McKinsey</td><td>2023</td><td>Only 15% of businesses' ML projects ever succeed</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Different organizations, different years, different definitions of "success," so these three numbers shouldn't be read as three measurements of the same thing. They don't need to agree precisely to make the same point: independently, across different methodologies, the honest answer to "how many ML projects actually make it" keeps landing somewhere between "most don't" and "the large majority don't," even as cloud infrastructure and tooling have improved substantially since 2019. The bottleneck was never really the modeling.</p>
+
+<p>MLOps is the answer to that bottleneck.</p>
+
+<hr>
+
+<h2 id="part-2"><small>Part 2</small>What is MLOps, really?</h2>
+
+<p>MLOps stands for machine learning operations. It's a set of practices, tools, and habits that bring the discipline of software engineering, reliability, automation, testing, versioning, to the messier, constantly changing world of machine learning.</p>
+
+<p>The name borrows from DevOps (development plus operations), the discipline that changed how regular software gets built and shipped over the last fifteen years. DevOps solved a familiar problem: developers wrote code that worked on their machine, then handed it to an operations team who had to somehow run it reliably in the real world, and chaos followed. DevOps fixed that by making development and operations work as one continuous process instead of two disconnected teams.</p>
+
+<p>MLOps takes that same idea and extends it to cover the parts of machine learning that DevOps was never built to handle.</p>
+
+<h3>The one difference that matters</h3>
+<p>Here's the idea the rest of this article, and honestly the rest of this series, hangs on: in traditional software, only the code changes. In machine learning, the code, the data, and the model all change, independently of each other, and any one of them can quietly break the system.</p>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram contrasting traditional software, where only the code changes, with a machine learning system, where code, data, and model all change independently, meaning all three must be versioned, tested, and watched together, since the code can be perfect while the model quietly fails because the data it now sees has drifted from what it was trained on.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:11px;fill:#6B6B6B;} </style>
+  <text x="120" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#6B6B6B">TRADITIONAL SOFTWARE</text>
+  <rect x="40" y="35" width="160" height="55" rx="6" class="box"/>
+  <text x="120" y="58" text-anchor="middle" class="lbl">CODE</text>
+  <text x="120" y="76" text-anchor="middle" class="sub">the only thing that changes</text>
+  <text x="120" y="130" text-anchor="middle" class="sub">Test it, ship it, done.</text>
+  <text x="120" y="146" text-anchor="middle" class="sub">If it worked yesterday,</text>
+  <text x="120" y="162" text-anchor="middle" class="sub">it works today.</text>
+
+  <line x1="260" y1="65" x2="260" y2="160" stroke="#E5E5E2" stroke-width="1.5"/>
+
+  <text x="440" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#1B6B5C">A MACHINE LEARNING SYSTEM</text>
+  <rect x="290" y="35" width="100" height="55" rx="6" class="box"/><text x="340" y="58" text-anchor="middle" class="lbl">CODE</text><text x="340" y="76" text-anchor="middle" class="sub">changes</text>
+  <rect x="400" y="35" width="100" height="55" rx="6" class="box"/><text x="450" y="58" text-anchor="middle" class="lbl">DATA</text><text x="450" y="76" text-anchor="middle" class="sub">changes</text>
+  <rect x="510" y="35" width="100" height="55" rx="6" class="box"/><text x="560" y="58" text-anchor="middle" class="lbl">MODEL</text><text x="560" y="76" text-anchor="middle" class="sub">changes</text>
+  <text x="450" y="112" text-anchor="middle" class="sub">ALL THREE must be versioned, tested,</text>
+  <text x="450" y="128" text-anchor="middle" class="sub">and watched together. Code can be perfect</text>
+  <text x="450" y="144" text-anchor="middle" class="sub">while the model quietly fails because the</text>
+  <text x="450" y="160" text-anchor="middle" class="sub">world moved and the data it sees drifted</text>
+  <text x="450" y="176" text-anchor="middle" class="sub">away from what it was trained on.</text>
+</svg>
+<figcaption>Fig. 2 — what changes in traditional software vs. an ML system</figcaption>
+</figure>
+
+<p>A traditional web app doesn't spontaneously get worse over time just by sitting there. A machine learning model can. Customer behavior shifts, a market crashes, a competitor changes the game, a pandemic rewrites what "normal" data even looks like, and your model, which hasn't changed one line of code, starts making confidently wrong predictions. Nothing crashed. No error was thrown. It just quietly stopped being right. We'll see this happen to a real company in Part 4.</p>
+
+<blockquote>
+<p><strong>Building a car vs. running an airline.</strong> Here's a way to feel the difference, not just understand it.</p>
+<p>Training a good model is like a skilled engineer building one excellent prototype car. Given enough time, talent, and a controlled test track, a good engineer can build a car that performs beautifully. That's the data science part, and it's genuinely hard work.</p>
+<p>Running that model in production is more like running a commercial airline. An airline doesn't build one great plane and hope for the best. It runs pre-flight checklists, schedules maintenance, keeps redundant systems on standby, has air traffic control watching every flight in real time, and monitors weather closely enough to ground flights before a storm arrives. Every aircraft carries a black box recorder, because when something does go wrong, someone needs to know exactly what happened. None of this is about whether the plane can fly. It's about making sure it flies safely, every day, for years, as conditions around it keep changing.</p>
+<p>MLOps is the checklist, the maintenance schedule, the air traffic control, and the black box recorder for machine learning. It's not really about building a better model. It's about keeping the good model you already built flying safely long after you've stopped watching it.</p>
+</blockquote>
+
+<hr>
+
+<h2 id="part-3"><small>Part 3</small>Why do we need MLOps? The problems it solves</h2>
+
+<p>Let's get specific. Here are the recurring pains MLOps exists to fix, the same pains that add up to the 87% failure rate from Part 1.</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Problem</th><th>What it looks like in practice</th></tr></thead>
+<tbody>
+<tr><td>Irreproducibility</td><td>"The model in production was trained six weeks ago. Nobody can say exactly which code, which data, and which hyperparameters produced it."</td></tr>
+<tr><td>The handoff gap</td><td>The data scientist who built the model speaks Jupyter and pandas. The engineer who has to run it speaks servers and uptime. Neither fully understands the other's world, and the model gets stuck in the middle.</td></tr>
+<tr><td>"Works on my machine"</td><td>The model runs perfectly on the data scientist's laptop and immediately breaks on the server: different Python version, missing system library, a package that silently upgraded.</td></tr>
+<tr><td>Manual, error-prone deployment</td><td>Shipping a new model version means someone manually copying a <code>.pkl</code> file onto a server at 11pm and hoping nothing else changed.</td></tr>
+<tr><td>Silent model decay</td><td>The model was 92% accurate at launch. Nobody re-measures it against new data, so nobody notices it's now effectively guessing.</td></tr>
+<tr><td>No audit trail</td><td>A regulator, a customer, or your own CEO asks why the model made this exact decision for this exact customer, and there's no record good enough to answer.</td></tr>
+<tr><td>Duplicated effort</td><td>Every new ML project reinvents its own ad-hoc way to save models, serve predictions, and track experiments, because there's no shared, repeatable system.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Every tool on this roadmap, Git, DVC, Docker, Flask, FastAPI, MLflow, Airflow, GitHub Actions, Terraform, Kubernetes, Prometheus, exists to close one or more of these specific gaps. None of it is complexity for its own sake. These are practical answers to problems that have already cost real companies real money. Let's look at two of those companies.</p>
+
+<hr>
+
+<h2 id="part-4"><small>Part 4</small>What happens without MLOps</h2>
+
+<p>In 2018, the real-estate company Zillow launched a business called Zillow Offers. The idea: use a machine learning pricing model, built on the company's "Zestimate" technology, to make instant cash offers on homes, buy them directly from sellers, and resell them for a modest profit. No negotiation, no waiting around, just the algorithm pricing homes at scale.</p>
+<p>For a while, it worked reasonably well. Then the world changed faster than the model could keep up.</p>
+<p>When the pandemic hit, the U.S. housing market didn't just move, it convulsed. Prices swung unpredictably, inventory patterns broke from anything in the historical record, and the statistical relationships the model had learned from years of past housing data stopped holding true. This is a textbook case of concept drift: the real-world relationship between a home's features and its true market price had shifted, but the model kept scoring homes as though the old, stable market still applied.</p>
+<p>Making things worse, reports indicate Zillow's own management pushed the algorithm to make more aggressive offers to hit growth targets, turning up the dial on a model that was already working off outdated assumptions, instead of having an independent system checking whether those assumptions still held.</p>
+<p>By November 2021, the damage was done. Zillow disclosed a write-down of more than $500 million on homes it had bought for prices that no longer made sense, and shut Zillow Offers down entirely, laying off roughly a quarter of the unit's workforce.</p>
+
+<figure>
+<svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing how a model trained on historical stable housing data, combined with the pandemic-era market shifting wildly, and no independent system watching it, led to thousands of homes bought at prices the real market would no longer support, resulting in a five hundred million dollar write-down, the business shutting down, and layoffs.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxwarn{fill:#FAF3E8;stroke:#9A6B2E;stroke-width:1.3;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10.5px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="arZ" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="20" width="180" height="55" rx="6" class="box"/><text x="100" y="42" text-anchor="middle" class="lbl">Model trained on</text><text x="100" y="58" text-anchor="middle" class="sub">historical, stable housing data</text>
+  <rect x="230" y="20" width="180" height="55" rx="6" class="box"/><text x="320" y="42" text-anchor="middle" class="lbl">Market shifts wildly</text><text x="320" y="58" text-anchor="middle" class="sub">pandemic-era chaos</text>
+  <rect x="450" y="20" width="180" height="55" rx="6" class="box"/><text x="540" y="42" text-anchor="middle" class="lbl">No system flags it</text><text x="540" y="58" text-anchor="middle" class="sub">model trusts old assumptions</text>
+
+  <line x1="190" y1="47" x2="228" y2="47" class="ln" marker-end="url(#arZ)"/>
+  <line x1="410" y1="47" x2="448" y2="47" class="ln" marker-end="url(#arZ)"/>
+  <line x1="540" y1="75" x2="540" y2="100" class="ln" marker-end="url(#arZ)"/>
+  <line x1="540" y1="100" x2="320" y2="100" class="ln"/>
+  <line x1="320" y1="100" x2="320" y2="120" class="ln" marker-end="url(#arZ)"/>
+
+  <rect x="170" y="125" width="300" height="40" rx="6" class="box"/>
+  <text x="320" y="150" text-anchor="middle" class="sub">Thousands of homes bought at prices the market no longer supports</text>
+
+  <line x1="320" y1="165" x2="320" y2="185" class="ln" marker-end="url(#arZ)"/>
+  <rect x="150" y="188" width="340" height="20" rx="4" class="boxwarn"/>
+  <text x="320" y="202" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#9A6B2E">$500M+ write-down &middot; business shut down &middot; layoffs</text>
+</svg>
+<figcaption>Fig. 3 — how an undetected drift became a half-billion-dollar problem</figcaption>
+</figure>
+
+<blockquote class="warn">
+<p>This wasn't a story about a bad algorithm. Zillow had skilled data scientists and enormous amounts of data. It was a story about missing operations around the model: no automated system was comparing the model's predictions against reality, nothing was flagging that the input data no longer resembled the training data, no early-warning dashboard existed to catch the problem before it became a half-billion-dollar one. Monitoring, drift detection, and automated retraining triggers are core pieces of MLOps, and we'll build toward all three later in this series, especially the observability tools in Phase 4 of the roadmap in Part 11.</p>
+</blockquote>
+
+<hr>
+
+<h2 id="part-5"><small>Part 5</small>What mature MLOps looks like</h2>
+
+<p>Now the other side of the coin. Uber runs machine learning at a scale that's hard to picture: trip time estimates, driver-rider matching, fraud detection, UberEats delivery predictions, and dozens more, running continuously, worldwide.</p>
+<p>Uber didn't get there by having each team build its own deployment process from scratch. Starting in 2016, the company built an internal platform called Michelangelo, meant to take a model from a data scientist's experiment to a reliable, monitored production service, repeatably, for any team, without reinventing the process each time.</p>
+<p>The reason for building it is worth sitting with. Internally, Uber found that machine learning's impact across the company was limited by how much engineering effort it took to turn any single local model into something running reliably in production. The modeling itself wasn't the bottleneck. The road from notebook to production was.</p>
+<p>Today, Michelangelo manages roughly 400 active ML projects and generates more than 20,000 model training jobs a month, covering the full lifecycle: managing data, training, evaluating, deploying, serving live predictions, and continuously monitoring how those predictions hold up in the real world.</p>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram contrasting before Michelangelo, where three separate teams each built their own deployment, monitoring, and serving stack from scratch, slowly and inconsistently, with after Michelangelo, one shared platform covering data through monitoring, reused across many projects including an ETA model, a fraud model, and an Eats delivery model.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.3;} .lbl{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="arM" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <text x="110" y="18" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#6B6B6B">BEFORE: every team solving it alone</text>
+  <rect x="10" y="30" width="65" height="55" rx="5" class="box"/><text x="42" y="52" text-anchor="middle" class="lbl">Team A</text><text x="42" y="67" text-anchor="middle" class="sub">builds own</text><text x="42" y="79" text-anchor="middle" class="sub">stack</text>
+  <rect x="83" y="30" width="65" height="55" rx="5" class="box"/><text x="115" y="52" text-anchor="middle" class="lbl">Team B</text><text x="115" y="67" text-anchor="middle" class="sub">builds own</text><text x="115" y="79" text-anchor="middle" class="sub">stack</text>
+  <rect x="156" y="30" width="65" height="55" rx="5" class="box"/><text x="188" y="52" text-anchor="middle" class="lbl">Team C</text><text x="188" y="67" text-anchor="middle" class="sub">builds own</text><text x="188" y="79" text-anchor="middle" class="sub">stack</text>
+  <text x="115" y="105" text-anchor="middle" class="sub">Slow, inconsistent,</text>
+  <text x="115" y="118" text-anchor="middle" class="sub">repeated effort</text>
+
+  <line x1="240" y1="55" x2="280" y2="55" class="ln" marker-end="url(#arM)"/>
+
+  <text x="460" y="18" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#1B6B5C">AFTER: one shared platform</text>
+  <rect x="290" y="30" width="340" height="60" rx="6" class="boxd"/>
+  <text x="460" y="52" text-anchor="middle" class="lbl">MICHELANGELO</text>
+  <text x="460" y="70" text-anchor="middle" class="sub">data &rarr; train &rarr; evaluate &rarr; deploy &rarr; predict &rarr; monitor</text>
+
+  <line x1="380" y1="90" x2="350" y2="120" class="ln" marker-end="url(#arM)"/>
+  <line x1="460" y1="90" x2="460" y2="120" class="ln" marker-end="url(#arM)"/>
+  <line x1="540" y1="90" x2="570" y2="120" class="ln" marker-end="url(#arM)"/>
+
+  <rect x="300" y="123" width="100" height="35" rx="5" class="box"/><text x="350" y="145" text-anchor="middle" class="sub">ETA model</text>
+  <rect x="410" y="123" width="100" height="35" rx="5" class="box"/><text x="460" y="145" text-anchor="middle" class="sub">Fraud model</text>
+  <rect x="520" y="123" width="100" height="35" rx="5" class="box"/><text x="570" y="145" text-anchor="middle" class="sub">Eats delivery</text>
+</svg>
+<figcaption>Fig. 4 — Michelangelo: one platform, reused across hundreds of projects</figcaption>
+</figure>
+
+<blockquote>
+<p>Michelangelo didn't make Uber's models smarter. It turned the path from idea to reliable production into a solved, reusable capability, the opposite of what happened at Zillow. That's MLOps at its best: not a single clever tool, but a set of shared, engineered systems that make going to production safely the default outcome of an ML project instead of a stroke of luck.</p>
+</blockquote>
+
+<hr>
+
+<h2 id="part-6"><small>Part 6</small>MLOps vs. DevOps vs. data engineering</h2>
+
+<p>MLOps didn't appear out of nowhere. It sits at the intersection of three existing disciplines, borrowing something from each.</p>
+
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing MLOps sitting at the intersection of machine learning, which contributes experimentation, model training, and feature engineering, and development, which contributes version control, CI/CD pipelines, automated testing, and code review, with operations underneath contributing infrastructure, monitoring and alerting, and scaling and reliability.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.4;} .lbl{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10.5px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="arV" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="30" y="15" width="250" height="90" rx="6" class="box"/>
+  <text x="155" y="38" text-anchor="middle" class="lbl">Machine Learning</text>
+  <text x="155" y="55" text-anchor="middle" class="sub">Experimentation &middot; Model training</text>
+  <text x="155" y="70" text-anchor="middle" class="sub">Feature engineering</text>
+
+  <rect x="360" y="15" width="250" height="90" rx="6" class="box"/>
+  <text x="485" y="38" text-anchor="middle" class="lbl">Development (DevOps)</text>
+  <text x="485" y="55" text-anchor="middle" class="sub">Version control &middot; CI/CD pipelines</text>
+  <text x="485" y="70" text-anchor="middle" class="sub">Automated testing &middot; Code review</text>
+
+  <line x1="200" y1="105" x2="290" y2="135" class="ln" marker-end="url(#arV)"/>
+  <line x1="440" y1="105" x2="350" y2="135" class="ln" marker-end="url(#arV)"/>
+
+  <rect x="220" y="138" width="200" height="65" rx="6" class="boxd"/>
+  <text x="320" y="160" text-anchor="middle" class="lbl">MLOps</text>
+  <text x="320" y="177" text-anchor="middle" class="sub">Automating and operationalizing</text>
+  <text x="320" y="190" text-anchor="middle" class="sub">the entire ML lifecycle, safely</text>
+
+  <line x1="320" y1="203" x2="320" y2="220" class="ln" marker-end="url(#arV)"/>
+
+  <rect x="180" y="223" width="280" height="35" rx="6" class="box"/>
+  <text x="320" y="238" text-anchor="middle" class="lbl" font-size="11">Operations</text>
+  <text x="320" y="252" text-anchor="middle" class="sub">Infrastructure &middot; Monitoring &amp; alerting &middot; Scaling &amp; reliability</text>
+</svg>
+<figcaption>Fig. 5 — MLOps at the intersection of ML, development, and operations</figcaption>
+</figure>
+
+<p>Here's a direct comparison, because the differences from plain DevOps are exactly where beginners get tripped up.</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Aspect</th><th>DevOps (traditional software)</th><th>MLOps (machine learning)</th></tr></thead>
+<tbody>
+<tr><td>What gets versioned</td><td>Code</td><td>Code, plus data, plus trained models</td></tr>
+<tr><td>What "testing" means</td><td>Does the code behave correctly?</td><td>Does the code work, and is the model's accuracy, fairness, and performance acceptable?</td></tr>
+<tr><td>Why quality degrades</td><td>Bugs introduced by new code changes</td><td>Bugs from code changes, plus silent decay from the real world changing (drift) even when no code changed</td></tr>
+<tr><td>The core pipeline</td><td>CI/CD (continuous integration / continuous deployment)</td><td>CI/CD plus CT (continuous training: retraining models as new data arrives)</td></tr>
+<tr><td>What "rollback" means</td><td>Revert to a previous code version</td><td>Revert the code, and the model, and possibly the data snapshot</td></tr>
+<tr><td>Who's involved</td><td>Developers and operations engineers</td><td>Data scientists, ML engineers, and operations engineers, sharing one workflow</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>MLOps also overlaps heavily with data engineering, the discipline of building reliable pipelines that move and transform data, since a model is only as trustworthy as the data feeding it. In practice, MLOps absorbs the parts of data engineering concerned with getting clean, versioned, monitored data into a training and serving pipeline.</p>
+
+<hr>
+
+<h2 id="part-7"><small>Part 7</small>The machine learning lifecycle: a loop, not a line</h2>
+
+<p>Here's a mental model shift that changes a lot: traditional software has a release cycle. You ship version 1.0, then work toward 2.0. Machine learning has a lifecycle loop that never really stops, because the moment a model is deployed, the real world starts drifting away from the data it was trained on, and the whole cycle has to run again.</p>
+
+<figure>
+<svg viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A circular workflow diagram: collect and version the data, prepare and clean the data, train and experiment with models, evaluate and register the best model, deploy and serve predictions, then monitor and detect drift, which either loops back to collecting data if drift is found, or continues serving if things look healthy.">
+  <style> .node{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.2;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;fill:#1C1C1C;} .ln{stroke:#1B6B5C;stroke-width:1.6;fill:none;} </style>
+  <defs><marker id="arrowL" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <circle cx="320" cy="60" r="55" class="node"/><text x="320" y="55" text-anchor="middle" class="lbl">1. Collect &amp;</text><text x="320" y="70" text-anchor="middle" class="lbl">version data</text>
+
+  <circle cx="500" cy="140" r="55" class="node"/><text x="500" y="135" text-anchor="middle" class="lbl">2. Prepare &amp;</text><text x="500" y="150" text-anchor="middle" class="lbl">clean data</text>
+
+  <circle cx="500" cy="260" r="55" class="node"/><text x="500" y="255" text-anchor="middle" class="lbl">3. Train &amp;</text><text x="500" y="270" text-anchor="middle" class="lbl">experiment</text>
+
+  <circle cx="320" cy="300" r="55" class="node"/><text x="320" y="295" text-anchor="middle" class="lbl">4. Evaluate &amp;</text><text x="320" y="310" text-anchor="middle" class="lbl">register best</text>
+
+  <circle cx="140" cy="260" r="55" class="node"/><text x="140" y="255" text-anchor="middle" class="lbl">5. Deploy &amp;</text><text x="140" y="270" text-anchor="middle" class="lbl">serve</text>
+
+  <circle cx="140" cy="140" r="55" class="node"/><text x="140" y="130" text-anchor="middle" class="lbl">6. Monitor &amp;</text><text x="140" y="145" text-anchor="middle" class="lbl">detect drift</text><text x="140" y="160" text-anchor="middle" font-size="9.5" fill="#6B6B6B" font-family="Inter,sans-serif">(drift → retrain)</text>
+
+  <path d="M368,75 Q440,95 460,115" class="ln" marker-end="url(#arrowL)"/>
+  <path d="M500,195 L500,205" class="ln" marker-end="url(#arrowL)"/>
+  <path d="M460,300 Q400,320 372,315" class="ln" marker-end="url(#arrowL)"/>
+  <path d="M270,300 Q200,285 178,275" class="ln" marker-end="url(#arrowL)"/>
+  <path d="M140,205 L140,195" class="ln" marker-end="url(#arrowL)"/>
+  <path d="M178,110 Q240,80 268,68" class="ln" marker-end="url(#arrowL)"/>
+</svg>
+<figcaption>Fig. 6 — the ML lifecycle: a loop, not a one-way pipeline</figcaption>
+</figure>
+
+<p>Notice step 6 has two arrows leaving it: one loops back to step 1 (retrain, because the world moved), and one just continues serving (because things still look healthy). A production ML system is never really finished. It's a loop that has to keep spinning correctly, indefinitely, which is why operations has to be a real part of the discipline and not an afterthought.</p>
+
+<hr>
+
+<h2 id="part-8"><small>Part 8</small>The core pillars of MLOps</h2>
+
+<p>Everything MLOps does can be sorted into a small number of foundational pillars. Think of these as the load-bearing columns holding up a reliable production ML system. Remove any one of them, and the whole structure gets shaky.</p>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing a reliable production ML system resting on four pillars: versioning, meaning code, data, and models tracked together; automation, meaning build, test, train, and deploy on autopilot; reproducibility, meaning the same code, data, and parameters always produce the same model; and monitoring, meaning catching drift and decay early.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.4;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="arP" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="70" y="10" width="500" height="40" rx="6" class="boxd"/>
+  <text x="320" y="35" text-anchor="middle" class="lbl">A RELIABLE, PRODUCTION ML SYSTEM</text>
+
+  <line x1="150" y1="50" x2="150" y2="70" class="ln" marker-end="url(#arP)"/>
+  <line x1="290" y1="50" x2="290" y2="70" class="ln" marker-end="url(#arP)"/>
+  <line x1="430" y1="50" x2="430" y2="70" class="ln" marker-end="url(#arP)"/>
+  <line x1="560" y1="50" x2="560" y2="70" class="ln" marker-end="url(#arP)"/>
+
+  <rect x="20" y="75" width="150" height="130" rx="6" class="box"/>
+  <text x="95" y="98" text-anchor="middle" class="lbl">Versioning</text>
+  <text x="95" y="120" text-anchor="middle" class="sub">Code, data, and</text>
+  <text x="95" y="134" text-anchor="middle" class="sub">models tracked</text>
+  <text x="95" y="148" text-anchor="middle" class="sub">together</text>
+
+  <rect x="210" y="75" width="150" height="130" rx="6" class="box"/>
+  <text x="285" y="98" text-anchor="middle" class="lbl">Automation</text>
+  <text x="285" y="112" text-anchor="middle" class="sub">(CI/CD/CT)</text>
+  <text x="285" y="132" text-anchor="middle" class="sub">Build, test, train,</text>
+  <text x="285" y="146" text-anchor="middle" class="sub">deploy on autopilot</text>
+
+  <rect x="400" y="75" width="150" height="130" rx="6" class="box"/>
+  <text x="475" y="98" text-anchor="middle" class="lbl">Reproducibility</text>
+  <text x="475" y="120" text-anchor="middle" class="sub">Same code + data +</text>
+  <text x="475" y="134" text-anchor="middle" class="sub">params = same model,</text>
+  <text x="475" y="148" text-anchor="middle" class="sub">every time</text>
+
+  <rect x="490" y="75" width="130" height="130" rx="6" class="box"/>
+  <text x="555" y="98" text-anchor="middle" class="lbl">Monitoring</text>
+  <text x="555" y="120" text-anchor="middle" class="sub">Catching drift</text>
+  <text x="555" y="134" text-anchor="middle" class="sub">and decay</text>
+  <text x="555" y="148" text-anchor="middle" class="sub">early</text>
+</svg>
+<figcaption>Fig. 7 — the four pillars holding up a reliable ML system</figcaption>
+</figure>
+
+<p>Versioning means code, data, and models are all tracked, all the time, so you can always answer what exactly produced this prediction. Articles 1 through 3 of this series cover Git and DVC, the tools that make this possible.</p>
+<p>Automation, often shortened to CI/CD/CT, means building, testing, training, and deploying happen through repeatable, automated pipelines instead of manual, error-prone steps. GitHub Actions and orchestration tools like Airflow cover this later in the series.</p>
+<p>Reproducibility means that given the same code, the same data, and the same parameters, you get the exact same model every time, on any machine, not just yours. That's what Docker guarantees, and what DVC and Git make possible together.</p>
+<p>Monitoring and observability means someone, or something automated, is always watching how the model performs against fresh, real-world data, so decay gets caught in days instead of in a half-billion-dollar write-down. This is the pillar that was missing at Zillow, and it's what Prometheus, Grafana, and Evidently AI will give you later in the series.</p>
+
+<hr>
+
+<h2 id="part-9"><small>Part 9</small>A day in the life, before and after MLOps</h2>
+
+<p>Let's make this concrete with one running example: a subscription business's customer churn model. Here's how the same situations play out with and without MLOps.</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Situation</th><th>Without MLOps</th><th>With MLOps</th></tr></thead>
+<tbody>
+<tr><td>New data arrives at month-end</td><td>A data scientist manually reruns their notebook, eyeballs the new accuracy, and, if it looks fine, manually copies a new model file onto the server.</td><td>An automated pipeline retrains the model on schedule, evaluates it against the current production model, and only promotes it if it's actually better.</td></tr>
+<tr><td>A bug shows up in production</td><td>Nobody can say for certain which code, which data, and which model version is even currently live.</td><td>Git, DVC, and a model registry together tell you the exact code commit, data version, and model version running right now.</td></tr>
+<tr><td>Comparing two experiments</td><td>Accuracy numbers live in scattered notebook print statements, Slack messages, and someone's memory.</td><td>A tool like MLflow shows every run's parameters, metrics, and artifacts side by side, searchable and permanent.</td></tr>
+<tr><td>The model quietly gets worse</td><td>Nobody notices until a customer complaint, a bad business quarter, or an executive asks an uncomfortable question.</td><td>Automated drift detection and dashboards flag the degradation within days, before it becomes expensive.</td></tr>
+<tr><td>The data scientist who built it leaves</td><td>The model becomes an unmaintainable black box that nobody dares touch.</td><td>Everything, code, data, environment, model, is versioned and documented, so any team member can pick it up.</td></tr>
+<tr><td>Traffic suddenly spikes</td><td>The single server hosting the model falls over, and predictions stop entirely.</td><td>Container orchestration (Kubernetes) automatically scales up more instances to absorb the load.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Every row in the "With MLOps" column maps to a tool or practice on this series' roadmap, which is the whole point of Part 11.</p>
+
+<hr>
+
+<h2 id="part-10"><small>Part 10</small>Common myths about MLOps</h2>
+
+<p>Before the roadmap, a few misconceptions worth clearing up.</p>
+
+<blockquote><p><strong>One myth:</strong> MLOps is just DevOps with a new name. It isn't, not quite. MLOps borrows heavily from DevOps, but it has to solve problems DevOps was never designed for. Code doesn't spontaneously get worse by sitting still. Data does, quietly, through drift. That difference is why data and model versioning, continuous training, and drift monitoring exist as entirely new categories of tooling that DevOps never needed.</p></blockquote>
+
+<blockquote><p><strong>Another myth:</strong> you need Kubernetes, a cloud budget, and a platform team to "do" MLOps. You don't. MLOps is a set of practices, not a specific stack. Someone running Git, DVC, and Docker on a laptop is already practicing real MLOps principles, versioning and reproducibility, just at a smaller scale than Uber's. This series builds up to Kubernetes and cloud infrastructure later because you'll understand why you need them by the time you get there, not because they're required on day one.</p></blockquote>
+
+<blockquote><p><strong>A third myth:</strong> MLOps only matters once you're "in production." It doesn't. The habits that make production reliable, versioning data alongside code, writing reproducible training scripts, tracking experiments properly, are much easier to build from day one than to retrofit later. Waiting until "it's serious" to start caring about MLOps is exactly how projects end up in the 87% that never make it.</p></blockquote>
+
+<hr>
+
+<h2 id="part-11"><small>Part 11</small>The roadmap ahead</h2>
+
+<p>Here's how the tools in this series map onto everything you've just read, organized into four phases that mirror the pillars from Part 8 and the lifecycle loop from Part 7.</p>
+
+<figure>
+<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A four-phase roadmap diagram: Phase 1, Foundation, Git plus DVC, Docker, Flask and FastAPI, days 1 to 7, make it work the same way everywhere and reproducibly; Phase 2, Tracking and Registry, MLflow tracking and registry, days 8 to 14, bring order to the chaos of experiments and model versions; Phase 3, Automation, Airflow or Prefect, GitHub Actions, days 15 to 22, stop doing this by hand, let it run itself; Phase 4, Deploy Scale and Observe, Terraform, Kubernetes, Prometheus, Grafana, and Evidently AI, days 23 to 30, get it live, keep it healthy, and know the instant it's not.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:9.5px;fill:#6B6B6B;} .tag{font-family:'Inter',sans-serif;font-size:9.5px;font-style:italic;fill:#1B6B5C;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="arR" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="30" width="145" height="110" rx="6" class="box"/>
+  <text x="82" y="50" text-anchor="middle" class="lbl">Phase 1 — Foundation</text>
+  <text x="82" y="64" text-anchor="middle" class="sub">days 1&ndash;7</text>
+  <text x="82" y="82" text-anchor="middle" class="sub">Git + DVC, Docker,</text>
+  <text x="82" y="95" text-anchor="middle" class="sub">Flask/FastAPI</text>
+  <text x="82" y="120" text-anchor="middle" class="tag">"make it work the</text>
+  <text x="82" y="132" text-anchor="middle" class="tag">same way everywhere"</text>
+
+  <line x1="155" y1="85" x2="170" y2="85" class="ln" marker-end="url(#arR)"/>
+
+  <rect x="175" y="30" width="145" height="110" rx="6" class="box"/>
+  <text x="247" y="50" text-anchor="middle" class="lbl">Phase 2 — Tracking</text>
+  <text x="247" y="64" text-anchor="middle" class="sub">days 8&ndash;14</text>
+  <text x="247" y="82" text-anchor="middle" class="sub">MLflow Tracking,</text>
+  <text x="247" y="95" text-anchor="middle" class="sub">MLflow Registry</text>
+  <text x="247" y="120" text-anchor="middle" class="tag">"bring order to the</text>
+  <text x="247" y="132" text-anchor="middle" class="tag">chaos of experiments"</text>
+
+  <line x1="320" y1="85" x2="335" y2="85" class="ln" marker-end="url(#arR)"/>
+
+  <rect x="340" y="30" width="145" height="110" rx="6" class="box"/>
+  <text x="412" y="50" text-anchor="middle" class="lbl">Phase 3 — Automation</text>
+  <text x="412" y="64" text-anchor="middle" class="sub">days 15&ndash;22</text>
+  <text x="412" y="82" text-anchor="middle" class="sub">Airflow/Prefect,</text>
+  <text x="412" y="95" text-anchor="middle" class="sub">GitHub Actions</text>
+  <text x="412" y="120" text-anchor="middle" class="tag">"stop doing this by</text>
+  <text x="412" y="132" text-anchor="middle" class="tag">hand, let it run itself"</text>
+
+  <line x1="485" y1="85" x2="500" y2="85" class="ln" marker-end="url(#arR)"/>
+
+  <rect x="505" y="30" width="130" height="110" rx="6" class="box"/>
+  <text x="570" y="50" text-anchor="middle" class="lbl">Phase 4 — Deploy</text>
+  <text x="570" y="64" text-anchor="middle" class="sub">days 23&ndash;30</text>
+  <text x="570" y="82" text-anchor="middle" class="sub">Terraform, K8s,</text>
+  <text x="570" y="95" text-anchor="middle" class="sub">Prometheus/Grafana</text>
+  <text x="570" y="120" text-anchor="middle" class="tag">"get it live, know the</text>
+  <text x="570" y="132" text-anchor="middle" class="tag">instant it's not"</text>
+</svg>
+<figcaption>Fig. 8 — the four-phase roadmap, and where this series is headed (Article 1 starts Phase 1, right after this one)</figcaption>
+</figure>
+
+<blockquote>
+<p>This four-phase shape isn't specific to this series. Google Cloud publishes its own MLOps maturity model with almost the identical progression, in three levels instead of four: Level 0 is a fully manual process, someone runs every step by hand. Level 1 adds ML pipeline automation, the training pipeline itself runs on a schedule and retrains automatically. Level 2 adds full CI/CD for the pipeline, so changes to the training code get tested, built, and deployed the same automated way changes to a web app would be. Phases 1 and 2 of this roadmap build toward Google's Level 1; Phase 3's GitHub Actions work is what actually gets you to Level 2. The point isn't that the numbers match exactly, they don't need to, it's that "manual, then an automated pipeline, then a fully automated pipeline" is how the industry itself describes MLOps maturity, not a framework invented for this series.</p>
+</blockquote>
+
+<p>Let's slow down and go tool by tool before zooming back out to the phase level.</p>
+
+<h3>Tool by tool: the problem each one actually solves</h3>
+<p>Every tool on this roadmap exists because of one specific, recurring problem, not because it's trendy. To make this concrete, we'll follow one running example the whole way through: the customer churn model from Part 9, as it moves from a data scientist's laptop to a real, monitored production system.</p>
+
+<h3>1. Git and DVC</h3>
+<p>Regular version control tracks code well, but it was never built to handle datasets and trained model files: large binary blobs that bloat a repository and can't be meaningfully diffed. Without a way to version data and models alongside code, nobody can answer the question that matters most after something goes wrong: what data, what code, and what model produced this exact prediction?</p>
+<p>Here's how that plays out. Three data scientists each retrain the churn model on slightly different data pulls over a month. Six weeks later, leadership asks the team to reproduce the exact model that flagged a batch of high-value customers as "high churn risk" last quarter, because that flag triggered a costly retention campaign and finance wants to audit it. Nobody can say for certain which data snapshot and which code version produced that model. With <strong>Git</strong> tracking the code and <strong>DVC</strong> tracking the data, linked by a small pointer file Git can version, the team runs <code>git checkout</code> to the right commit and <code>dvc checkout</code> to pull the matching data, and reproduces the exact model, byte for byte, months later.</p>
+
+<h3>2. Docker</h3>
+<p>A model that trains and predicts correctly on a data scientist's laptop can behave differently, or simply crash, the moment it moves to another machine, because of differences in Python version, library versions, or missing system dependencies. This is the classic "works on my machine" problem.</p>
+<p>The churn model was built and tested on a laptop running Python 3.11 and scikit-learn 1.4. Handed off to the company's production server, which runs Python 3.9 with an older scikit-learn, predictions come out subtly different, and a required system library is missing entirely, crashing the service. <strong>Docker</strong> packages the exact Python version, exact package versions, and any system dependencies into one portable container. The same container that ran correctly on the laptop runs identically on staging and production, and this whole category of bug disappears.</p>
+
+<h3>3. Flask, then FastAPI</h3>
+<p>A trained model saved as a <code>.pkl</code> file can only be used by loading it inside a Python script. Real consumers of a prediction (a customer support dashboard, a mobile app, another internal service) are rarely written in Python and shouldn't need to know anything about pickle files or scikit-learn.</p>
+<p>The support team's dashboard, built in a completely different stack, needs to show a live "churn risk" badge next to each customer's name. Wrapping the model in a <strong>FastAPI</strong> endpoint (<code>POST /predict</code>) turns it into a universal service: the dashboard sends a customer's data as plain JSON over HTTP and gets a churn probability back, with no knowledge of Python, pickle files, or how the model works internally.</p>
+
+<h3>4. MLflow, experiment tracking</h3>
+<p>Finding the best-performing version of a model usually means running many experiments across different algorithms, features, and hyperparameters. Without a system to track them, results end up scattered across notebook print statements, an outdated spreadsheet, and half-remembered Slack messages, and it becomes nearly impossible to say with confidence which configuration was actually best.</p>
+<p>Over two weeks, the team runs 40 variations of the churn model: logistic regression, random forests, gradient boosting, each with different features and hyperparameters. <strong>MLflow</strong> logs every run's parameters, metrics, and output artifacts to one searchable place automatically. Instead of digging through notebooks, the team opens the MLflow UI, sorts by F1 score, and finds that run 27, a random forest with 200 trees and max depth 8, outperformed everything else, with the exact code and data version that produced it already attached.</p>
+
+<h3>5. MLflow, model registry</h3>
+<p>Even after finding the best model, there's usually no formal, safe way to declare "this is the model serving real customers right now" versus "this is a candidate we're still testing." Teams fall back on renaming files by hand, something like <code>model_v2_FINAL_use_this_one.pkl</code>, and that system breaks down the moment more than one person touches it.</p>
+<p>The team promotes run 27 from staging to production inside the MLflow Model Registry with a single action. The live prediction API always loads whichever model is currently tagged production, so releasing a better model later is a clean stage transition, not a manual file swap at 11pm that someone might get wrong.</p>
+
+<h3>6. Apache Airflow or Prefect</h3>
+<p>A production model needs fresh data on a regular schedule to stay accurate, which usually means running several scripts in a strict order: extract, clean, train, evaluate. Relying on a person to remember to run these manually, in order, every single week, is exactly the kind of fragile process that breaks the moment that person is on vacation or just forgets.</p>
+<p>The churn model needs retraining every Monday on the past week's customer activity. An <strong>Airflow</strong> DAG defines "extract, then preprocess, then train, then evaluate" as a dependency graph that runs automatically at 2am every Monday, retries any step that fails, and alerts the team the moment something breaks, with no human needing to remember any of it.</p>
+
+<h3>7. GitHub Actions</h3>
+<p>A developer can fix a bug in the code and push it to Git, then forget to rebuild and redeploy the Docker image that actually runs in production. The "fixed" code sits safely in the repository while the live system keeps running the old, buggy container, and this mismatch can go unnoticed for weeks.</p>
+<p>A data scientist fixes a preprocessing bug in the churn model's feature pipeline and pushes the change. A <strong>GitHub Actions</strong> workflow triggers automatically: it runs the unit tests, builds a fresh Docker image if they pass, and pushes the new image to the container registry, so the code in Git and the container running in production can't quietly drift apart again.</p>
+
+<h3>8. Terraform</h3>
+<p>Cloud infrastructure (servers, networking rules, storage) often gets set up by clicking through a cloud provider's console by hand. That works until someone needs to recreate the setup later: a new staging environment, a disaster recovery scenario, or simply because the person who originally clicked through it has left the company and nobody remembers the settings.</p>
+<p>The engineer who set up the churn model API's server, load balancer, and storage bucket on AWS leaves the company. Six months later, the team needs an identical staging environment to test a new model version safely, and nobody can recall the exact configuration. With <strong>Terraform</strong>, that infrastructure was described as code from the start, so recreating it identically is one command, <code>terraform apply</code>, not a two-hour guessing game through a console.</p>
+
+<h3>9. Kubernetes</h3>
+<p>A model API running on a single server handles everyday traffic fine, but has no way to automatically absorb a sudden spike in demand, and a server that falls over during a spike takes down service for every user, not just the extra ones.</p>
+<p>Every Monday morning, the sales team runs a bulk churn-risk check against thousands of customers ahead of their weekly planning meeting. On a single server, that spike overwhelms the churn API and it stops responding for everyone, including customer support agents relying on it in real time. <strong>Kubernetes</strong> detects the load increase, starts additional copies of the API to absorb it, then scales back down once the spike passes, with no 3am page and no manual server provisioning.</p>
+
+<h3>10. Prometheus, Grafana, and Evidently AI</h3>
+<p>This is the exact gap that sank Zillow Offers back in Part 4: a model's real-world performance can degrade slowly and silently as the data it sees drifts away from what it was trained on, and without active monitoring, nobody notices until the damage shows up in a quarterly report.</p>
+<p>Three months after launch, the churn model's accuracy quietly drops because a pricing change shifted customer behavior in ways the training data never saw. <strong>Prometheus</strong> continuously collects operational metrics like request latency and volume. <strong>Grafana</strong> turns them into a live dashboard. <strong>Evidently AI</strong> compares the live customer data hitting the model against the original training distribution, and flags the drift within days of it starting, not three months later in a boardroom.</p>
+
+<p>Ten tools, ten separate scenarios. It's worth stepping back and looking at the same churn model moving through all of them as one continuous journey, rather than ten disconnected stories, since that's what actually happens to it in a real pipeline.</p>
+
+<figure>
+<svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A ten-step diagram showing the churn model's complete journey: starting as a notebook, then versioned by Git and DVC, containerized by Docker, served by FastAPI, tracked by MLflow Tracking, promoted by the MLflow Registry, automated by Airflow or Prefect, shipped by GitHub Actions, scaled by Terraform and Kubernetes, and monitored by Prometheus, Grafana, and Evidently AI, which loops back to retraining if drift is found.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxstart{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.3;} .boxend{fill:#FAF3E8;stroke:#9A6B2E;stroke-width:1.3;} .lbl{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:9px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} .num{font-family:'JetBrains Mono',monospace;font-size:9px;fill:#1B6B5C;font-weight:700;} </style>
+  <defs><marker id="arJ" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <text x="10" y="15" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#6B6B6B">ROW 1 &rarr;</text>
+  <rect x="10" y="25" width="150" height="60" rx="6" class="boxstart"/><text x="85" y="48" text-anchor="middle" class="num">START</text><text x="85" y="64" text-anchor="middle" class="lbl">Notebook</text><text x="85" y="77" text-anchor="middle" class="sub">works once, on one laptop</text>
+
+  <rect x="190" y="25" width="150" height="60" rx="6" class="box"/><text x="265" y="42" text-anchor="middle" class="num">1</text><text x="265" y="58" text-anchor="middle" class="lbl">Git + DVC</text><text x="265" y="72" text-anchor="middle" class="sub">code and data versioned</text>
+
+  <rect x="370" y="25" width="150" height="60" rx="6" class="box"/><text x="445" y="42" text-anchor="middle" class="num">2</text><text x="445" y="58" text-anchor="middle" class="lbl">Docker</text><text x="445" y="72" text-anchor="middle" class="sub">packaged, portable</text>
+
+  <rect x="550" y="25" width="150" height="60" rx="6" class="box"/><text x="625" y="42" text-anchor="middle" class="num">3</text><text x="625" y="58" text-anchor="middle" class="lbl">FastAPI</text><text x="625" y="72" text-anchor="middle" class="sub">reachable over HTTP</text>
+
+  <rect x="730" y="25" width="150" height="60" rx="6" class="box"/><text x="805" y="42" text-anchor="middle" class="num">4</text><text x="805" y="58" text-anchor="middle" class="lbl">MLflow Tracking</text><text x="805" y="72" text-anchor="middle" class="sub">every run compared</text>
+
+  <line x1="160" y1="55" x2="188" y2="55" class="ln" marker-end="url(#arJ)"/>
+  <line x1="340" y1="55" x2="368" y2="55" class="ln" marker-end="url(#arJ)"/>
+  <line x1="520" y1="55" x2="548" y2="55" class="ln" marker-end="url(#arJ)"/>
+  <line x1="700" y1="55" x2="728" y2="55" class="ln" marker-end="url(#arJ)"/>
+
+  <path d="M805,85 Q805,120 805,150" class="ln" marker-end="url(#arJ)"/>
+
+  <text x="10" y="170" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#6B6B6B">&larr; ROW 2</text>
+  <rect x="730" y="150" width="150" height="60" rx="6" class="box"/><text x="805" y="167" text-anchor="middle" class="num">5</text><text x="805" y="183" text-anchor="middle" class="lbl">MLflow Registry</text><text x="805" y="197" text-anchor="middle" class="sub">best run promoted</text>
+
+  <rect x="550" y="150" width="150" height="60" rx="6" class="box"/><text x="625" y="167" text-anchor="middle" class="num">6</text><text x="625" y="183" text-anchor="middle" class="lbl">Airflow / Prefect</text><text x="625" y="197" text-anchor="middle" class="sub">retraining automated</text>
+
+  <rect x="370" y="150" width="150" height="60" rx="6" class="box"/><text x="445" y="167" text-anchor="middle" class="num">7</text><text x="445" y="183" text-anchor="middle" class="lbl">GitHub Actions</text><text x="445" y="197" text-anchor="middle" class="sub">tested, built, shipped</text>
+
+  <rect x="190" y="150" width="150" height="60" rx="6" class="box"/><text x="265" y="167" text-anchor="middle" class="num">8</text><text x="265" y="183" text-anchor="middle" class="lbl">Terraform + K8s</text><text x="265" y="197" text-anchor="middle" class="sub">infra as code, scales itself</text>
+
+  <rect x="10" y="150" width="150" height="60" rx="6" class="boxend"/><text x="85" y="167" text-anchor="middle" class="num">9</text><text x="85" y="183" text-anchor="middle" class="lbl">Prometheus / Grafana /</text><text x="85" y="197" text-anchor="middle" class="lbl">Evidently AI</text>
+
+  <line x1="730" y1="180" x2="702" y2="180" class="ln" marker-end="url(#arJ)"/>
+  <line x1="550" y1="180" x2="522" y2="180" class="ln" marker-end="url(#arJ)"/>
+  <line x1="370" y1="180" x2="342" y2="180" class="ln" marker-end="url(#arJ)"/>
+  <line x1="190" y1="180" x2="162" y2="180" class="ln" marker-end="url(#arJ)"/>
+
+  <path d="M85,212 Q85,245 175,245 Q265,245 265,87" class="ln" marker-end="url(#arJ)" fill="none"/>
+  <text x="175" y="265" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#9A6B2E">drift found → back to versioning fresh data, retrain</text>
+</svg>
+<figcaption>Fig. 9 — one model, one continuous journey through all ten tools, from a notebook to a monitored, self-correcting system</figcaption>
+</figure>
+
+<p>Read left to right, then right to left: the notebook becomes versioned, then portable, then reachable, then measured, then formally promoted, then automated, then continuously shipped, then able to absorb load, then watched. Nothing on this path is optional if the goal is a system real users can depend on, and nothing on it requires all ten tools on day one, that's exactly what the four phases below are for.</p>
+
+<p><em>Now, zooming back out to the phase level: here's what each of these phases builds toward as a whole.</em></p>
+
+<h3>Phase 1 — environment, versioning, and packaging <small style="display:inline; text-transform:none;">(days 1&ndash;7)</small></h3>
+<p>This phase builds the versioning and reproducibility pillars from Part 8. It runs across Articles 1 through 7, right after this one.</p>
+<ul>
+<li>Git and DVC (Articles 1–3) version your code, your data, and your trained models, so you can always answer what exactly produced this.</li>
+<li>Docker (Articles 4–5) packages your code and every dependency into one portable unit, killing the "works on my machine" problem for good.</li>
+<li>Flask, then FastAPI (Articles 6–7) wrap your trained model in an API so anything, a website, an app, another service, can ask it for a prediction.</li>
+</ul>
+<p>By the end of Phase 1, the gap from Part 1 closes: your model won't be trapped in a notebook anymore. It'll be reproducible, portable, and reachable over a network.</p>
+
+<h3>Phase 2 — experiment tracking and model registries <small style="display:inline; text-transform:none;">(days 8&ndash;14)</small></h3>
+<p>This phase brings order to the experimentation side of the lifecycle loop, steps 3 and 4 from Part 7. Train ten variations of a model without it, and you'll likely end up tracking results in scattered print statements or a messy spreadsheet.</p>
+<ul>
+<li>MLflow tracking logs every experiment's parameters, metrics, and output artifacts automatically, so comparing runs stops being guesswork.</li>
+<li>The MLflow model registry gives each trained model a managed lifecycle, moving it formally through stages like staging, production, and archived, instead of "the latest file someone happened to copy onto the server."</li>
+</ul>
+<p>This phase directly answers the "comparing two experiments" and "which model is live" rows from Part 9's table.</p>
+
+<h3>Phase 3 — orchestration and CI/CD <small style="display:inline; text-transform:none;">(days 15&ndash;22)</small></h3>
+<p>This is where the automation pillar takes over, turning the manual steps from Part 9's "without MLOps" column into something that runs on its own.</p>
+<ul>
+<li>Apache Airflow or Prefect let you write DAGs, directed acyclic graphs, that run your pipeline's steps in the correct order (extract data, preprocess, train, evaluate) on a schedule, without anyone kicking each one off by hand.</li>
+<li>GitHub Actions automatically tests, builds, and packages your Docker image the moment new code is pushed, then pushes the result to a container registry, closing the loop between "I changed the code" and "the new version is ready to deploy."</li>
+</ul>
+<p>This phase is what makes continuous training (CT), the ML-specific addition to CI/CD from Part 6's comparison table, actually real instead of theoretical.</p>
+
+<h3>Phase 4 — deployment, scaling, and monitoring <small style="display:inline; text-transform:none;">(days 23&ndash;30)</small></h3>
+<p>The final phase builds the monitoring and observability pillar, the exact one that was missing at Zillow in Part 4.</p>
+<ul>
+<li>Terraform provisions the cloud infrastructure your API needs through code, instead of clicking through a cloud console by hand and being unable to reliably repeat what you clicked.</li>
+<li>Kubernetes manages your containerized API at scale, so a traffic spike gets absorbed automatically instead of taking your service down.</li>
+<li>Prometheus, Grafana, and Evidently AI expose real operational metrics like latency and request volume, visualize them, and, critically, compare incoming data against your original training data to catch drift before it becomes a Zillow-sized problem.</li>
+</ul>
+<p>By the end of Phase 4, every row in Part 9's "With MLOps" column is a system you'll have actually built, not just a concept you've read about.</p>
+
+<hr>
+
+<h2>Summary</h2>
+
+<p>Before you move on to Article 1, here's what should be locked in. A working notebook and a reliable production system are two different achievements, and closing that gap is what this series is for. MLOps takes DevOps principles and extends them to handle the fact that in ML, code, data, and models all change independently, and any one of them can quietly break things. Skipping it costs real money: irreproducibility, handoff friction, "works on my machine," manual deployment, silent model decay, and missing audit trails added up to Zillow's $500 million write-down. Done well, it looks like Uber's Michelangelo platform, which turned "get a model to production reliably" into a solved, reusable capability across 400-plus projects.</p>
+
+<p>The whole thing rests on four pillars: versioning, automation, reproducibility, and monitoring. And the lifecycle itself is a loop, not a line. Production ML is never really finished, it just keeps spinning, which is why operations has to be part of the discipline from the start.</p>
+
+<p>From here, the roadmap runs in four phases: foundational versioning first, then experiment tracking, then automation, then deployment at scale with real monitoring.</p>
+
+<h3>Sources and further reading</h3>
+<ul>
+<li>VentureBeat, <em>"Why do 87% of data science projects never make it into production?"</em> (2019). The original source of the widely cited failure rate.</li>
+<li>Stanford Graduate School of Business, <em>"Flip Flop: Why Zillow's Algorithmic Home Buying Venture Imploded."</em> Background on the Zillow Offers shutdown.</li>
+<li>Uber Engineering Blog, <em>"Meet Michelangelo: Uber's Machine Learning Platform"</em> and <em>"From Predictive to Generative: How Michelangelo Accelerates Uber's AI Journey."</em> Background on Uber's internal ML platform.</li>
+</ul>
+
+<p>You'll start building the first pillar, versioning, with your own hands in Article 1. Everything in this article was the <em>why</em>. Starting with Article 1, it's all <em>how</em>.</p>
+
+</div>
+</article>
+
+<footer>
+<p>MLOps for ML practitioners &middot; Introduction to the series</p>
+</footer>
+
+</body>
+</html>

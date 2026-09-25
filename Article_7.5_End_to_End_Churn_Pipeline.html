@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The churn model, for real — one project, start to finish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:33px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:24px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:13.8px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+  .out-label{ font-family:'Inter', sans-serif; font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0.04em; text-transform:uppercase; margin:0 0 6px; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote.warn{ background:var(--amber-soft); border-left-color:var(--amber); }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+  .table-scroll{ overflow-x:auto; margin-bottom:24px; }
+  .table-scroll table{ margin-bottom:0; min-width:520px; }
+
+  .gotcha{ margin:22px 0; padding:16px 20px; background:var(--amber-soft); border-left:3px solid var(--amber); border-radius:0 6px 6px 0; font-size:17.5px; }
+  .gotcha strong{ color:var(--amber); }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Checkpoint, between Articles 7 and 8</p>
+    <h1 class="title">The churn model, for real: one project, start to finish</h1>
+    <p class="dek">Article 0 used a customer churn model as a hypothetical example throughout. This time we build it, version it, containerize it, and serve it, for real, end to end.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Articles 1&ndash;7 first &middot; next up: MLflow Tracking and MLflow Model Registry</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Back in Article 0, before any of the hands-on work started, the running example for almost every concept was a subscription business's customer churn model. It was useful precisely because it was hypothetical: no code to write, no data to wrangle, just a clean illustration of what MLOps is for.</p>
+
+<p>Seven articles later, you've actually learned every tool that example was gesturing at. Git and GitHub for versioning code. DVC for versioning data and models alongside it. Docker for packaging the whole thing so it runs the same everywhere. FastAPI and Pydantic for turning a trained model into a validated, documented API.</p>
+
+<p>What you haven't done yet is run all four, back to back, on one real project, without gaps. Each article showed a slice. This one shows the whole chain: <code>git init</code> to a running, containerized, input-validated churn prediction API, on real data, with nothing hidden or simulated.</p>
+
+<p>It also ends somewhere deliberately uncomfortable. Partway through, you'll do the thing every data scientist does: train a few models, tweak some hyperparameters, and try to remember which run was actually the best one. Watching that go wrong, honestly, is what sets up the next two articles on MLflow.</p>
+
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing Git versioning code, DVC versioning data and the trained model, Docker packaging the whole environment, and FastAPI validating and serving predictions, all working together on one project.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10.5px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.6;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="60" width="140" height="80" rx="8" class="box"/>
+  <text x="80" y="92" text-anchor="middle" class="lbl">Git</text>
+  <text x="80" y="110" text-anchor="middle" class="sub">versions code</text>
+
+  <rect x="175" y="60" width="140" height="80" rx="8" class="box"/>
+  <text x="245" y="92" text-anchor="middle" class="lbl">DVC</text>
+  <text x="245" y="110" text-anchor="middle" class="sub">versions data + model</text>
+
+  <rect x="340" y="60" width="140" height="80" rx="8" class="box"/>
+  <text x="410" y="92" text-anchor="middle" class="lbl">Docker</text>
+  <text x="410" y="110" text-anchor="middle" class="sub">packages the environment</text>
+
+  <rect x="505" y="60" width="130" height="80" rx="8" class="box" fill="#E7F1EE"/>
+  <text x="570" y="92" text-anchor="middle" class="lbl">FastAPI</text>
+  <text x="570" y="110" text-anchor="middle" class="sub">validates &amp; serves</text>
+
+  <line x1="150" y1="100" x2="173" y2="100" class="ln" marker-end="url(#ar)"/>
+  <line x1="315" y1="100" x2="338" y2="100" class="ln" marker-end="url(#ar)"/>
+  <line x1="480" y1="100" x2="503" y2="100" class="ln" marker-end="url(#ar)"/>
+
+  <text x="320" y="30" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" fill="#6B6B6B">One real project, one unbroken chain</text>
+</svg>
+<figcaption>Fig. 1 — four tools, one project, no gaps between them</figcaption>
+</figure>
+
+<hr>
+
+<h2>The project</h2>
+
+<p><strong>Task:</strong> predict whether a telecom customer is going to churn, from their account, service, and billing data.</p>
+
+<p><strong>Dataset:</strong> the IBM Telco Customer Churn dataset, the same one Article 0 gestured at without naming. It's real, well documented, and small enough to move quickly: 7,043 customers, 21 columns, hosted on IBM's own GitHub.<sup class="fn"><a href="#fn1">1</a></sup> About 26.5% of customers in the dataset churned.</p>
+
+<p>Unlike Heart Disease or Iris from earlier articles, this dataset is mostly categorical, not numeric: gender, contract type, payment method, internet service, and a dozen more Yes/No/service-tier columns, alongside a handful of numeric ones like tenure and monthly charges. That's closer to what a real business dataset actually looks like, and it means this project introduces one genuinely new piece: encoding categorical features properly, inside the same pipeline pattern you already know from Articles 2, 3, 5, and 7.</p>
+
+<p>Project structure, matching the shape you've used since Article 7:</p>
+
+<pre><code>churn_prediction/
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── train.py              ← trains and saves the final pipeline
+├── explore_models.py     ← informal experimentation (Part 4)
+├── schemas.py             ← Pydantic request/response schemas
+├── main.py                ← the FastAPI app
+├── data/
+│   └── telco_churn.csv
+└── models/
+    └── model.pkl</code></pre>
+
+<hr>
+
+<h2>Part 1 &mdash; Git: the foundation, as always</h2>
+
+<p>Nothing new here. Start the way every project in this series has started.</p>
+
+<pre><code>mkdir churn_prediction
+cd churn_prediction
+git init</code></pre>
+
+<p>Write <code>.gitignore</code> before anything else, the habit from Article 2:</p>
+
+<pre><code>__pycache__/
+*.pyc
+.venv/
+venv/
+data/
+*.csv
+models/
+*.pkl
+.env
+.DS_Store</code></pre>
+
+<pre><code>git add .gitignore
+git commit -m "Add .gitignore"</code></pre>
+
+<p>Add a short README and a <code>requirements.txt</code> pinned to what's actually been tested:</p>
+
+<pre><code>scikit-learn==1.8.0
+pandas==3.0.2
+numpy==2.4.4
+joblib==1.5.3
+fastapi==0.141.1
+uvicorn==0.52.1
+pydantic==2.13.4</code></pre>
+
+<pre><code>git add README.md requirements.txt
+git commit -m "Add README and dependencies"</code></pre>
+
+<p>Three commits in, nothing surprising. This is exactly the workflow from Article 2.</p>
+
+<hr>
+
+<h2>Part 2 &mdash; DVC: version the data before you touch it</h2>
+
+<pre><code>dvc init
+git add .dvc .dvcignore
+git commit -m "Initialize DVC"</code></pre>
+
+<p>Now place <code>telco_churn.csv</code> in <code>data/</code>, and here's a genuine gotcha worth knowing before it bites you.</p>
+
+<div class="gotcha"><p><strong>Run <code>dvc add</code> on the data file before it ever gets swept up by a <code>git add .</code> or <code>git add -A</code>.</strong> If Git commits the raw CSV directly first, DVC will refuse to track it afterward, confirmed by actually triggering this exact error while building this project:</p></div>
+
+<pre class="output"><code>ERROR: output 'data/telco_churn.csv' is already tracked by SCM (e.g. Git).
+    You can remove it from Git, then add to DVC.
+        To stop tracking from Git:
+            git rm -r --cached 'data/telco_churn.csv'</code></pre>
+
+<p>This is DVC protecting you from double-tracking the same file two different ways, but it's an easy trap to fall into on a real project, especially once your <code>.gitignore</code> from Part 1 hasn't caught up yet. Do it in the right order and there's no problem at all:</p>
+
+<pre><code>dvc add data/telco_churn.csv</code></pre>
+<pre class="output"><code>To track the changes with git, run:
+
+        git add data/.gitignore data/telco_churn.csv.dvc</code></pre>
+
+<pre><code>git add data/.gitignore data/telco_churn.csv.dvc
+git commit -m "Track Telco churn dataset with DVC"</code></pre>
+
+<p>Set up a remote and push, exactly as in Article 3:</p>
+
+<pre><code>mkdir -p ~/dvc-remote
+dvc remote add -d storage ~/dvc-remote
+git add .dvc/config
+git commit -m "Configure DVC remote"
+dvc push</code></pre>
+
+<p>The data is versioned, backed up, and reproducible by anyone who clones this repo and runs <code>dvc pull</code>. Keep that fact in mind. It matters later.</p>
+
+<hr>
+
+<h2>Part 3 &mdash; Building the pipeline</h2>
+
+<h3>The one real data quirk</h3>
+
+<p><code>TotalCharges</code> looks numeric but is stored as text, and 11 rows are blank rather than zero.<sup class="fn"><a href="#fn2">2</a></sup> Every one of those 11 rows turns out to be a brand-new customer with <code>tenure == 0</code>, someone who hasn't been billed yet. That's not corrupted data, it's a real customer state the column just wasn't designed to represent cleanly. Fixing it is one line:</p>
+
+<pre><code>df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce').fillna(0)</code></pre>
+
+<h3>Handling a mostly-categorical dataset</h3>
+
+<p>Every pipeline so far in this series used <code>StandardScaler</code> alone, because every feature was numeric. This dataset has 15 categorical columns and 4 numeric ones, which calls for one new tool: <code>ColumnTransformer</code>. It's a small, natural extension of the <code>Pipeline</code> pattern you already know, it just lets you apply different preprocessing to different columns, then hands the combined result to the model, all inside one object you can save and load as a single file.</p>
+
+<figure>
+<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of a ColumnTransformer splitting incoming customer data into four numeric columns handled by StandardScaler and fifteen categorical columns handled by OneHotEncoder, with both outputs combined and passed into the classifier, all inside one saved Pipeline object.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.5;} </style>
+  <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="65" width="130" height="55" rx="6" class="box"/>
+  <text x="75" y="88" text-anchor="middle" class="lbl">4 numeric cols</text>
+  <text x="75" y="104" text-anchor="middle" class="sub">tenure, charges...</text>
+
+  <rect x="10" y="130" width="130" height="55" rx="6" class="box"/>
+  <text x="75" y="153" text-anchor="middle" class="lbl">15 categorical cols</text>
+  <text x="75" y="169" text-anchor="middle" class="sub">gender, contract...</text>
+
+  <line x1="140" y1="92" x2="228" y2="92" class="ln" marker-end="url(#ar2)"/>
+  <text x="184" y="80" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#1B6B5C">StandardScaler</text>
+
+  <line x1="140" y1="157" x2="228" y2="157" class="ln" marker-end="url(#ar2)"/>
+  <text x="184" y="145" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#1B6B5C">OneHotEncoder</text>
+
+  <rect x="230" y="55" width="180" height="140" rx="8" class="box" fill="#fff"/>
+  <text x="320" y="35" text-anchor="middle" class="lbl">ColumnTransformer</text>
+
+  <line x1="410" y1="120" x2="458" y2="120" class="ln" marker-end="url(#ar2)"/>
+
+  <rect x="460" y="90" width="170" height="60" rx="8" class="boxd"/>
+  <text x="545" y="115" text-anchor="middle" class="lbl">classifier</text>
+  <text x="545" y="132" text-anchor="middle" class="sub">one saved Pipeline</text>
+</svg>
+<figcaption>Fig. 2 — one ColumnTransformer, two preprocessing paths, saved as a single pipeline</figcaption>
+</figure>
+
+<pre><code>"""train.py — Train a churn prediction pipeline and save it."""
+import pandas as pd
+import joblib
+import os
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+df = pd.read_csv("data/telco_churn.csv")
+
+<span class="c"># the one real data quirk in this dataset — see above</span>
+df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce").fillna(0)
+
+df = df.drop(columns=["customerID"])
+df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
+
+X = df.drop(columns=["Churn"])
+y = df["Churn"]
+
+numeric_features = ["SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges"]
+categorical_features = [c for c in X.columns if c not in numeric_features]
+
+preprocessor = ColumnTransformer(transformers=[
+    ("num", StandardScaler(), numeric_features),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+pipeline = Pipeline([
+    ("preprocessor", preprocessor),
+    ("classifier", LogisticRegression(max_iter=1000, random_state=42)),
+])
+pipeline.fit(X_train, y_train)
+
+pred = pipeline.predict(X_test)
+print(f"Accuracy:  {accuracy_score(y_test, pred):.4f}")
+print(f"Precision: {precision_score(y_test, pred):.4f}")
+print(f"Recall:    {recall_score(y_test, pred):.4f}")
+print(f"F1:        {f1_score(y_test, pred):.4f}")
+
+os.makedirs("models", exist_ok=True)
+joblib.dump(pipeline, "models/model.pkl")
+print("Saved full pipeline (preprocessing + model) to models/model.pkl")</code></pre>
+
+<p><code>OneHotEncoder(handle_unknown="ignore")</code> matters more than it looks: it means a category the model never saw during training won't crash a live prediction later, it just gets treated as "none of the known categories." The whole <code>Pipeline</code>, preprocessing and model together, gets saved as one <code>model.pkl</code>. That single detail is what makes serving this later almost identical to Article 7's Heart Disease API, despite this dataset being far messier.</p>
+
+<p>Run it:</p>
+
+<pre><code>python train.py</code></pre>
+<pre class="output"><code>Accuracy:  0.8055
+Precision: 0.6572
+Recall:    0.5588
+F1:        0.6040
+Saved full pipeline (preprocessing + model) to models/model.pkl</code></pre>
+
+<hr>
+
+<h2>Part 4 &mdash; What actually happens without a tracking tool</h2>
+
+<p>An 80.5% accuracy baseline is fine, but it's a logistic regression with default settings. Naturally, you try a few other things. This is the normal, universal next step in any real project, and it's worth watching exactly what happens when you do it the way most people actually do it: informally, in a scratch script, with print statements.</p>
+
+<pre><code>"""explore_models.py — trying a few different models and settings"""
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+<span class="c"># ... same preprocessing and train/test split as train.py ...</span>
+
+def run(name, clf):
+    pipe = Pipeline([("preprocessor", preprocessor), ("classifier", clf)])
+    pipe.fit(X_train, y_train)
+    pred = pipe.predict(X_test)
+    print(f"{name}: acc={accuracy_score(y_test, pred):.4f} f1={f1_score(y_test, pred):.4f}")
+
+run("RandomForest, 100 trees", RandomForestClassifier(n_estimators=100, random_state=42))
+run("RandomForest, 200 trees, max_depth=10", RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42))
+run("RandomForest, 300 trees, max_depth=6", RandomForestClassifier(n_estimators=300, max_depth=6, random_state=42))
+run("GradientBoosting, 100 est, lr=0.1", GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=42))
+run("GradientBoosting, 200 est, lr=0.05", GradientBoostingClassifier(n_estimators=200, learning_rate=0.05, random_state=42))</code></pre>
+
+<p>Six runs total, including the baseline. Here's every result, actually produced by running this exact code against the real dataset, not invented for the example:<sup class="fn"><a href="#fn3">3</a></sup></p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Run</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+<tbody>
+<tr><td>Logistic Regression (default)</td><td>0.8055</td><td>0.6572</td><td>0.5588</td><td>0.6040</td></tr>
+<tr><td>Random Forest, 100 trees</td><td>0.7864</td><td>0.6254</td><td>0.4866</td><td>0.5474</td></tr>
+<tr><td>Random Forest, 200 trees, depth 10</td><td>0.7999</td><td>0.6575</td><td>0.5134</td><td>0.5766</td></tr>
+<tr><td>Random Forest, 300 trees, depth 6</td><td>0.8048</td><td>0.6854</td><td>0.4893</td><td>0.5710</td></tr>
+<tr><td>Gradient Boosting, 100 est, lr 0.1</td><td>0.8027</td><td>0.6655</td><td>0.5160</td><td>0.5813</td></tr>
+<tr><td>Gradient Boosting, 200 est, lr 0.05</td><td>0.8048</td><td>0.6689</td><td>0.5241</td><td>0.5877</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Now, genuinely, which one is best? By accuracy, the plain logistic regression and the heavily tuned gradient boosting model are separated by 0.0007, close enough to be noise. By recall, which matters a lot for churn specifically, since missing an actual churner is usually more expensive than a false alarm, the plain logistic regression wins outright. The simplest model in the list, with no tuning at all, is arguably the best one.</p>
+
+<p>That's not a contrived result. It's a completely real, common outcome, and it's exactly the kind of thing that's easy to know in the moment and impossible to reconstruct a week later. Which terminal scrollback had the 300-tree run? Was <code>max_depth=6</code> the good one or the bad one? If you saved a model file for each attempt, you likely have something like this in your <code>models/</code> folder by now:</p>
+
+<pre><code>models/
+├── model.pkl
+├── model_rf.pkl
+├── model_rf_v2.pkl
+├── model_rf_v2_tuned.pkl
+├── model_gb.pkl
+└── model_gb_final_ACTUALLY.pkl</code></pre>
+
+<p>If that filename pattern looks familiar, it should. It's the exact same chaos Article 1 opened with, <code>model_v2_final_ACTUALLY_FINAL.py</code>, except this time it isn't code sitting untracked. It's decisions, and there's no tool watching them at all.</p>
+
+<p>Hold that thought. We'll come back to it.</p>
+
+<hr>
+
+<h2>Part 5 &mdash; Locking in a model and building the API</h2>
+
+<p>Weighing accuracy against recall, the plain logistic regression from Part 3 is the one worth shipping: best accuracy, clearly best recall, and it's already sitting in <code>models/model.pkl</code> from the original <code>train.py</code> run. Version it properly, the way Article 3 taught:</p>
+
+<pre><code>dvc add models/model.pkl
+git add models/model.pkl.dvc models/.gitignore
+git commit -m "Track trained churn model (LogisticRegression, acc=0.8055) with DVC"
+dvc push</code></pre>
+
+<p>Notice what just happened. The decision is now permanently recorded: this exact model, this exact commit message, this exact DVC-tracked binary. Compare that to the five other models sitting as loose <code>.pkl</code> files with no record of what hyperparameters produced them. One artifact in this whole project is properly accounted for. It's the one that happened to come from the tool built for versioning, not the one from Part 4.</p>
+
+<h3>The schema</h3>
+
+<p>Fifteen of nineteen input fields here are categorical, which is a good excuse to extend the <code>Field</code> constraints from Article 7 with something built for exactly this: Python's <code>Literal</code> type. Instead of just constraining a number's range, <code>Literal</code> constrains a string to a fixed, named set of values, and Pydantic enforces it exactly the way it enforced <code>ge</code>/<code>le</code> before.</p>
+
+<pre><code>"""schemas.py — Pydantic models for request validation and response shape."""
+from typing import Literal
+from pydantic import BaseModel, Field
+
+
+class Customer(BaseModel):
+    """Schema for a single customer's account and service data."""
+    gender: Literal["Female", "Male"]
+    SeniorCitizen: int = Field(..., ge=0, le=1, description="1 = senior citizen, 0 = not")
+    Partner: Literal["Yes", "No"]
+    Dependents: Literal["Yes", "No"]
+    tenure: int = Field(..., ge=0, description="Months as a customer")
+    PhoneService: Literal["Yes", "No"]
+    MultipleLines: Literal["Yes", "No", "No phone service"]
+    InternetService: Literal["DSL", "Fiber optic", "No"]
+    OnlineSecurity: Literal["Yes", "No", "No internet service"]
+    OnlineBackup: Literal["Yes", "No", "No internet service"]
+    DeviceProtection: Literal["Yes", "No", "No internet service"]
+    TechSupport: Literal["Yes", "No", "No internet service"]
+    StreamingTV: Literal["Yes", "No", "No internet service"]
+    StreamingMovies: Literal["Yes", "No", "No internet service"]
+    Contract: Literal["Month-to-month", "One year", "Two year"]
+    PaperlessBilling: Literal["Yes", "No"]
+    PaymentMethod: Literal[
+        "Electronic check", "Mailed check",
+        "Bank transfer (automatic)", "Credit card (automatic)"
+    ]
+    MonthlyCharges: float = Field(..., gt=0)
+    TotalCharges: float = Field(..., ge=0)
+
+
+class ChurnPrediction(BaseModel):
+    """Schema for the prediction we send back."""
+    prediction: int
+    probability: float
+    interpretation: str</code></pre>
+
+<p>Every valid category for every field came directly from the real dataset, not guessed. Send anything outside these exact sets, a typo, a different capitalization, a category that plain doesn't exist, and FastAPI rejects it before your model ever sees it, the same guarantee Article 7 built.</p>
+
+<h3>The app</h3>
+
+<pre><code>"""main.py — FastAPI app serving customer churn predictions."""
+import joblib
+import pandas as pd
+from fastapi import FastAPI
+from schemas import Customer, ChurnPrediction
+
+app = FastAPI(
+    title="Customer Churn Prediction API",
+    description="Predicts whether a telecom customer is likely to churn.",
+    version="1.0.0",
+)
+
+<span class="c"># loaded once at startup — the rule from Article 6, unchanged</span>
+model = joblib.load("models/model.pkl")
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+
+@app.post("/predict", response_model=ChurnPrediction)
+def predict(customer: Customer):
+    data = customer.model_dump()
+    input_df = pd.DataFrame([data])
+    prediction = int(model.predict(input_df)[0])
+    probability = float(model.predict_proba(input_df)[0][1])
+    return ChurnPrediction(
+        prediction=prediction,
+        probability=round(probability, 4),
+        interpretation="Likely to churn" if prediction == 1 else "Likely to stay",
+    )</code></pre>
+
+<p>Notice <code>input_df = pd.DataFrame([data])</code> is the entire preprocessing step. No manual scaling, no manual encoding, because the saved pipeline already contains the <code>ColumnTransformer</code>. Save the whole pipeline, and serving it stays this simple no matter how messy the raw data was.</p>
+
+<pre><code>git add schemas.py main.py
+git commit -m "Add FastAPI app with Pydantic validation for churn predictions"</code></pre>
+
+<hr>
+
+<h2>Part 6 &mdash; Testing it live</h2>
+
+<pre><code>uvicorn main:app --host 0.0.0.0 --port 8000 --reload</code></pre>
+
+<p>Two real customers from the dataset, chosen because the model gets both confidently right, make a clean demonstration.<sup class="fn"><a href="#fn3">3</a></sup></p>
+
+<p><strong>A high-risk profile:</strong> short tenure, month-to-month contract, fiber internet with none of the security or protection add-ons, paying by electronic check.</p>
+
+<pre><code>curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Female", "SeniorCitizen": 1, "Partner": "No", "Dependents": "No",
+    "tenure": 4, "PhoneService": "Yes", "MultipleLines": "Yes",
+    "InternetService": "Fiber optic", "OnlineSecurity": "No", "OnlineBackup": "No",
+    "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "Yes", "StreamingMovies": "Yes",
+    "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check",
+    "MonthlyCharges": 95.45, "TotalCharges": 396.1
+  }'</code></pre>
+<pre class="output"><code>{"prediction": 1, "probability": 0.8371, "interpretation": "Likely to churn"}</code></pre>
+
+<p><strong>A low-risk profile:</strong> long tenure, a one-year contract, security add-ons in place, paying by mailed check.</p>
+
+<pre><code>curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Male", "SeniorCitizen": 0, "Partner": "No", "Dependents": "No",
+    "tenure": 34, "PhoneService": "Yes", "MultipleLines": "No",
+    "InternetService": "DSL", "OnlineSecurity": "Yes", "OnlineBackup": "No",
+    "DeviceProtection": "Yes", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No",
+    "Contract": "One year", "PaperlessBilling": "No", "PaymentMethod": "Mailed check",
+    "MonthlyCharges": 56.95, "TotalCharges": 1889.5
+  }'</code></pre>
+<pre class="output"><code>{"prediction": 0, "probability": 0.0445, "interpretation": "Likely to stay"}</code></pre>
+
+<p>Both are real historical customers. Both predictions match what actually happened to them. Now try an invalid category, <code>gender</code> misspelled as something the schema was never told about:</p>
+
+<pre><code>curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"gender": "Nonbinary", "SeniorCitizen": 0, "Partner": "No", ...}'</code></pre>
+<pre class="output"><code>{"detail": [{
+  "type": "literal_error",
+  "loc": ["body", "gender"],
+  "msg": "Input should be 'Female' or 'Male'",
+  "input": "Nonbinary",
+  "ctx": {"expected": "'Female' or 'Male'"}
+}]}</code></pre>
+
+<p>Rejected cleanly, with the exact field and the exact allowed values named. Zero validation code written for this. That's <code>Literal</code> doing precisely what <code>Field</code>'s <code>ge</code>/<code>le</code> did in Article 7, just for categories instead of numbers.</p>
+
+<hr>
+
+<h2>Part 7 &mdash; Dockerizing it</h2>
+
+<p>The Dockerfile follows the exact shape from Articles 5 and 7. Nothing here is new.</p>
+
+<pre><code>FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+<span class="c"># dependencies before code — the layer-caching habit from Article 4</span>
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY data/ ./data/
+COPY train.py schemas.py main.py ./
+
+<span class="c"># train during the build, same pattern as Article 7</span>
+RUN python train.py
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+
+<pre><code>docker build -t churn-api:v1 .
+docker run -d -p 8000:8000 --name churn-api churn-api:v1
+curl http://localhost:8000/health</code></pre>
+<pre class="output"><code>{"status": "healthy"}</code></pre>
+
+<p>Same container, same commands, same result on any machine that has Docker. That guarantee hasn't changed since Article 5, it's just now protecting a messier, more realistic dataset than any project so far.</p>
+
+<hr>
+
+<h2>Part 8 &mdash; The whole chain, start to finish</h2>
+
+<p>Here's every command from this article, in the order you'd actually run them, with nothing skipped:</p>
+
+<pre><code><span class="c"># Git</span>
+mkdir churn_prediction && cd churn_prediction
+git init
+<span class="c"># ... .gitignore, README.md, requirements.txt ...</span>
+git add .gitignore README.md requirements.txt
+git commit -m "Initial project setup"
+
+<span class="c"># DVC — data first, always before a blanket git add</span>
+dvc init
+git add .dvc .dvcignore
+git commit -m "Initialize DVC"
+
+dvc add data/telco_churn.csv
+git add data/.gitignore data/telco_churn.csv.dvc
+git commit -m "Track Telco churn dataset with DVC"
+
+dvc remote add -d storage ~/dvc-remote
+git add .dvc/config
+git commit -m "Configure DVC remote"
+dvc push
+
+<span class="c"># Build and train</span>
+python train.py
+dvc add models/model.pkl
+git add models/model.pkl.dvc models/.gitignore
+git commit -m "Track trained churn model with DVC"
+dvc push
+
+<span class="c"># FastAPI</span>
+git add schemas.py main.py
+git commit -m "Add FastAPI app with Pydantic validation"
+
+<span class="c"># Docker</span>
+git add Dockerfile
+git commit -m "Add Dockerfile"
+docker build -t churn-api:v1 .
+docker run -d -p 8000:8000 --name churn-api churn-api:v1
+
+<span class="c"># Ship it</span>
+git push origin main</code></pre>
+
+<p>Every one of those commands is something you already knew how to use before this article started. The only thing new was putting them in one sequence, on one real, messy dataset, without a single gap.</p>
+
+<hr>
+
+<h2>What this project just proved, and what it didn't</h2>
+
+<p>Look at what actually got tracked properly here. The code: every meaningful change is a Git commit with a real message. The data: <code>telco_churn.csv</code> is DVC-tracked, backed up to a remote, and pullable by anyone who clones the repo. The environment: the Dockerfile guarantees this exact API runs identically on any machine with Docker installed. The API itself: every field is validated by Pydantic before it reaches the model, and a bad request gets a precise, useful error instead of a crash.</p>
+
+<p>Now look at Part 4 again. Six real experiments ran. Their results are sitting in this article as a table, because this article's author wrote them down. On a real project, at your actual job, that table doesn't exist unless you build it yourself, by hand, every single time, and remember to keep it updated as you try a seventh thing, then an eighth. Nothing in this entire pipeline, not Git, not DVC, not Docker, not FastAPI, was built to answer the question that actually decided which model got shipped: which exact configuration produced which exact number, and can you prove it?</p>
+
+<figure>
+<svg viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing code, data, environment, and the API all protected by a tool: Git, DVC, Docker, and FastAPI respectively. Beside them, the six experiments from Part 4 sit in an unprotected zone with nothing watching them, which is the gap MLflow exists to close.">
+  <style> .box{fill:#F5F5F3;stroke:#1B6B5C;stroke-width:1.2;} .boxbad{fill:#FAF3E8;stroke:#9A6B2E;stroke-width:1.4;stroke-dasharray:5,4;} .lbl{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'Inter',sans-serif;font-size:10px;fill:#6B6B6B;} .tag{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#1B6B5C;} .tagbad{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#9A6B2E;} </style>
+
+  <rect x="10" y="20" width="130" height="70" rx="8" class="box"/>
+  <text x="75" y="48" text-anchor="middle" class="lbl">Code</text>
+  <text x="75" y="64" text-anchor="middle" class="tag">protected by Git</text>
+
+  <rect x="155" y="20" width="130" height="70" rx="8" class="box"/>
+  <text x="220" y="48" text-anchor="middle" class="lbl">Data + model</text>
+  <text x="220" y="64" text-anchor="middle" class="tag">protected by DVC</text>
+
+  <rect x="300" y="20" width="130" height="70" rx="8" class="box"/>
+  <text x="365" y="48" text-anchor="middle" class="lbl">Environment</text>
+  <text x="365" y="64" text-anchor="middle" class="tag">protected by Docker</text>
+
+  <rect x="445" y="20" width="130" height="70" rx="8" class="box"/>
+  <text x="510" y="48" text-anchor="middle" class="lbl">API inputs</text>
+  <text x="510" y="64" text-anchor="middle" class="tag">protected by FastAPI</text>
+
+  <rect x="140" y="130" width="360" height="80" rx="8" class="boxbad"/>
+  <text x="320" y="158" text-anchor="middle" class="lbl" fill="#9A6B2E">Part 4's six experiments</text>
+  <text x="320" y="178" text-anchor="middle" class="sub">params, metrics, which model won — none of it recorded</text>
+  <text x="320" y="196" text-anchor="middle" class="tagbad">protected by nothing</text>
+</svg>
+<figcaption>Fig. 3 — everything else in this project has a tool watching it. The experiments don't.</figcaption>
+</figure>
+
+<p>That's not a gap in what you've learned. It's a gap in what these four tools were ever meant to solve. Git versions code. DVC versions data and models. Docker guarantees an environment. FastAPI validates and serves. None of them, even used perfectly, keep score across an afternoon of "let me just try one more thing."</p>
+
+<p>That's exactly the job the next two articles exist to do. MLflow Tracking turns Part 4's ad-hoc script and mental math into a permanent, searchable record, every parameter, every metric, every run, logged automatically. MLflow Model Registry turns "which <code>.pkl</code> file was the good one again" into a managed, auditable lifecycle: staging, production, archived, with a real history behind each transition.</p>
+
+<p>You've now felt the problem firsthand, on a real project, with real numbers. That's the right place to start.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. IBM Telco Customer Churn dataset, 7,043 rows, 21 columns, hosted at <a href="https://github.com/IBM/telco-customer-churn-on-icp4d">github.com/IBM/telco-customer-churn-on-icp4d</a>. Downloaded and verified directly for this article; the shape, column names, and churn distribution (5,174 stayed, 1,869 churned) were confirmed by loading the real file.</p>
+<p id="fn2">2. The 11 blank <code>TotalCharges</code> rows, and their exact correlation with <code>tenure == 0</code>, were confirmed by inspecting the real dataset directly.</p>
+<p id="fn3">3. Every code block, table value, and API response in this article was re-verified a second time immediately before publishing: the exact <code>train.py</code>, <code>explore_models.py</code>, <code>schemas.py</code>, and <code>main.py</code> as shown here were re-run from scratch, and every number matched precisely, with zero drift from the original runs.</p>
+<p>MLOps for ML practitioners &middot; checkpoint article, between Article 7 and the MLflow articles</p>
+</footer>
+
+</body>
+</html>

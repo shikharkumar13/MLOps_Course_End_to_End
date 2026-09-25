@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Making it one system: integrating MLflow, Prefect, and GitHub Actions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:32px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:24px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:13.8px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+
+  .gapbox{ margin:20px 0; padding:16px 20px; background:#fff; border:1px solid var(--border); border-radius:8px; }
+  .gapbox strong{ color:var(--accent); }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Implementation article</p>
+    <h1 class="title">Making it one system: integrating MLflow, Prefect, and GitHub Actions into the churn project</h1>
+    <p class="dek">Article 7.5 built one real project with Git, DVC, Docker, and FastAPI. Articles 8 through 11 each added one more tool on top, correctly, but separately. This article makes them work as one system, not four demonstrations.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Articles 7.5 through 11 first</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Here's a question worth sitting with before writing any code: if you actually tried to run the churn project today, using everything taught since Article 7.5, would it work as one thing?</p>
+
+<p>Not quite. Article 8's MLflow ran against a local <code>mlflow.db</code> file. Article 9's <code>main.py</code> loaded a model from <code>models:/ChurnModel@champion</code>, a URI that only resolves if something is actually listening wherever MLflow's client expects it, which a local file isn't, once that code is inside a Docker container. Article 10's Prefect flow assumed the same local file was reachable from wherever the scheduler runs. Article 11's tests loaded a model with plain <code>joblib</code>, sidestepping the registry entirely. Each article was correct on its own. Together, they're four systems that happen to share a codebase.</p>
+
+<p>This article closes those seams. Three real gaps, each with a concrete fix, verified by actually running every piece against real network services rather than describing how it would probably work:</p>
+
+<div class="gapbox"><p><strong>1. MLflow has to be reachable from more than one process on one machine.</strong> Fixed by running it as an actual network service, via Docker Compose, the way MLflow's own documentation recommends self-hosting it.</p></div>
+<div class="gapbox"><p><strong>2. DVC and MLflow both know how to version "the model," and nothing said which one is authoritative.</strong> Fixed by an explicit division: DVC owns data, MLflow Registry owns models, full stop.</p></div>
+<div class="gapbox"><p><strong>3. Article 10 promised GitHub Actions would trigger when <code>@champion</code> changes. It didn't.</strong> Fixed by giving Prefect's promotion step a real, tested trigger call against GitHub's actual API.</p></div>
+
+<p>One honest limit, stated plainly now so it doesn't need repeating: everything below that runs on infrastructure I control, I built and verified for real, live output included. The two things that need your own Docker Hub and GitHub accounts, pushing an image and firing a live deploy trigger, I've verified as far as it's possible to without your credentials, and the article tells you exactly what to run yourself.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>The unified architecture</td></tr>
+<tr><td>2</td><td>MLflow as a real network service</td></tr>
+<tr><td>3</td><td>Every component pointed at the network, not a file</td></tr>
+<tr><td>4</td><td>Running the full pipeline against a live server</td></tr>
+<tr><td>5</td><td>Proof: loading a model from a completely separate process</td></tr>
+<tr><td>6</td><td>CI with a real, ephemeral MLflow instance</td></tr>
+<tr><td>7</td><td>Closing the loop: Prefect triggers a real deploy</td></tr>
+<tr><td>8</td><td>What only you can run</td></tr>
+<tr><td>9</td><td>The complete project</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2>Part 1 &mdash; The unified architecture</h2>
+
+<p>The fix for all three gaps is one architectural decision: MLflow stops being "files on disk" and becomes a small, always-on service that everything else talks to over the network, the same way a database is a service, not a file your application happens to open.</p>
+
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing the MLflow tracking server as a central network service, with four consumers all pointed at it via the same MLFLOW_TRACKING_URI environment variable: the FastAPI churn-api, the Prefect training flow, GitHub Actions CI, and a developer running locally.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxc{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.3;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="ar" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="180" y="15" width="280" height="55" rx="8" class="boxc"/>
+  <text x="320" y="38" text-anchor="middle" class="lbl">mlflow-server</text>
+  <text x="320" y="55" text-anchor="middle" class="sub">port 5000, backed by SQLite</text>
+
+  <text x="320" y="95" text-anchor="middle" class="sub" font-size="10.5">MLFLOW_TRACKING_URI=http://mlflow-server:5000</text>
+
+  <line x1="320" y1="70" x2="90" y2="140" class="ln" marker-end="url(#ar)"/>
+  <line x1="320" y1="70" x2="240" y2="140" class="ln" marker-end="url(#ar)"/>
+  <line x1="320" y1="70" x2="400" y2="140" class="ln" marker-end="url(#ar)"/>
+  <line x1="320" y1="70" x2="550" y2="140" class="ln" marker-end="url(#ar)"/>
+
+  <rect x="20" y="145" width="140" height="50" rx="6" class="box"/><text x="90" y="168" text-anchor="middle" class="lbl">churn-api</text><text x="90" y="184" text-anchor="middle" class="sub">FastAPI</text>
+  <rect x="170" y="145" width="140" height="50" rx="6" class="box"/><text x="240" y="168" text-anchor="middle" class="lbl">Prefect flow</text><text x="240" y="184" text-anchor="middle" class="sub">scheduled training</text>
+  <rect x="330" y="145" width="140" height="50" rx="6" class="box"/><text x="400" y="168" text-anchor="middle" class="lbl">GitHub Actions</text><text x="400" y="184" text-anchor="middle" class="sub">CI</text>
+  <rect x="480" y="145" width="140" height="50" rx="6" class="box"/><text x="550" y="168" text-anchor="middle" class="lbl">You</text><text x="550" y="184" text-anchor="middle" class="sub">running locally</text>
+</svg>
+<figcaption>Fig. 1 — one env var, four consumers, one real service</figcaption>
+</figure>
+
+<p>Every arrow in that diagram is the same environment variable, <code>MLFLOW_TRACKING_URI</code>, pointed at wherever MLflow actually is: <code>http://mlflow-server:5000</code> inside Docker Compose's network, <code>http://localhost:5000</code> for an ephemeral instance inside a CI job. Nothing in the application code needs to know which. That single decision is what makes the rest of this article possible.</p>
+
+<p>The division of labor between DVC and MLflow, decided explicitly rather than left to accumulate by accident:</p>
+
+<table>
+<thead><tr><th>Artifact</th><th>Owned by</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td><code>data/telco_churn.csv</code></td><td>DVC</td><td>A dataset, not a model. Article 3's job, unchanged.</td></tr>
+<tr><td>The trained model</td><td>MLflow Registry</td><td>Needs versions, aliases, and lineage back to a specific run, not just a hash. Article 9's job.</td></tr>
+</tbody>
+</table>
+
+<p>Article 7.5's <code>dvc add models/model.pkl</code> step is retired. It did real, correct work at the time; MLflow's registry, added afterward, is simply the better tool for that one job, and having two systems both claiming to own the same artifact is worse than having a clear answer.</p>
+
+<hr>
+
+<h2>Part 2 &mdash; MLflow as a real network service</h2>
+
+<pre><code>services:
+  mlflow-server:
+    image: python:3.11-slim
+    working_dir: /mlflow
+    volumes:
+      - mlflow-data:/mlflow
+    ports:
+      - "5000:5000"
+    command: >
+      bash -c "pip install mlflow==3.15.1 --quiet &&
+               mlflow server
+               --backend-store-uri sqlite:///mlflow.db
+               --default-artifact-root /mlflow/mlartifacts
+               --host 0.0.0.0
+               --port 5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  churn-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
+    depends_on:
+      mlflow-server:
+        condition: service_healthy
+
+volumes:
+  mlflow-data:</code></pre>
+
+<p>Two things worth pointing out. <code>mlflow-data</code> is a named volume, not a bind mount, so the SQLite database and every logged model artifact survive a container restart, exactly the persistence Article 3's DVC remote gives your data. And <code>depends_on: condition: service_healthy</code> genuinely matters here, not decoration: confirmed directly, MLflow's server takes roughly 30 seconds to finish spinning up its worker processes before it actually answers requests. A plain <code>depends_on: [mlflow-server]</code>, without the health condition, only waits for the container to <em>start</em>, not for MLflow to actually be ready, and <code>churn-api</code> would come up racing a server that isn't listening yet. The <code>start_period: 30s</code> in the healthcheck is that exact measured startup time, not a guess.</p>
+
+<p>This is, deliberately, the same architecture MLflow's own documentation recommends for self-hosting: a tracking server as its own service, backed by a database, reachable over the network. Larger deployments add Postgres and S3-compatible storage in place of SQLite and a local volume; the shape stays identical.</p>
+
+<hr>
+
+<h2>Part 3 &mdash; Every component pointed at the network, not a file</h2>
+
+<p><code>main.py</code>, unchanged from Article 9 except the one line that matters:</p>
+
+<pre><code>import os
+import mlflow
+
+mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+model = mlflow.sklearn.load_model("models:/ChurnModel@champion")</code></pre>
+
+<p>No hardcoded path, no default that quietly falls back to a local file. If <code>MLFLOW_TRACKING_URI</code> isn't set, this now fails loudly at startup instead of silently succeeding against the wrong thing, which is exactly the failure mode you want: caught immediately, not discovered in production.</p>
+
+<p><code>orchestrate_training.py</code>, Article 10's flow, gets the identical treatment:</p>
+
+<pre><code>MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow-server:5000")
+
+@flow(name="churn-training-pipeline")
+def churn_training_flow():
+    mlflow.set_tracking_uri(MLFLOW_URI)
+    mlflow.set_experiment("churn-prediction")
+    ...</code></pre>
+
+<p>The default value, <code>http://mlflow-server:5000</code>, is Docker Compose's own internal DNS name for the service defined in Part 2, not <code>localhost</code>. Inside Compose's network, <code>mlflow-server</code> resolves automatically; nothing extra to configure.</p>
+
+<hr>
+
+<h2>Part 4 &mdash; Running the full pipeline against a live server</h2>
+
+<p>Confirmed by actually starting a real MLflow server, exporting <code>MLFLOW_TRACKING_URI</code> to point at it, and running the exact training script:</p>
+
+<pre><code>export MLFLOW_TRACKING_URI=http://localhost:5050
+python track_experiments.py</code></pre>
+<pre class="output"><code>logreg_default: acc=0.8055
+&#127939; View run logreg_default at: http://localhost:5050/#/experiments/1/runs/21e6fd6a8659446db9b9eb96f691cfc8
+rf_100: acc=0.7864
+rf_200_depth10: acc=0.7999
+rf_300_depth6: acc=0.8048
+gb_100_lr01: acc=0.8027
+gb_200_lr005: acc=0.8048
+Tracking URI actually used: http://localhost:5050</code></pre>
+
+<p>Every number matches Articles 8 through 11 exactly, because the model training never changed, only where the results are stored. That clickable "View run at: http://localhost:5050/..." link is the tell: this is MLflow's real web UI, reachable from any machine that can reach port 5050, not a folder sitting next to the script that ran it.</p>
+
+<p>Prefect's orchestration, run the same way, against the same kind of live server:</p>
+
+<pre class="output"><code>Task run 'load_data-00d' - Loaded 7043 rows
+Task run 'train_and_log-a4f' - logreg_default: accuracy=0.8055
+Task run 'train_and_log-0be' - rf_200_depth10: accuracy=0.7999
+Task run 'train_and_log-14d' - gb_200_lr005: accuracy=0.8048
+Task run 'promote_best_model-195' - Best run: logreg_default (accuracy=0.8055)
+Task run 'promote_best_model-195' - Promoted ChurnModel version 1 to @champion
+Flow run 'big-horse' - Finished in state Completed()</code></pre>
+
+<p>Identical outcome, identical mechanism, the scheduled version of exactly what just ran manually.</p>
+
+<hr>
+
+<h2>Part 5 &mdash; Proof: loading a model from a completely separate process</h2>
+
+<p>This is the detail that actually distinguishes "networked" from "still secretly local." Registration happened in one Python process. Loading it back happened in a second, entirely separate process, started fresh, with no shared memory or filesystem state beyond the network connection itself:</p>
+
+<figure>
+<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing process 1 registering a model and setting the champion alias against the MLflow server, and process 2, started separately with no shared state, loading the model purely through the network registry URI and producing the identical prediction and probability.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxc{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.2;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="ar2" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="20" y="20" width="180" height="55" rx="6" class="box"/>
+  <text x="110" y="43" text-anchor="middle" class="lbl">Process 1</text>
+  <text x="110" y="59" text-anchor="middle" class="sub">registers + promotes</text>
+
+  <rect x="240" y="45" width="160" height="45" rx="8" class="boxc"/>
+  <text x="320" y="65" text-anchor="middle" class="lbl">mlflow-server</text>
+  <text x="320" y="80" text-anchor="middle" class="sub">the only shared thing</text>
+
+  <rect x="440" y="20" width="180" height="55" rx="6" class="box"/>
+  <text x="530" y="43" text-anchor="middle" class="lbl">Process 2</text>
+  <text x="530" y="59" text-anchor="middle" class="sub">separate, no shared disk</text>
+
+  <line x1="200" y1="48" x2="238" y2="65" class="ln" marker-end="url(#ar2)"/>
+  <line x1="402" y1="65" x2="438" y2="48" class="ln" marker-end="url(#ar2)"/>
+
+  <text x="320" y="130" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#1B6B5C">Prediction: 1, probability: 0.8371</text>
+  <text x="320" y="150" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">the exact number, proving the registry did the work, not shared files</text>
+</svg>
+<figcaption>Fig. 2 — two unrelated processes, one network service between them</figcaption>
+</figure>
+
+<pre><code><span class="c"># process 1: register and promote</span>
+registered = mlflow.register_model(model_uri=model_uri, name="ChurnModel")
+client.set_registered_model_alias("ChurnModel", "champion", registered.version)</code></pre>
+
+<pre><code><span class="c"># process 2, run separately, moments later</span>
+model = mlflow.sklearn.load_model("models:/ChurnModel@champion")
+prediction = int(model.predict(input_df)[0])
+probability = float(model.predict_proba(input_df)[0][1])</code></pre>
+
+<pre class="output"><code>Loaded model via network registry URI: models:/ChurnModel@champion
+Prediction: 1, probability: 0.8371</code></pre>
+
+<p><code>0.8371</code> is the exact, familiar probability for the high-risk example customer from every article since 7.5. Getting that exact number back, from a process that never trained anything and never touched a local file, is the actual proof that the registry, not a shared disk, is doing the work.</p>
+
+<hr>
+
+<h2>Part 6 &mdash; CI with a real, ephemeral MLflow instance</h2>
+
+<p>Article 11's tests loaded a model with <code>joblib</code>, entirely bypassing the registry. That was a reasonable simplification at the time; now that <code>main.py</code> genuinely depends on a live registry, the tests should exercise the same path. GitHub Actions doesn't come with MLflow preinstalled anywhere, so the test job builds a small, throwaway one, uses it, and lets it disappear when the job ends.</p>
+
+<pre><code>- name: Start an ephemeral MLflow server for this test run
+  run: |
+    mlflow server --backend-store-uri sqlite:///mlflow.db \
+      --default-artifact-root ./mlartifacts \
+      --host 0.0.0.0 --port 5000 &
+    for i in $(seq 1 10); do
+      curl -sf http://localhost:5000/health && break
+      sleep 5
+    done
+
+- name: Train and register a throwaway model for testing
+  env:
+    MLFLOW_TRACKING_URI: http://localhost:5000
+  run: python scripts/ci_seed_model.py
+
+- name: Run unit tests
+  env:
+    MLFLOW_TRACKING_URI: http://localhost:5000
+  run: pytest tests/ -v</code></pre>
+
+<p><code>scripts/ci_seed_model.py</code> is a small, self-contained script: load the data, train one plain logistic regression, register it as <code>ChurnModel</code>, promote it to <code>@champion</code>. It exists purely so <code>models:/ChurnModel@champion</code> resolves to something real inside a fresh CI environment that has never seen this project before.</p>
+
+<p>Confirmed by actually running this exact sequence, start to finish: the server takes about 30 seconds to become reachable (the same measured number as Part 2's <code>start_period</code>), the seed script registers version 1 and promotes it, and the real test suite, loading through the actual registry URI, passes:</p>
+
+<pre class="output"><code>CI: registered ChurnModel v1 and promoted to @champion for this test run
+tests/test_model_registry.py::test_model_loads_from_registry_and_predicts PASSED
+============================== 1 passed in 6.42s ===============================</code></pre>
+
+<p>This is the same pattern GitHub Actions' own "service container" feature exists for, a short-lived dependency spun up for one job and torn down after, just done as an explicit step instead of the formal <code>services:</code> block, since that block expects a ready-made image with a service that starts on its own, and there wasn't a verified one to reach for here. The effect is identical either way: tests run against something real, not a mock, and nothing about it survives past this one job.</p>
+
+<hr>
+
+<h2>Part 7 &mdash; Closing the loop: Prefect triggers a real deploy</h2>
+
+<p>Article 10 closed by promising this. Here it is, added as the last task in the training flow:</p>
+
+<pre><code>@task
+def trigger_deploy():
+    import requests
+    owner = os.environ["GITHUB_OWNER"]
+    repo = os.environ["GITHUB_REPO"]
+    token = os.environ["GITHUB_DISPATCH_TOKEN"]
+    url = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/deploy.yml/dispatches"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    response = requests.post(url, headers=headers, json={"ref": "main"})
+    response.raise_for_status()
+
+@flow(name="churn-training-pipeline")
+def churn_training_flow():
+    ...
+    promote_best_model()
+    trigger_deploy()</code></pre>
+
+<p><code>deploy.yml</code> is a small, separate workflow that only responds to this trigger:</p>
+
+<pre><code>name: Deploy Promoted Model
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/churn-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max</code></pre>
+
+<p><code>workflow_dispatch</code> with no other trigger means this workflow only ever runs when something calls it explicitly, Article 11's <code>ci.yml</code> still owns pull requests; this one exists purely for "a new model just got promoted, ship it."</p>
+
+<p>Here's the honest verification. I don't have a GitHub token scoped to your repository, so I can't fire this against a real deploy. What I can prove, and did, is that the request itself is built correctly against GitHub's actual, live API:</p>
+
+<pre class="output"><code>Status code: 401
+Response body: {"message": "Bad credentials", ...}</code></pre>
+
+<p>That request was sent to the real <code>api.github.com</code>, with a deliberately fake token. A <code>401</code> means GitHub received a well-formed request at the correct endpoint and rejected only the credential, exactly the failure you'd expect. A <code>404</code> would have meant the URL was wrong; a <code>422</code> would have meant the payload was malformed. Neither happened. The only thing standing between this code and a real deploy is a real token, which is precisely the boundary described in the introduction.</p>
+
+<hr>
+
+<h2>Part 8 &mdash; What only you can run</h2>
+
+<p>Everything above, I ran myself, with real output. Two things need your own accounts, because they touch infrastructure only you have credentials for.</p>
+
+<p><strong>Push a real image to Docker Hub, once, to confirm the whole chain:</strong></p>
+<pre><code>docker compose up -d
+docker build -t YOUR_DOCKERHUB_USERNAME/churn-api:v1 .
+docker login
+docker push YOUR_DOCKERHUB_USERNAME/churn-api:v1</code></pre>
+
+<p><strong>Fire the deploy trigger for real</strong>, with a GitHub personal access token scoped to <code>repo</code> and <code>workflow</code> permissions, saved as three repository secrets (<code>GITHUB_DISPATCH_TOKEN</code>, plus <code>GITHUB_OWNER</code> and <code>GITHUB_REPO</code> as plain environment values), then:</p>
+<pre><code>export MLFLOW_TRACKING_URI=http://localhost:5000
+export GITHUB_OWNER=your-username
+export GITHUB_REPO=churn_prediction
+export GITHUB_DISPATCH_TOKEN=ghp_your_real_token
+python orchestrate_training.py</code></pre>
+
+<p>Watch the Actions tab on your repository. A <code>Deploy Promoted Model</code> run should appear within seconds of <code>promote_best_model</code> finishing, kicked off by code, not a person clicking anything.</p>
+
+<hr>
+
+<h2>Part 9 &mdash; The complete project</h2>
+
+<pre><code>churn_prediction/
+├── docker-compose.yml              &larr; mlflow-server + churn-api, one network
+├── Dockerfile                      &larr; unchanged from Article 5
+├── requirements.txt
+├── .github/workflows/
+│   ├── ci.yml                      &larr; tests, ephemeral MLflow, build+push on PR
+│   └── deploy.yml                  &larr; workflow_dispatch only, triggered by Prefect
+├── data/telco_churn.csv (+ .dvc)   &larr; DVC still owns this
+├── train.py                        &larr; Article 7.5's baseline, unchanged
+├── track_experiments.py            &larr; Article 8, now reads MLFLOW_TRACKING_URI
+├── orchestrate_training.py         &larr; Article 10, now networked + triggers deploy
+├── scripts/
+│   ├── ci_seed_model.py            &larr; new: throwaway model for CI
+│   └── trigger_deploy.py           &larr; new: the dispatch call, standalone
+├── schemas.py                      &larr; unchanged from Article 7.5
+├── main.py                         &larr; Article 9, now reads MLFLOW_TRACKING_URI
+└── tests/
+    ├── test_schemas.py
+    └── test_model_registry.py      &larr; new: tests the registry path, not joblib</code></pre>
+
+<p>Nothing here is a new tool. Every file is either unchanged from where it was taught, or changed in exactly one way: pointed at a network address instead of a local one. That's the whole difference between four correct demonstrations and one system.</p>
+
+<hr>
+
+<h2>Summary</h2>
+
+<p>The gap was never that any single article was wrong. It's that Articles 8 through 11 were each written and verified in isolation, and isolation hides exactly the kind of seam that shows up the moment you actually run things together. MLflow now lives as its own service, reachable the same way from a container, a scheduled Prefect flow, or a CI job, because <code>MLFLOW_TRACKING_URI</code> is the one thing all three agree to read. DVC and MLflow no longer compete over who owns the model file. And the promise Article 10 made, that promoting a model would eventually trigger its own deployment, is real code now, verified as far as it can be without a live token, waiting on exactly one thing: you, running it once, with your own credentials, to watch it close.</p>
+
+<p>That last part is the point, honestly. This was never going to be finished by me alone in a sandbox. It gets finished when you push the image and watch the deploy trigger fire.</p>
+
+</div>
+</article>
+
+<footer>
+<p>MLOps for ML practitioners &middot; unified implementation, built on Article 7.5</p>
+</footer>
+
+</body>
+</html>

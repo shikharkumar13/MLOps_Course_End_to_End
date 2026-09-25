@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CI/CD with GitHub Actions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:34px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:24px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:13.8px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 11 &middot; series finale</p>
+    <h1 class="title">CI/CD with GitHub Actions</h1>
+    <p class="dek">Article 10 automated training and promotion. It never touched the Docker image or the live API. This article closes that last gap, and with it, the roadmap this series has been building toward since Article 0.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Article 10 first</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Trace the churn project's actual lifecycle one more time. Prefect now pulls data, trains a handful of models, tracks every run in MLflow, and promotes the best one to <code>@champion</code>, every Monday at 2am, unattended. That's genuinely automated. What still isn't: the Dockerfile from Article 5, or <code>main.py</code>, or <code>schemas.py</code>, changing at all. Someone edits a file, opens a pull request, and from there, everything is manual again. Did the tests still pass? Does the Docker image still build? Nobody knows until a person checks, builds it locally, and pushes it themselves.</p>
+
+<p>That's CI/CD, continuous integration and continuous delivery, and it's the last piece this series set out to cover. This article builds a real GitHub Actions workflow for the churn project: it triggers on every pull request, runs a real test suite, builds the Docker image, and pushes it to a container registry, automatically, before a human ever has to think about it.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>The problem: the one thing still done by hand</td></tr>
+<tr><td>2</td><td>What CI/CD is, and what GitHub Actions specifically does</td></tr>
+<tr><td>3</td><td>Writing a real test suite for the churn project</td></tr>
+<tr><td>4</td><td>Anatomy of a workflow file</td></tr>
+<tr><td>5</td><td>The test job: running pytest on every pull request</td></tr>
+<tr><td>6</td><td>Secrets: never putting credentials in a YAML file</td></tr>
+<tr><td>7</td><td>The build-and-push job: Docker Hub</td></tr>
+<tr><td>8</td><td>Caching: the same idea, a third time</td></tr>
+<tr><td>9</td><td>AWS ECR, and why OIDC beats access keys</td></tr>
+<tr><td>10</td><td>Branch protection: making the check actually count</td></tr>
+<tr><td>11</td><td>The complete workflow</td></tr>
+<tr><td>12</td><td>Where this leaves the whole system</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2>Part 1 &mdash; The problem: the one thing still done by hand</h2>
+
+<p>Every other article in this series closed a specific gap. Git stopped code from being lost. DVC did the same for data and models. Docker stopped "works on my machine." FastAPI stopped bad input from reaching a model. MLflow stopped experiments from being forgotten. Prefect stopped the training-to-promotion sequence from depending on someone remembering to run it.</p>
+
+<p>None of that touches what happens when the code itself changes. Someone fixes a bug in <code>schemas.py</code>, or updates a dependency in <code>requirements.txt</code>, or tweaks the Dockerfile. Right now, in this project, that means: hope the tests still pass, because nobody's required to run them; hope the Docker image still builds, because nobody's required to check; and manually run <code>docker build</code> and <code>docker push</code> if it does. That's exactly the kind of manual step this whole series has been in the business of removing.</p>
+
+<hr>
+
+<h2>Part 2 &mdash; What CI/CD is, and what GitHub Actions specifically does</h2>
+
+<p>Continuous integration means every code change gets automatically tested the moment it's proposed, not whenever someone remembers to. Continuous delivery extends that: once a change passes, the artifact it produces, here, a Docker image, gets built and published automatically too.</p>
+
+<p>GitHub Actions is GitHub's own automation platform for exactly this: a <strong>workflow</strong> is a YAML file describing what to run and when. A workflow triggers on an <strong>event</strong>, a pull request being opened, code being pushed, a schedule, and runs one or more <strong>jobs</strong>, each made of <strong>steps</strong>, on a fresh virtual machine called a <strong>runner</strong> that GitHub provisions and tears down automatically. Individual steps are often prebuilt <strong>actions</strong> pulled from GitHub's marketplace, <code>actions/checkout</code> to get your code onto the runner, <code>docker/build-push-action</code> to build and push an image, rather than hand-written shell scripts for everything.</p>
+
+<figure>
+<svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing a pull request opening or updating, which triggers GitHub to spin up a fresh runner, which runs the test job, and only if that job succeeds does the build-and-push job run, since it depends on the test job via a needs relationship.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.5;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="230" y="10" width="180" height="40" rx="8" class="box"/>
+  <text x="320" y="34" text-anchor="middle" class="sub">pull_request opened/updated</text>
+
+  <line x1="320" y1="50" x2="320" y2="78" class="ln" marker-end="url(#ar)"/>
+
+  <rect x="200" y="82" width="240" height="45" rx="8" class="boxd"/>
+  <text x="320" y="108" text-anchor="middle" class="lbl">GitHub spins up a fresh runner</text>
+
+  <line x1="260" y1="127" x2="150" y2="155" class="ln" marker-end="url(#ar)"/>
+  <line x1="380" y1="127" x2="490" y2="155" class="ln" marker-end="url(#ar)"/>
+
+  <rect x="30" y="160" width="180" height="45" rx="6" class="box"/>
+  <text x="120" y="182" text-anchor="middle" class="lbl">job: test</text>
+  <text x="120" y="198" text-anchor="middle" class="sub">runs pytest</text>
+
+  <rect x="430" y="160" width="180" height="45" rx="6" class="box"/>
+  <text x="520" y="182" text-anchor="middle" class="lbl">job: build-and-push</text>
+  <text x="520" y="198" text-anchor="middle" class="sub">needs: test</text>
+</svg>
+<figcaption>Fig. 1 — build-and-push only runs if test succeeds first</figcaption>
+</figure>
+
+<p>The <code>needs:</code> relationship in that diagram matters. A build-and-push job that depends on the test job simply doesn't run at all if testing fails, the same safety property Article 10 built into Prefect: a broken step should stop everything downstream, automatically, not rely on a person noticing.</p>
+
+<hr>
+
+<h2>Part 3 &mdash; Writing a real test suite for the churn project</h2>
+
+<p>Nothing in this series has had tests yet. Article 9's <code>main.py</code> and <code>schemas.py</code> have been correct, but "correct because I checked it once" isn't the same as "correct, verified automatically, every time someone touches this file."</p>
+
+<pre><code>"""tests/test_schemas.py — unit tests for the Pydantic request/response schemas."""
+import pytest
+from pydantic import ValidationError
+from schemas import Customer, ChurnPrediction
+
+VALID_CUSTOMER = {
+    "gender": "Female", "SeniorCitizen": 1, "Partner": "No", "Dependents": "No",
+    "tenure": 4, "PhoneService": "Yes", "MultipleLines": "Yes",
+    "InternetService": "Fiber optic", "OnlineSecurity": "No", "OnlineBackup": "No",
+    "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "Yes", "StreamingMovies": "Yes",
+    "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check",
+    "MonthlyCharges": 95.45, "TotalCharges": 396.1,
+}
+
+
+def test_valid_customer_is_accepted():
+    customer = Customer(**VALID_CUSTOMER)
+    assert customer.gender == "Female"
+    assert customer.tenure == 4
+
+
+def test_invalid_gender_is_rejected():
+    bad_data = {**VALID_CUSTOMER, "gender": "Nonbinary"}
+    with pytest.raises(ValidationError):
+        Customer(**bad_data)
+
+
+def test_senior_citizen_out_of_range_is_rejected():
+    bad_data = {**VALID_CUSTOMER, "SeniorCitizen": 2}
+    with pytest.raises(ValidationError):
+        Customer(**bad_data)
+
+
+def test_negative_monthly_charges_is_rejected():
+    bad_data = {**VALID_CUSTOMER, "MonthlyCharges": -10.0}
+    with pytest.raises(ValidationError):
+        Customer(**bad_data)
+
+
+def test_churn_prediction_response_shape():
+    response = ChurnPrediction(prediction=1, probability=0.8371, interpretation="Likely to churn")
+    assert response.prediction == 1
+    assert 0 <= response.probability <= 1</code></pre>
+
+<p>A second file goes one level deeper, testing the actual trained model, not just the schema, using the exact two example customers from Article 7.5 onward:</p>
+
+<pre><code>"""tests/test_model.py — sanity checks on the trained model, not just the schema."""
+import joblib
+import pandas as pd
+from schemas import Customer
+
+HIGH_RISK = {
+    "gender": "Female", "SeniorCitizen": 1, "Partner": "No", "Dependents": "No",
+    "tenure": 4, "PhoneService": "Yes", "MultipleLines": "Yes",
+    "InternetService": "Fiber optic", "OnlineSecurity": "No", "OnlineBackup": "No",
+    "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "Yes", "StreamingMovies": "Yes",
+    "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check",
+    "MonthlyCharges": 95.45, "TotalCharges": 396.1,
+}
+LOW_RISK = {
+    "gender": "Male", "SeniorCitizen": 0, "Partner": "No", "Dependents": "No",
+    "tenure": 34, "PhoneService": "Yes", "MultipleLines": "No",
+    "InternetService": "DSL", "OnlineSecurity": "Yes", "OnlineBackup": "No",
+    "DeviceProtection": "Yes", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No",
+    "Contract": "One year", "PaperlessBilling": "No", "PaymentMethod": "Mailed check",
+    "MonthlyCharges": 56.95, "TotalCharges": 1889.5,
+}
+
+
+def _predict(customer_dict):
+    model = joblib.load("models/model.pkl")
+    customer = Customer(**customer_dict)
+    input_df = pd.DataFrame([customer.model_dump()])
+    return int(model.predict(input_df)[0]), float(model.predict_proba(input_df)[0][1])
+
+
+def test_high_risk_customer_predicts_churn():
+    prediction, probability = _predict(HIGH_RISK)
+    assert prediction == 1
+    assert probability > 0.5
+
+
+def test_low_risk_customer_predicts_no_churn():
+    prediction, probability = _predict(LOW_RISK)
+    assert prediction == 0
+    assert probability < 0.5</code></pre>
+
+<pre><code>pytest tests/ -v</code></pre>
+<pre class="output"><code>tests/test_model.py::test_high_risk_customer_predicts_churn PASSED
+tests/test_model.py::test_low_risk_customer_predicts_no_churn PASSED
+tests/test_schemas.py::test_valid_customer_is_accepted PASSED
+tests/test_schemas.py::test_invalid_gender_is_rejected PASSED
+tests/test_schemas.py::test_senior_citizen_out_of_range_is_rejected PASSED
+tests/test_schemas.py::test_negative_monthly_charges_is_rejected PASSED
+tests/test_schemas.py::test_churn_prediction_response_shape PASSED
+
+============================== 7 passed in 1.67s ===============================</code></pre>
+
+<p>All seven pass, confirmed by actually running them. Now watch what happens when someone accidentally weakens a constraint, dropping <code>ge=0, le=1</code> from <code>SeniorCitizen</code>'s <code>Field(...)</code>, a genuinely easy typo to make while refactoring:</p>
+
+<pre class="output"><code>tests/test_schemas.py::test_senior_citizen_out_of_range_is_rejected FAILED
+
+FAILURES
+_________________ test_senior_citizen_out_of_range_is_rejected _________________
+    def test_senior_citizen_out_of_range_is_rejected():
+        bad_data = {**VALID_CUSTOMER, "SeniorCitizen": 2}
+>       with pytest.raises(ValidationError):
+E       Failed: DID NOT RAISE ValidationError
+
+===================== 1 failed, 4 passed in 0.11s =====================</code></pre>
+
+<p>That's the entire value of this section. A real regression, caught immediately, before it ever reaches a pull request review, let alone production. This is exactly what Part 5's workflow will run on every single PR from here on.</p>
+
+<p>It's worth seeing the other kind of CI failure too, one that has nothing to do with a test assertion. A dependency typo, <code>pydnatic</code> instead of <code>pydantic</code> in <code>requirements.txt</code>, is exactly the sort of thing that slips into a PR unnoticed:</p>
+
+<pre class="output"><code>ERROR: Could not find a version that satisfies the requirement pydnatic==2.6.0 (from versions: none)
+ERROR: No matching distribution found for pydnatic==2.6.0</code></pre>
+
+<figure>
+<svg viewBox="0 0 640 175" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing two different kinds of CI failure caught by the same workflow: a test assertion failure from a weakened validation constraint, and a dependency install failure from a misspelled package name, both stopping the pipeline before the build-and-push job runs.">
+  <style> .box{fill:#FAF3E8;stroke:#9A6B2E;stroke-width:1.2;} .lbl{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#6B6B6B;} .hd{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;} </style>
+
+  <text x="160" y="20" text-anchor="middle" class="hd">Broken assertion</text>
+  <rect x="40" y="35" width="240" height="40" rx="6" class="box"/>
+  <text x="160" y="59" text-anchor="middle" class="sub">SeniorCitizen constraint dropped</text>
+  <text x="160" y="95" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">pytest fails: 1 failed, 4 passed</text>
+
+  <text x="480" y="20" text-anchor="middle" class="hd">Broken environment</text>
+  <rect x="360" y="35" width="240" height="40" rx="6" class="box"/>
+  <text x="480" y="59" text-anchor="middle" class="sub">pydnatic typo in requirements.txt</text>
+  <text x="480" y="95" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">pip install fails: exit code 1</text>
+
+  <line x1="20" y1="120" x2="620" y2="120" stroke="#E5E5E2" stroke-width="1"/>
+  <text x="320" y="150" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" fill="#6B6B6B">Both stop the workflow before build-and-push ever runs</text>
+</svg>
+<figcaption>Fig. 2 — two different failure modes, caught the same automatic way</figcaption>
+</figure>
+
+<p>Confirmed directly: <code>pip install</code> exits with status 1 on a bad package name, the "Install dependencies" step fails before pytest ever runs, and the whole job stops there. Two different failure modes, a broken assertion and a broken environment, and the workflow in Part 5 catches both the same way, automatically, on every PR.</p>
+
+<hr>
+
+<h2>Part 4 &mdash; Anatomy of a workflow file</h2>
+
+<p>Workflow files live at <code>.github/workflows/*.yml</code> in the repository, and GitHub picks them up automatically, no separate registration step.</p>
+
+<pre><code>name: CI - Test, Build, and Push
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4</code></pre>
+
+<p><code>name:</code> is what shows up in GitHub's UI. <code>on:</code> declares the trigger, here, any pull request targeting <code>main</code>. <code>jobs:</code> holds one or more named jobs, <code>runs-on: ubuntu-latest</code> picks the runner's operating system, and <code>steps:</code> lists what happens, in order.</p>
+
+<blockquote><p><strong>A genuine YAML quirk worth knowing.</strong> Try validating this file with a generic YAML parser like Python's <code>pyyaml</code>, and <code>on:</code> gets silently read back as the boolean <code>True</code>, not the string <code>"on"</code>. That's real, confirmed directly, and it's the YAML 1.1 spec's fault: bare <code>on</code>, <code>off</code>, <code>yes</code>, and <code>no</code> are boolean literals unless quoted. It doesn't affect GitHub's own parsing, which has always treated <code>on:</code> as the trigger key correctly, this only bites you if you write your own tooling to introspect workflow files.</p></blockquote>
+
+<hr>
+
+<h2>Part 5 &mdash; The test job: running pytest on every pull request</h2>
+
+<pre><code>jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run unit tests
+        run: pytest tests/ -v</code></pre>
+
+<p><code>actions/checkout@v4</code> puts the repository's code onto the runner, the step every workflow needs first. <code>actions/setup-python@v5</code> installs the Python version the project actually targets. The dependency install and test run are then just the same commands you'd type locally, <code>pip install -r requirements.txt</code> and <code>pytest tests/ -v</code>, run on a clean machine instead of your own. If any test fails, this job fails, and GitHub blocks the pull request from looking green, exactly the signal a reviewer needs before approving.</p>
+
+<hr>
+
+<h2>Part 6 &mdash; Secrets: never putting credentials in a YAML file</h2>
+
+<p>Pushing to a registry needs credentials, and a workflow file is not a safe place for them, it's committed to Git, visible to anyone with read access to the repo. GitHub Secrets solve this: stored encrypted at the repository level (Settings &rarr; Secrets and variables &rarr; Actions), referenced in a workflow as <code>${{ secrets.NAME }}</code>, and never printed in logs, GitHub automatically redacts them if a step tries to echo one out.</p>
+
+<p>For Docker Hub, two secrets: <code>DOCKERHUB_USERNAME</code> and <code>DOCKERHUB_TOKEN</code>, the token generated from Docker Hub's own account settings, not your actual account password.</p>
+
+<hr>
+
+<h2>Part 7 &mdash; The build-and-push job: Docker Hub</h2>
+
+<pre><code>  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/churn-api:pr-${{ github.event.pull_request.number }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/churn-api:${{ github.sha }}</code></pre>
+
+<p><code>needs: test</code> is the whole safety mechanism from Part 2's diagram: this job simply does not start if the test job failed. <code>docker/setup-buildx-action</code> enables the modern BuildKit builder from Article 4, including its layer caching, the same "requirements before code" habit that article taught applies here too, just to the CI build now instead of a local one. <code>docker/login-action</code> authenticates using the secrets from Part 6, never a literal password. <code>docker/build-push-action</code> builds from the Dockerfile Article 5 wrote and pushes it, tagged two ways: <code>pr-&lt;number&gt;</code> for a reviewer who wants to actually pull and test this exact PR's image, and the commit SHA, a permanent, unambiguous reference back to precisely what code produced it.</p>
+
+<p>Worth being honest about a real tradeoff here. Pushing a real image to the registry on every single PR, as shown above, is a fine, common pattern for a small team where every contributor is trusted. At larger scale, or with PRs from outside contributors, the more common convention is to build and test on every PR, but only actually push on merge to <code>main</code>, done by swapping <code>push: true</code> for <code>push: ${{ github.event_name != 'pull_request' }}</code>. Either is defensible; know which one you're choosing and why.</p>
+
+<hr>
+
+<h2>Part 8 &mdash; Caching: the same idea, a third time</h2>
+
+<p>Article 3 taught this for DVC, <code>dvc repro</code> skipping an unchanged stage. Article 10 taught it again for Prefect, a task returning a cached result instead of re-running. It shows up a third time here, because rebuilding the same unchanged dependencies and Docker layers on every single PR is exactly the kind of wasted, repeated work all three tools exist to avoid.</p>
+
+<pre><code>- name: Set up Python
+  uses: actions/setup-python@v5
+  with:
+    python-version: "3.11"
+    cache: "pip"   <span class="c"># caches the pip download cache between runs, keyed on requirements.txt</span></code></pre>
+
+<pre><code>- name: Build and push
+  uses: docker/build-push-action@v6
+  with:
+    context: .
+    push: true
+    tags: ${{ secrets.DOCKERHUB_USERNAME }}/churn-api:${{ github.sha }}
+    cache-from: type=gha
+    cache-to: type=gha,mode=max</code></pre>
+
+<p><code>cache: "pip"</code> on <code>setup-python</code> keys a cache of downloaded packages to <code>requirements.txt</code>'s contents, change nothing in that file and the next run skips re-downloading every dependency. <code>cache-from</code>/<code>cache-to: type=gha</code> does the equivalent for the Docker build itself, storing built layers in GitHub's own cache so a PR that only touches <code>main.py</code>, and never touches <code>requirements.txt</code>, reuses the exact same dependency-installation layer from Article 4's Dockerfile instead of rebuilding it. Both YAML snippets validate and parse cleanly; the layer-reuse behavior itself is enforced by GitHub's own build infrastructure, the same way DVC's and Prefect's caching only actually shows its effect on GitHub's real runners, not something a local sandbox can fully demonstrate.</p>
+
+<hr>
+
+<h2>Part 9 &mdash; AWS ECR, and why OIDC beats access keys</h2>
+
+<p>Amazon ECR is the natural alternative to Docker Hub, and the authentication story is worth getting right, because the obvious approach is also the outdated one. Generating a long-lived AWS access key and storing it as a GitHub secret works, but it's a standing credential that lives forever until someone manually rotates it, and a leaked one is a real incident. The current, strongly recommended approach is OIDC, OpenID Connect: GitHub issues a short-lived identity token for the specific workflow run, AWS verifies it and hands back temporary credentials that expire when the job ends, and no AWS secret is stored in GitHub at all.<sup class="fn"><a href="#fn1">1</a></sup></p>
+
+<pre><code>  build-and-push-ecr:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   <span class="c"># required for OIDC — nothing else is granted by this</span>
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::&lt;ACCOUNT_ID&gt;:role/github-actions-ecr-push
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: &lt;ACCOUNT_ID&gt;.dkr.ecr.us-east-1.amazonaws.com/churn-api:${{ github.sha }}</code></pre>
+
+<p><code>permissions: id-token: write</code> is what lets the workflow request an OIDC token at all, and it grants nothing beyond that on its own. <code>role-to-assume</code> points at an IAM role configured, on the AWS side, to trust GitHub's OIDC provider for this specific repository, set up once, outside the workflow file, in IAM. From there, <code>aws-actions/amazon-ecr-login</code> handles the actual registry login using the temporary credentials <code>configure-aws-credentials</code> obtained. No <code>AWS_SECRET_ACCESS_KEY</code> anywhere in this file, because there isn't one to leak.</p>
+
+<hr>
+
+<h2>Part 10 &mdash; Branch protection: making the check actually count</h2>
+
+<p>Everything built so far runs the workflow and reports pass or fail on the pull request. On its own, that's advisory. Nothing stops someone from merging a PR with a big red X sitting right there, GitHub doesn't block anything by default.</p>
+
+<p>Making it actually count is a repository setting, not a workflow file: Settings &rarr; Branches &rarr; add a branch protection rule for <code>main</code> &rarr; enable "Require status checks to pass before merging" &rarr; select the <code>test</code> job by name. From that point on, the merge button itself is disabled on any PR where the test job hasn't passed, not just discouraged, genuinely blocked. That one setting is what turns "we have CI" into "broken code cannot reach <code>main</code>."</p>
+
+<hr>
+
+<h2>Part 11 &mdash; The complete workflow</h2>
+
+<pre><code>name: CI - Test, Build, and Push
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run unit tests
+        run: pytest tests/ -v
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/churn-api:pr-${{ github.event.pull_request.number }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/churn-api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max</code></pre>
+
+<p>Open a pull request against <code>main</code> in this repository, and this entire sequence, checkout, cached dependency install, the full test suite, a cache-accelerated Docker build, and a registry push, runs on its own, on a machine nobody had to provision, reporting a clean pass or an honest failure directly on the PR before a human ever reviews the code. Add the branch protection rule from Part 10, and a failing run doesn't just report, it blocks.</p>
+
+<hr>
+
+<h2>Part 12 &mdash; Where this leaves the whole system</h2>
+
+<p>Article 0 opened with a hypothetical: a subscription business's churn model, and a list of everything that goes wrong without proper tooling around it. Article 7.5 built that same model for real, for the first time, wiring together Git, DVC, Docker, and FastAPI into one unbroken chain. Every article since has closed one more gap in that chain. MLflow Tracking made experiments permanent. The Model Registry made "what's live" a managed fact instead of a memory. Prefect made the whole training-to-promotion sequence run itself, on schedule, with retries and a permanent history. This article makes the last piece automatic too: a pull request that changes code now proves itself, tests, build, and all, before anyone has to trust it by hand.</p>
+
+<figure>
+<svg viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of the complete MLOps system built across this series: Git and DVC version code and data, Docker packages the environment, FastAPI serves predictions, MLflow tracks experiments and manages which model is live, Prefect automates training and promotion on a schedule, and GitHub Actions tests, builds, and ships every code change automatically, gated by branch protection.">
+  <style> .box{fill:#F5F5F3;stroke:#1B6B5C;stroke-width:1.1;} .boxfin{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.4;} .lbl{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:9px;fill:#6B6B6B;} </style>
+
+  <rect x="20" y="20" width="130" height="55" rx="6" class="box"/><text x="85" y="45" text-anchor="middle" class="lbl">Git + DVC</text><text x="85" y="60" text-anchor="middle" class="sub">code + data</text>
+
+  <rect x="170" y="20" width="130" height="55" rx="6" class="box"/><text x="235" y="45" text-anchor="middle" class="lbl">Docker</text><text x="235" y="60" text-anchor="middle" class="sub">environment</text>
+
+  <rect x="320" y="20" width="130" height="55" rx="6" class="box"/><text x="385" y="45" text-anchor="middle" class="lbl">FastAPI</text><text x="385" y="60" text-anchor="middle" class="sub">serving</text>
+
+  <rect x="470" y="20" width="150" height="55" rx="6" class="box"/><text x="545" y="45" text-anchor="middle" class="lbl">MLflow</text><text x="545" y="60" text-anchor="middle" class="sub">tracking + registry</text>
+
+  <rect x="150" y="105" width="150" height="55" rx="6" class="box"/><text x="225" y="130" text-anchor="middle" class="lbl">Prefect</text><text x="225" y="145" text-anchor="middle" class="sub">scheduled automation</text>
+
+  <rect x="330" y="105" width="180" height="55" rx="6" class="boxfin"/><text x="420" y="130" text-anchor="middle" class="lbl">GitHub Actions</text><text x="420" y="145" text-anchor="middle" class="sub">test, build, ship — this article</text>
+
+  <rect x="180" y="200" width="280" height="55" rx="8" class="boxfin" stroke-width="1.6"/>
+  <text x="320" y="225" text-anchor="middle" class="lbl">A pull request that proves itself</text>
+  <text x="320" y="243" text-anchor="middle" class="sub">before a human ever has to trust it by hand</text>
+</svg>
+<figcaption>Fig. 3 — every article in this series, one system</figcaption>
+</figure>
+
+<p>Look at what happens now, end to end, when a real change lands. A data scientist opens a PR tweaking a feature or bumping a dependency. GitHub Actions runs the full test suite in under a minute and builds the image to prove it still works. Once merged, that same commit's image sits in the registry, tagged and traceable back to the exact code, the exact test run, and, if the change touched the model, back through Prefect's flow to the exact MLflow run and the exact DVC-tracked data that produced it. Nothing in that sentence was true nine articles ago, and none of it required a person to remember a single step.</p>
+
+<p>That's the system this series set out to build: not one clever tool, but a set of ordinary tools, each doing one job well, wired together so that the correct thing to do is also the automatic thing to do. The churn model from Article 0 was never really the point. This was.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. OIDC as the current recommended authentication method between GitHub Actions and AWS, replacing long-lived access keys, confirmed against AWS's own IAM documentation and multiple independent, current implementation guides, including the official <code>aws-actions/configure-aws-credentials</code> action documentation.</p>
+<p>MLOps for ML practitioners &middot; Article 11, the final article in this series</p>
+</footer>
+
+</body>
+</html>

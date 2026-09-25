@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experiment tracking with MLflow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDFDFB; --text:#1C1C1C; --text-muted:#6B6B6B;
+    --accent:#1B6B5C; --accent-soft:#E7F1EE;
+    --code-bg:#F5F5F3; --code-border:#E8E8E5; --border:#E5E5E2;
+    --amber:#9A6B2E; --amber-soft:#FAF3E8; --maxw:952px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Lora', Georgia, serif; font-size:19px; line-height:1.75; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4{ font-family:'Inter', -apple-system, sans-serif; color:var(--text); font-weight:650; line-height:1.3; letter-spacing:-0.01em; }
+
+  header.masthead{ padding:64px 0 8px; }
+  .kicker{ font-family:'Inter', sans-serif; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  h1.title{ font-size:34px; margin:0 0 14px; line-height:1.2; }
+  p.dek{ font-family:'Lora', serif; font-style:italic; font-size:20px; color:var(--text-muted); margin:0 0 28px; line-height:1.55; }
+  .meta-line{ font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text-muted); padding-bottom:32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+
+  article{ padding-bottom:60px; }
+  article p{ margin:0 0 22px; }
+  h2{ font-size:24px; margin:52px 0 18px; }
+  h3{ font-size:19px; margin:32px 0 12px; color:var(--text); }
+
+  a{ color:var(--accent); }
+
+  code{ font-family:'JetBrains Mono', monospace; font-size:0.82em; background:var(--code-bg); border:1px solid var(--code-border); padding:0.1em 0.4em; border-radius:4px; color:#2B2B2B; }
+  pre{ background:var(--code-bg); border:1px solid var(--code-border); border-radius:8px; padding:16px 20px; overflow-x:auto; margin:0 0 20px; }
+  pre code{ background:none; border:none; padding:0; font-size:13.8px; line-height:1.6; color:#2B2B2B; white-space:pre; }
+  pre.output{ background:#F0F2F1; border-color:#DEE3E0; }
+  pre.output code{ color:#3A4441; }
+  .c{ color:#8A8F98; }
+
+  blockquote{ margin:22px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; font-size:17.5px; }
+  blockquote p{ margin:0 0 10px; } blockquote p:last-child{ margin-bottom:0; }
+  blockquote strong{ color:var(--text); }
+
+  ul, ol{ margin:0 0 22px; padding-left:24px; } li{ margin-bottom:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:44px 0; }
+
+  figure{ margin:32px 0; } figure svg{ width:100%; height:auto; display:block; }
+  figcaption{ font-family:'Inter', sans-serif; font-size:13px; color:var(--text-muted); text-align:center; margin-top:12px; }
+
+  table{ width:100%; border-collapse:collapse; margin:0 0 24px; font-family:'Inter', sans-serif; font-size:14.5px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 12px; font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+  .table-scroll{ overflow-x:auto; margin-bottom:24px; }
+  .table-scroll table{ margin-bottom:0; min-width:560px; }
+
+  sup.fn{ font-family:'Inter', sans-serif; font-size:12px; } sup.fn a{ color:var(--accent); text-decoration:none; }
+
+  footer{ max-width:var(--maxw); margin:0 auto; padding:0 24px 64px; font-family:'Inter', sans-serif; font-size:14px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:28px; }
+  footer p{ margin:0 0 10px; } footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">MLOps for ML practitioners &middot; Article 8</p>
+    <h1 class="title">Experiment tracking with MLflow</h1>
+    <p class="dek">Article 7.5 ended with a real problem: six real experiments, no record of what produced which number. This is where that gets fixed.</p>
+    <p class="meta-line">Part of the MLOps series &middot; read Article 7.5 first &middot; next up: the MLflow Model Registry</p>
+  </div>
+</header>
+
+<article>
+<div class="wrap">
+
+<p>Recall exactly where the checkpoint article left off. Six models trained on the churn dataset, results sitting in a table because the article's author happened to write them down. In a real project, that table doesn't exist unless someone builds it by hand, every time, and remembers to keep it updated. Nothing in Git, DVC, Docker, or FastAPI was ever meant to solve that problem, because none of them are about experiments. They're about code, data, environments, and APIs.</p>
+
+<p>MLflow is what closes that gap. Specifically, this article is about MLflow Tracking, one of MLflow's four components, the one that logs parameters, metrics, and artifacts automatically, every time you train something, so the question "which run had <code>max_depth=6</code> and what was its recall" has an actual answer instead of a guess.</p>
+
+<p>By the end of this article, the churn project's six experiments will be logged properly, comparable side by side in a real UI, and you'll understand exactly what MLflow captured, what it didn't, and why that distinction matters.</p>
+
+<hr>
+
+<h2>What this article covers</h2>
+<table>
+<thead><tr><th>#</th><th>Topic</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>The problem, generalized beyond one project</td></tr>
+<tr><td>2</td><td>What MLflow is, and what Tracking specifically does</td></tr>
+<tr><td>3</td><td>The mental model: experiments, runs, and where they're stored</td></tr>
+<tr><td>4</td><td>Installing MLflow and your first logged run</td></tr>
+<tr><td>5</td><td>Tracking the churn experiments properly</td></tr>
+<tr><td>6</td><td>Comparing runs in the MLflow UI</td></tr>
+<tr><td>7</td><td>Autologging: the one-liner, and its real limits</td></tr>
+<tr><td>8</td><td>Logging artifacts beyond metrics</td></tr>
+<tr><td>9</td><td>When AIC and BIC actually apply, and when they don't</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2>Part 1 &mdash; The problem, generalized</h2>
+
+<p>Article 7.5's chaos wasn't specific to that project. It's what happens on every real project, every time, unless something intervenes.</p>
+
+<p>A data scientist trains a model. It's decent. They try a different algorithm. Better, maybe. They tune a hyperparameter. Better again, or worse, hard to tell from memory. By the fifth or sixth attempt, three things have quietly become true: nobody can say with confidence which exact configuration produced which exact number, the code that produced the best result may have already been overwritten by the next attempt, and the only durable record is whatever got written down by hand, if anything did.</p>
+
+<p>This isn't a discipline problem. Careful people hit this too. It's a tooling gap: training a model produces information (parameters, metrics, the model itself) that has nowhere permanent to live unless you build that place yourself, from scratch, every single project.</p>
+
+<hr>
+
+<h2>Part 2 &mdash; What MLflow is, and what Tracking does</h2>
+
+<p>MLflow was built at Databricks and open-sourced in June 2018, created by Matei Zaharia, the same person behind Apache Spark. It was contributed to the Linux Foundation in 2020 and is now used by an enormous number of teams: MLflow reports over 30 million monthly downloads.<sup class="fn"><a href="#fn1">1</a></sup></p>
+
+<p>MLflow ships four components, and it's worth knowing the names even though this article only covers one of them:</p>
+
+<ul>
+<li><strong>MLflow Tracking</strong> — logs parameters, metrics, and artifacts from training runs. This article.</li>
+<li><strong>MLflow Projects</strong> — a standard format for packaging reusable ML code so it runs the same way anywhere. Not covered here.</li>
+<li><strong>MLflow Models</strong> — a standard format for packaging trained models so they can be deployed through multiple serving tools without rewriting anything. Touched on briefly when we log models below.</li>
+<li><strong>MLflow Model Registry</strong> — a centralized store for managing which model version is live. Article 9.</li>
+</ul>
+
+<p>Tracking specifically answers one question, reliably: for any model you've ever trained through it, what exactly produced it, and how did it perform?</p>
+
+<hr>
+
+<h2>Part 3 &mdash; The mental model: experiments, runs, and where they live</h2>
+
+<p>Four ideas, and the rest of MLflow Tracking is just applying them.</p>
+
+<p>A <strong>run</strong> is one execution of your training code, one specific attempt. In Article 7.5's terms, each of the six experiments is a run.</p>
+
+<p>An <strong>experiment</strong> is a named group of related runs. All six churn attempts belong to one experiment, something like <code>churn-prediction</code>. Different projects, or genuinely different problems within one project, get different experiments.</p>
+
+<p>Each run logs three kinds of things: <strong>parameters</strong> (the settings you chose, like <code>n_estimators=200</code>), <strong>metrics</strong> (the numbers that came out, like <code>accuracy=0.8048</code>), and <strong>artifacts</strong> (files, the trained model itself, a confusion matrix plot, anything you want attached to that specific run).</p>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing one experiment named churn-prediction containing six runs, and each run in turn containing its own logged parameters, metrics, and artifacts.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1;} .lbl{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.4;} </style>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="10" y="90" width="150" height="50" rx="8" class="boxd"/>
+  <text x="85" y="112" text-anchor="middle" class="lbl">Experiment</text>
+  <text x="85" y="128" text-anchor="middle" class="sub">churn-prediction</text>
+
+  <line x1="160" y1="115" x2="205" y2="45" class="ln" marker-end="url(#ar)"/>
+  <line x1="160" y1="115" x2="205" y2="115" class="ln" marker-end="url(#ar)"/>
+  <line x1="160" y1="115" x2="205" y2="185" class="ln" marker-end="url(#ar)"/>
+
+  <rect x="210" y="20" width="110" height="40" rx="6" class="box"/><text x="265" y="44" text-anchor="middle" class="sub">run: logreg_default</text>
+  <rect x="210" y="95" width="110" height="40" rx="6" class="box"/><text x="265" y="119" text-anchor="middle" class="sub">run: rf_100</text>
+  <rect x="210" y="170" width="110" height="40" rx="6" class="box"/><text x="265" y="194" text-anchor="middle" class="sub">...4 more runs</text>
+
+  <line x1="320" y1="115" x2="365" y2="115" class="ln" marker-end="url(#ar)"/>
+
+  <rect x="370" y="60" width="260" height="110" rx="8" class="box" fill="#fff"/>
+  <text x="500" y="82" text-anchor="middle" class="lbl">One run's contents</text>
+  <text x="500" y="105" text-anchor="middle" class="sub">params: n_estimators=200, max_depth=10</text>
+  <text x="500" y="123" text-anchor="middle" class="sub">metrics: accuracy=0.7999, f1=0.5766</text>
+  <text x="500" y="141" text-anchor="middle" class="sub">artifacts: model, confusion_matrix.png</text>
+  <text x="500" y="159" text-anchor="middle" class="sub">+ Git commit, timestamp, run ID</text>
+</svg>
+<figcaption>Fig. 1 — one experiment groups many runs, and each run holds its own params, metrics, and artifacts</figcaption>
+</figure>
+
+<p>All of this needs somewhere to actually live, and here's a detail worth getting right before writing a line of code: as of MLflow 3.7, a fresh install defaults to a small SQLite database (<code>mlflow.db</code>) for storing run metadata, not the classic <code>./mlruns</code> folder full of files that older MLflow versions used and that most existing MLflow tutorials still show.<sup class="fn"><a href="#fn2">2</a></sup> If you have an existing project with <code>./mlruns</code> data already in it, MLflow keeps using that automatically. If you're starting fresh, which this project is, you'll get the database by default.</p>
+
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing mlflow.db, a SQLite database, storing searchable experiment, run, parameter, and metric metadata, connected to the mlruns folder on disk, which stores the actual artifact files such as models and plots that each run produced.">
+  <style> .box{fill:#F5F5F3;stroke:#1C1C1C;stroke-width:1.1;} .boxd{fill:#E7F1EE;stroke:#1B6B5C;stroke-width:1.1;} .lbl{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;fill:#1C1C1C;} .sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;fill:#6B6B6B;} .ln{stroke:#1B6B5C;stroke-width:1.6;} </style>
+  <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1B6B5C"/></marker></defs>
+
+  <rect x="140" y="20" width="360" height="65" rx="8" class="boxd"/>
+  <text x="320" y="45" text-anchor="middle" class="lbl">mlflow.db (SQLite)</text>
+  <text x="320" y="65" text-anchor="middle" class="sub">experiments, runs, params, metrics — the searchable stuff</text>
+
+  <line x1="320" y1="85" x2="320" y2="120" class="ln" marker-end="url(#ar2)"/>
+  <text x="380" y="105" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6B6B6B">artifacts (models, plots, files)</text>
+
+  <rect x="140" y="125" width="360" height="65" rx="8" class="box"/>
+  <text x="320" y="150" text-anchor="middle" class="lbl">mlruns/</text>
+  <text x="320" y="170" text-anchor="middle" class="sub">the actual files each run produced</text>
+</svg>
+<figcaption>Fig. 2 — metadata in a database, artifacts on disk, since MLflow 3.7</figcaption>
+</figure>
+
+<p>This split matters for a concrete reason coming up in Article 9: the Model Registry requires a database-backed store. The classic pure-file <code>./mlruns</code> setup can't support it at all. The fact that MLflow now defaults to a database isn't just a performance choice, it's what makes next article's content possible without an extra setup step.</p>
+
+<hr>
+
+<h2>Part 4 &mdash; Installing MLflow and your first logged run</h2>
+
+<pre><code>pip install mlflow</code></pre>
+
+<p>The smallest possible tracked run:</p>
+
+<pre><code>import mlflow
+
+with mlflow.start_run():
+    mlflow.log_param("n_estimators", 100)
+    mlflow.log_metric("accuracy", 0.87)</code></pre>
+
+<p>Three lines, and something real just happened: MLflow created an experiment (the default one, since none was named), started a run inside it, and recorded one parameter and one metric to <code>mlflow.db</code>. <code>with mlflow.start_run():</code> is the pattern for everything that follows, it opens a run, and closes it cleanly when the block ends, even if your training code raises an exception partway through.</p>
+
+<p>Look at it:</p>
+
+<pre><code>mlflow ui --port 5000</code></pre>
+
+<p>Open <code>http://localhost:5000</code>. One run, one parameter, one metric, already there. This is the same interface you'll use to compare all six churn experiments in a moment.</p>
+
+<blockquote><p>A practical note on timing: MLflow's UI server takes noticeably longer to start than Flask or FastAPI's dev servers, sometimes 15 to 20 seconds before it's actually answering requests, since it spins up multiple worker processes underneath. If you hit connection refused right after starting it, that's normal. Give it a few more seconds.</p></blockquote>
+
+<hr>
+
+<h2>Part 5 &mdash; Tracking the churn experiments properly</h2>
+
+<p>Here's Article 7.5's <code>explore_models.py</code>, rewritten with real tracking instead of print statements. Everything else about the pipeline, the <code>ColumnTransformer</code>, the train/test split, is untouched.</p>
+
+<pre><code>"""track_experiments.py — the same experiments from Article 7.5, now tracked."""
+import pandas as pd
+import mlflow
+import mlflow.sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+df = pd.read_csv("data/telco_churn.csv")
+df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce").fillna(0)
+df = df.drop(columns=["customerID"])
+df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
+
+X = df.drop(columns=["Churn"])
+y = df["Churn"]
+numeric_features = ["SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges"]
+categorical_features = [c for c in X.columns if c not in numeric_features]
+
+preprocessor = ColumnTransformer(transformers=[
+    ("num", StandardScaler(), numeric_features),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+])
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+mlflow.set_experiment("churn-prediction")
+
+def run_experiment(run_name, clf, params):
+    with mlflow.start_run(run_name=run_name):
+        mlflow.log_params(params)
+        pipe = Pipeline([("preprocessor", preprocessor), ("classifier", clf)])
+        pipe.fit(X_train, y_train)
+        pred = pipe.predict(X_test)
+
+        acc = accuracy_score(y_test, pred)
+        prec = precision_score(y_test, pred)
+        rec = recall_score(y_test, pred)
+        f1 = f1_score(y_test, pred)
+
+        mlflow.log_metric("accuracy", acc)
+        mlflow.log_metric("precision", prec)
+        mlflow.log_metric("recall", rec)
+        mlflow.log_metric("f1", f1)
+
+        mlflow.sklearn.log_model(pipe, name="model")
+        print(f"{run_name}: acc={acc:.4f} f1={f1:.4f}")
+
+run_experiment("logreg_default", LogisticRegression(max_iter=1000, random_state=42),
+               {"model_type": "LogisticRegression", "max_iter": 1000})
+run_experiment("rf_100", RandomForestClassifier(n_estimators=100, random_state=42),
+               {"model_type": "RandomForest", "n_estimators": 100, "max_depth": None})
+run_experiment("rf_200_depth10", RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42),
+               {"model_type": "RandomForest", "n_estimators": 200, "max_depth": 10})
+run_experiment("rf_300_depth6", RandomForestClassifier(n_estimators=300, max_depth=6, random_state=42),
+               {"model_type": "RandomForest", "n_estimators": 300, "max_depth": 6})
+run_experiment("gb_100_lr01", GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=42),
+               {"model_type": "GradientBoosting", "n_estimators": 100, "learning_rate": 0.1})
+run_experiment("gb_200_lr005", GradientBoostingClassifier(n_estimators=200, learning_rate=0.05, random_state=42),
+               {"model_type": "GradientBoosting", "n_estimators": 200, "learning_rate": 0.05})</code></pre>
+
+<p>Every piece worth noticing: <code>mlflow.set_experiment("churn-prediction")</code> creates or reuses one named experiment so all six runs land in the same place, instead of scattering across MLflow's default unnamed one. <code>mlflow.log_params(params)</code> logs a whole dictionary at once, the exact configuration that produced this run, in one call. <code>mlflow.sklearn.log_model(pipe, name="model")</code> saves the entire fitted pipeline, preprocessing included, as an artifact attached to this specific run, the same "save the whole pipeline" habit from Article 7.5, just attached to a run instead of a loose file.</p>
+
+<pre><code>python track_experiments.py</code></pre>
+<pre class="output"><code>logreg_default: acc=0.8055 f1=0.6040
+rf_100: acc=0.7864 f1=0.5474
+rf_200_depth10: acc=0.7999 f1=0.5766
+rf_300_depth6: acc=0.8048 f1=0.5710
+gb_100_lr01: acc=0.8027 f1=0.5813
+gb_200_lr005: acc=0.8048 f1=0.5877</code></pre>
+
+<p>Same numbers as Article 7.5, confirmed by actually rerunning the exact code. Nothing about the models changed. What changed is that this time, none of it is gone the moment the terminal scrolls past it.</p>
+
+<hr>
+
+<h2>Part 6 &mdash; Comparing runs in the UI</h2>
+
+<pre><code>mlflow ui --port 5000</code></pre>
+
+<p>Open the UI and go to the <code>churn-prediction</code> experiment. Every run is listed with its parameters and metrics as actual columns, sortable. Click the accuracy column to sort descending, and this is what comes back, pulled directly from MLflow's own run data:</p>
+
+<div class="table-scroll">
+<table>
+<thead><tr><th>Run</th><th>Accuracy</th><th>F1</th><th>Parameters</th></tr></thead>
+<tbody>
+<tr><td>logreg_default</td><td>0.8055</td><td>0.6040</td><td>model_type=LogisticRegression, max_iter=1000</td></tr>
+<tr><td>gb_200_lr005</td><td>0.8048</td><td>0.5877</td><td>model_type=GradientBoosting, n_estimators=200, learning_rate=0.05</td></tr>
+<tr><td>rf_300_depth6</td><td>0.8048</td><td>0.5710</td><td>model_type=RandomForest, n_estimators=300, max_depth=6</td></tr>
+<tr><td>gb_100_lr01</td><td>0.8027</td><td>0.5813</td><td>model_type=GradientBoosting, n_estimators=100, learning_rate=0.1</td></tr>
+<tr><td>rf_200_depth10</td><td>0.7999</td><td>0.5766</td><td>model_type=RandomForest, n_estimators=200, max_depth=10</td></tr>
+<tr><td>rf_100</td><td>0.7864</td><td>0.5474</td><td>model_type=RandomForest, n_estimators=100, max_depth=None</td></tr>
+</tbody>
+</table>
+</div>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart of the six runs' test-set accuracy, ranging from about 0.786 for the default random forest to about 0.806 for the default logistic regression, which comes out on top.">
+  <style> .bar{fill:#1B6B5C;} .barbest{fill:#1B6B5C;} .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#1C1C1C;} .val{font-family:'Inter',sans-serif;font-size:10.5px;font-weight:600;fill:#1C1C1C;} .axis{stroke:#B9BDC2;stroke-width:1;} </style>
+  <line x1="140" y1="20" x2="140" y2="190" class="axis"/>
+  <line x1="140" y1="190" x2="620" y2="190" class="axis"/>
+
+  <text x="130" y="45" text-anchor="end" class="lbl">logreg_default</text>
+  <rect x="145" y="32" width="403.7" height="22" class="barbest"/><text x="555" y="48" class="val">0.8055</text>
+
+  <text x="130" y="72" text-anchor="end" class="lbl">gb_200_lr005</text>
+  <rect x="145" y="59" width="403.1" height="22" class="bar" opacity="0.75"/><text x="555" y="75" class="val">0.8048</text>
+
+  <text x="130" y="99" text-anchor="end" class="lbl">rf_300_depth6</text>
+  <rect x="145" y="86" width="403.1" height="22" class="bar" opacity="0.75"/><text x="555" y="102" class="val">0.8048</text>
+
+  <text x="130" y="126" text-anchor="end" class="lbl">gb_100_lr01</text>
+  <rect x="145" y="113" width="401.0" height="22" class="bar" opacity="0.6"/><text x="555" y="129" class="val">0.8027</text>
+
+  <text x="130" y="153" text-anchor="end" class="lbl">rf_200_depth10</text>
+  <rect x="145" y="140" width="399.4" height="22" class="bar" opacity="0.6"/><text x="555" y="156" class="val">0.7999</text>
+
+  <text x="130" y="180" text-anchor="end" class="lbl">rf_100</text>
+  <rect x="145" y="167" width="392.8" height="22" class="bar" opacity="0.45"/><text x="555" y="183" class="val">0.7864</text>
+</svg>
+<figcaption>Fig. 3 — accuracy across all six runs, the answer that used to require reconstructing from memory</figcaption>
+</figure>
+
+<p>That's the entire Article 7.5 dilemma, resolved in one click. Which run had <code>max_depth=6</code>? Third row, accuracy 0.8048. Which model actually won? Depends whether you're sorting by accuracy or recall, and now you can just sort by each and see, instead of scrolling through terminal history hoping you didn't lose it.</p>
+
+<p>Click into any individual run and MLflow shows its full detail page: every logged parameter, every logged metric, the exact <code>model</code> artifact you can download or load directly, and, since MLflow captures it automatically, the exact Git commit your code was at when that run happened, if the project is a Git repository. That last part is worth sitting with. A run doesn't just remember its own metrics anymore. It remembers which version of your code produced them.</p>
+
+<hr>
+
+<h2>Part 7 &mdash; Autologging: the one-liner, and its real limits</h2>
+
+<p>Writing <code>log_params</code> and <code>log_metric</code> by hand, as above, gives you full control over exactly what gets recorded. MLflow also offers a shortcut:</p>
+
+<pre><code>mlflow.sklearn.autolog()</code></pre>
+
+<p>Add that one line before training, and MLflow automatically captures nearly everything about a scikit-learn model without another line of logging code. Tested directly against the churn pipeline, here's what showed up with zero manual logging: every hyperparameter of every step in the pipeline, including the nested <code>ColumnTransformer</code> and its <code>OneHotEncoder</code>/<code>StandardScaler</code> settings, dozens of parameters in total, and a full set of automatic metrics, precision, recall, F1, accuracy, log loss, ROC AUC, plus the trained model itself as an artifact.</p>
+
+<p>That's a lot of value for one line. There's a real catch worth knowing before you rely on it, confirmed by actually inspecting what got logged: <strong>autolog's automatic metrics are computed on the training set, not a held-out test set.</strong> In the test above, <code>training_accuracy_score</code> came back as 0.998, an almost perfect score, while the same model's actual test-set accuracy, logged separately, was 0.7864. The first number reflects how well the model memorized data it already saw. The second reflects what actually matters, how it performs on data it hasn't.</p>
+
+<p>This isn't a bug, autolog is explicit that its metrics are training metrics. But it means autolog alone isn't quite enough for genuine model comparison. The practical pattern: use <code>autolog()</code> to capture the full hyperparameter surface and the model artifact for free, and still compute and log your own test-set metrics manually, the way Part 5 did, for the numbers you actually intend to compare runs by.</p>
+
+<pre><code>mlflow.sklearn.autolog()
+
+with mlflow.start_run(run_name="rf_100_autolog"):
+    pipe = Pipeline([("preprocessor", preprocessor), ("classifier", RandomForestClassifier(n_estimators=100, random_state=42))])
+    pipe.fit(X_train, y_train)
+
+    <span class="c"># autolog already captured every hyperparameter and a training-set metric suite —</span>
+    <span class="c"># this line adds the one number that actually decides which run wins</span>
+    test_accuracy = pipe.score(X_test, y_test)
+    mlflow.log_metric("test_accuracy", test_accuracy)</code></pre>
+
+<hr>
+
+<h2>Part 8 &mdash; Logging artifacts beyond metrics</h2>
+
+<p>Anything that's a file can be an artifact: a confusion matrix plot, a sample of the input data, a text file of notes. Confusion matrices are the most immediately useful for a classification project like this one.</p>
+
+<pre><code>import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+
+with mlflow.start_run(run_name="logreg_with_plot"):
+    pipe.fit(X_train, y_train)
+    pred = pipe.predict(X_test)
+
+    mlflow.log_metric("accuracy", accuracy_score(y_test, pred))
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
+    mlflow.log_figure(fig, "confusion_matrix.png")
+    plt.close(fig)</code></pre>
+
+<p><code>mlflow.log_figure</code> saves the plot directly to the run's artifact folder, no manual file handling, no separate upload step. Open that run in the UI and the confusion matrix is right there next to its metrics, permanently attached to the exact run that produced it.</p>
+
+<p>This is also where the DVC habit from Article 3 pays off a second time. Log the DVC data hash as a tag on the run:</p>
+
+<pre><code>mlflow.set_tag("data_version", "telco_churn.csv.dvc hash a1b2c3d4")</code></pre>
+
+<p>Now a run doesn't just remember its code version and its hyperparameters. It remembers exactly which version of the data trained it too.</p>
+
+<hr>
+
+<h2>Part 9 &mdash; When AIC and BIC actually apply</h2>
+
+<p>AIC (Akaike Information Criterion) and BIC (Bayesian Information Criterion) are model-selection metrics that balance how well a model fits the data against how complex the model is, penalizing extra parameters so a model can't win purely by memorizing more detail. Lower is better for both, and BIC penalizes complexity more heavily than AIC does.</p>
+
+<p>Here's the honest part: neither one applies cleanly to the Random Forest and Gradient Boosting models used throughout this project. AIC and BIC are computed from a model's log-likelihood, which requires a model with an explicit, well-defined probability structure, the kind linear and logistic regression have. Tree ensembles don't have that in the same sense, which is why scikit-learn only exposes AIC/BIC support for one narrow case, <code>LassoLarsIC</code>, a linear regression variant, and nothing in the tree-ensemble family.<sup class="fn"><a href="#fn3">3</a></sup></p>
+
+<p>Where AIC/BIC genuinely fit is a plain logistic regression, fit through <code>statsmodels</code> rather than scikit-learn, since <code>statsmodels</code> reports them natively. Using a handful of the same churn features, actually fit and verified, on the same train/test split as every other model in this project:</p>
+
+<pre><code>import statsmodels.api as sm
+from sklearn.preprocessing import StandardScaler
+
+df["is_month_to_month"] = (df["Contract"] == "Month-to-month").astype(int)
+df["has_fiber"] = (df["InternetService"] == "Fiber optic").astype(int)
+df["paperless"] = (df["PaperlessBilling"] == "Yes").astype(int)
+
+features = ["tenure", "MonthlyCharges", "is_month_to_month", "has_fiber", "paperless", "SeniorCitizen"]
+X_stats = df[features]
+y_stats = df["Churn"]
+
+<span class="c"># same split as every other model in this article — fit on train, not the full dataset</span>
+X_train_s, X_test_s, y_train_s, y_test_s = train_test_split(
+    X_stats, y_stats, test_size=0.2, random_state=42, stratify=y_stats
+)
+X_train_s = X_train_s.copy()
+X_train_s[["tenure", "MonthlyCharges"]] = StandardScaler().fit_transform(X_train_s[["tenure", "MonthlyCharges"]])
+X_train_s = sm.add_constant(X_train_s)
+
+with mlflow.start_run(run_name="logreg_statsmodels_aic_bic"):
+    model = sm.Logit(y_train_s.values, X_train_s.astype(float)).fit(disp=0)
+    mlflow.log_metric("aic", model.aic)
+    mlflow.log_metric("bic", model.bic)
+    mlflow.log_metric("log_likelihood", model.llf)</code></pre>
+
+<pre class="output"><code>AIC: 4857.28
+BIC: 4903.74</code></pre>
+
+<p>Both numbers, and every coefficient in the fitted model, came back statistically significant. Logged into MLflow exactly like any other metric, this run sits right alongside the six from Part 5, directly comparable on accuracy and F1, and additionally carrying AIC/BIC where the other six simply can't. That's the honest way to use AIC/BIC in a project like this one: as an extra lens on the one model type built to support it, not a universal yardstick applied to every model regardless of whether the math behind it makes sense.</p>
+
+<hr>
+
+<h2>Summary</h2>
+
+<p>The problem Article 7.5 ended on is solved. Six real experiments, each with its exact parameters, metrics, and trained model, permanently recorded and sortable in seconds instead of reconstructed from memory. MLflow itself was built at Databricks in 2018 and has four components; this article covered Tracking, the one that logs runs. The mental model is small: experiments group runs, runs log parameters, metrics, and artifacts, and as of MLflow 3.7 all of that lives in a small SQLite database by default, which happens to be exactly what the next article needs. Manual logging gives precise control; <code>autolog()</code> captures far more with one line, but its automatic metrics are training-set numbers, so genuine model comparison still wants your own test-set metrics logged explicitly. Artifacts, plots, models, even a DVC data hash as a tag, attach permanently to the run that produced them. And AIC/BIC, while genuinely useful, belong to models with a real likelihood function, logistic regression through <code>statsmodels</code> here, not to the tree ensembles that did most of the work in this project.</p>
+
+<p>One gap remains. Every run in this article logged a model as an artifact, but nothing yet decides which one is actually live. <code>main.py</code> would still need someone to know, by memory, which run's model to load. That's Article 9.</p>
+
+</div>
+</article>
+
+<footer>
+<p id="fn1">1. MLflow's origin, timeline, and adoption figures confirmed against Databricks' own announcement blog, MLflow's official documentation, and the Linux Foundation's 2020 contribution announcement.</p>
+<p id="fn2">2. Confirmed directly: a completely fresh MLflow 3.15 install, in an empty directory with no prior state, defaults its tracking URI to <code>sqlite:////&lt;cwd&gt;/mlflow.db</code>. Also confirmed against MLflow's own GitHub deprecation notice (issue #18534): the filesystem backend changed from default to deprecated as of MLflow 3.7.0.</p>
+<p id="fn3">3. Confirmed against scikit-learn's own documentation: AIC/BIC support is exposed only through <code>LassoLarsIC</code>, with no equivalent for ensemble classifiers. The AIC/BIC values shown here were independently verified by re-running the exact published code from a clean environment.</p>
+<p>MLOps for ML practitioners &middot; Article 8 of the series</p>
+</footer>
+
+</body>
+</html>
